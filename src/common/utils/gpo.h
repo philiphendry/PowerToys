@@ -30,6 +30,7 @@ namespace powertoys_gpo
     const std::wstring POLICY_CONFIGURE_ENABLED_AWAKE = L"ConfigureEnabledUtilityAwake";
     const std::wstring POLICY_CONFIGURE_ENABLED_CMD_NOT_FOUND = L"ConfigureEnabledUtilityCmdNotFound";
     const std::wstring POLICY_CONFIGURE_ENABLED_COLOR_PICKER = L"ConfigureEnabledUtilityColorPicker";
+    const std::wstring POLICY_CONFIGURE_ENABLED_QUICK_WINDOWS = L"ConfigureEnabledUtilityQuickWindows";
     const std::wstring POLICY_CONFIGURE_ENABLED_CROP_AND_LOCK = L"ConfigureEnabledUtilityCropAndLock";
     const std::wstring POLICY_CONFIGURE_ENABLED_LIGHT_SWITCH = L"ConfigureEnabledUtilityLightSwitch";
     const std::wstring POLICY_CONFIGURE_ENABLED_POWER_DISPLAY = L"ConfigureEnabledUtilityPowerDisplay";
@@ -300,6 +301,11 @@ namespace powertoys_gpo
     inline gpo_rule_configured_t getConfiguredColorPickerEnabledValue()
     {
         return getUtilityEnabledValue(POLICY_CONFIGURE_ENABLED_COLOR_PICKER);
+    }
+
+    inline gpo_rule_configured_t getConfiguredQuickWindowsEnabledValue()
+    {
+        return getUtilityEnabledValue(POLICY_CONFIGURE_ENABLED_QUICK_WINDOWS);
     }
 
     inline gpo_rule_configured_t getConfiguredCropAndLockEnabledValue()

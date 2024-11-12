@@ -965,6 +965,17 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <Folder Name="/modules/QuickWindows/">
+    <Project Path="src/modules/QuickWindows/QuickWindows/QuickWindows.vcxproj" Id="290c2cfc-4151-4f05-bc80-8b536925854b" />
+    <Project Path="src/modules/QuickWindows/QuickWindowsUI/QuickWindowsUI.csproj" Id="82c104b6-ee4e-41db-bc03-923be386881c">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/modules/QuickWindows/UnitTest-QuickWindowsUI/UnitTest-ColorPickerUI.csproj" Id="090cd7b7-3b0c-4d1d-bc98-83eb5d799bc1">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
   <Folder Name="/modules/RegistryPreview/">
     <Project Path="src/modules/registrypreview/RegistryPreview/RegistryPreview.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />

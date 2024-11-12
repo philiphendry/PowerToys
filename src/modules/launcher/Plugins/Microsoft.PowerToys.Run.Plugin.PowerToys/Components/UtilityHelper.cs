@@ -13,6 +13,7 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys.Components
             return key switch
             {
                 UtilityKey.ColorPicker => "Images/ColorPicker.png",
+                UtilityKey.QuickWindows => "Images/QuickWindows.png",
                 UtilityKey.FancyZones => "Images/FancyZones.png",
                 UtilityKey.Hosts => "Images/Hosts.png",
                 UtilityKey.MeasureTool => "Images/ScreenRuler.png",
@@ -31,6 +32,7 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys.Components
             return key switch
             {
                 UtilityKey.ColorPicker => SettingsDeepLink.SettingsWindow.ColorPicker,
+                UtilityKey.QuickWindows => SettingsDeepLink.SettingsWindow.QuickWindows,
                 UtilityKey.FancyZones => SettingsDeepLink.SettingsWindow.FancyZones,
                 UtilityKey.Hosts => SettingsDeepLink.SettingsWindow.Hosts,
                 UtilityKey.MeasureTool => SettingsDeepLink.SettingsWindow.MeasureTool,

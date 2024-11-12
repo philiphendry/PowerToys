@@ -151,6 +151,15 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Quick Windows.
+        /// </summary>
+        internal static string Quick_Windows {
+            get {
+                return ResourceManager.GetString("Quick_Windows", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Registry Preview.
         /// </summary>
         internal static string Registry_Preview {

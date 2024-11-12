@@ -526,6 +526,10 @@ opera.exe</value>
     <value>Power Display</value>
     <comment>Product name: Navigation view item name for Power Display</comment>
   </data>
+  <data name="Shell_QuickWindows.Content" xml:space="preserve">
+    <value>Quick Windows</value>
+    <comment>Product name: Navigation view item name for Quick Windows</comment>
+  </data>
   <data name="Shell_KeyboardManager.Content" xml:space="preserve">
     <value>Keyboard Manager</value>
     <comment>Product name: Navigation view item name for Keyboard Manager</comment>
@@ -712,6 +716,13 @@ opera.exe</value>
   </data>
   <data name="ColorPicker_ChangeCursor.Content" xml:space="preserve">
     <value>Change cursor when picking a color</value>
+  </data>
+  <data name="QuickWindows.ModuleDescription" xml:space="preserve">
+    <value>A faster way to move and resize windows.</value>
+  </data>
+  <data name="QuickWindows_EnableQuickWindows.Header" xml:space="preserve">
+    <value>Enable Quick Windows</value>
+    <comment>do not loc the Product name.  Do you want this feature on / off</comment>
   </data>
   <data name="PowerLauncher.ModuleDescription" xml:space="preserve">
     <value>A quick launcher that has additional capabilities without sacrificing performance.</value>
@@ -1358,6 +1369,9 @@ opera.exe</value>
   <data name="ColorPicker.ModuleTitle" xml:space="preserve">
     <value>Color Picker</value>
   </data>
+  <data name="QuickWindows.ModuleTitle" xml:space="preserve">
+    <value>Quick Windows</value>
+  </data>
   <data name="PowerLauncher.ModuleTitle" xml:space="preserve">
     <value>PowerToys Run</value>
   </data>
@@ -2002,6 +2016,9 @@ Made with 💗 by Microsoft and the PowerToys community.</value>
   <data name="Oobe_ColorPicker.Description" xml:space="preserve">
     <value>Color Picker is a system-wide color selection tool for Windows that enables you to pick colors from any currently running application and automatically copies it in a configurable format to your clipboard.</value>
   </data>
+  <data name="Oobe_QuickWindows.Description" xml:space="preserve">
+    <value>Quick Windows enables you to quickly grab windows for moving and resizing.</value>
+  </data>
   <data name="Oobe_FancyZones.Description" xml:space="preserve">
     <value>FancyZones is a window manager that makes it easy to create complex window layouts and quickly position windows into those layouts.</value>
     <comment>{Locked="FancyZones"}</comment>
@@ -2071,6 +2088,24 @@ Take a moment to preview the various utilities listed or view our comprehensive 
   </data>
   <data name="Oobe_ColorPicker_TipsAndTricks.Text" xml:space="preserve">
     <value>To select a color with more precision, **scroll the mouse wheel** to zoom in.</value>
+  </data>
+  <data name="Oobe_QuickWindows_MovingWindows.Text" xml:space="preserve">
+    <value>Moving Windows</value>
+  </data>
+  <data name="Oobe_QuickWindows_MovingWindows_Description.Text" xml:space="preserve">
+    <value>Hold **Alt** then **left click** anywhere within a window to move it around the screen.</value>
+  </data>
+  <data name="Oobe_QuickWindows_ResizingWindows.Text" xml:space="preserve">
+    <value>Resizing Windows</value>
+  </data>
+  <data name="Oobe_QuickWindows_ResizingWindows_Description.Text" xml:space="preserve">
+    <value>Hold **Alt** then **right click** to resize a window by the corner you clicked in.</value>
+  </data>
+  <data name="Oobe_QuickWindows_SendToFromBottom.Text" xml:space="preserve">
+    <value>Send Windows To/From Bottom</value>
+  </data>
+  <data name="Oobe_QuickWindows_SendToFromBottom_Description.Text" xml:space="preserve">
+    <value>Hold **Alt** then, using the mouse wheel, **scroll forward** to send the window beneath the cursor to the bottom of the stack, or **scroll backward** to bring the window at the bottom to the top.</value>
   </data>
   <data name="Oobe_FancyZones_HowToUse.Text" xml:space="preserve">
     <value>**Shift** + **drag the window** to snap a window to a zone, and release the window in the desired zone.</value>
@@ -2162,6 +2197,10 @@ From there, simply click on one of the supported files in the File Explorer and 
   </data>
   <data name="Oobe_ColorPicker.Title" xml:space="preserve">
     <value>Color Picker</value>
+    <comment>Do not localize this string</comment>
+  </data>
+  <data name="Oobe_QuickWindows.Title" xml:space="preserve">
+    <value>Quick Windows</value>
     <comment>Do not localize this string</comment>
   </data>
   <data name="Oobe_FancyZones.Title" xml:space="preserve">
@@ -2433,6 +2472,10 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>Learn more about Color Picker</value>
     <comment>Color Picker is a product name, do not loc</comment>
   </data>
+  <data name="LearnMore_QuickWindows.Text" xml:space="preserve">
+    <value>Learn more about Quick Windows</value>
+    <comment>Quick Windows is a product name, do not loc</comment>
+  </data>
   <data name="LearnMore_FancyZones.Text" xml:space="preserve">
     <value>Learn more about FancyZones</value>
     <comment>{Locked="FancyZones"}</comment>
@@ -2594,6 +2637,10 @@ From there, simply click on one of the supported files in the File Explorer and 
     <comment>giving credit to the projects this utility was based on</comment>
   </data>
   <data name="ColorPicker.SecondaryLinksHeader" xml:space="preserve">
+    <value>Attribution</value>
+    <comment>giving credit to the projects this utility was based on</comment>
+  </data>
+  <data name="QuickWindows.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>
     <comment>giving credit to the projects this utility was based on</comment>
   </data>
@@ -3242,6 +3289,9 @@ Activate by holding the key for the character you want to add an accent to, then
   </data>
   <data name="ColorPicker_ShortDescription" xml:space="preserve">
     <value>Pick a color</value>
+  </data>
+  <data name="QuickWindows_ShortDescription" xml:space="preserve">
+    <value>Quick Windows</value>
   </data>
   <data name="CropAndLock_Thumbnail" xml:space="preserve">
     <value>Crop and create a thumbnail</value>

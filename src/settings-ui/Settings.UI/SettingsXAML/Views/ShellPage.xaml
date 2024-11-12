@@ -286,6 +286,10 @@
                             helpers:NavHelper.NavigateTo="views:WorkspacesPage"
                             AutomationProperties.AutomationId="WorkspacesNavItem"
                             Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/Workspaces.png}" />
+                        <NavigationViewItem
+                            x:Uid="Shell_QuickWindows"
+                            helpers:NavHelper.NavigateTo="views:QuickWindowsPage"
+                            Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/QuickWindows.png}" />
                     </NavigationViewItem.MenuItems>
                 </NavigationViewItem>
 

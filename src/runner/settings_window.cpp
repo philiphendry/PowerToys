@@ -755,6 +755,8 @@ std::string ESettingsWindowNames_to_string(ESettingsWindowNames value)
         return "CmdNotFound";
     case ESettingsWindowNames::LightSwitch:
         return "LightSwitch";
+    case ESettingsWindowNames::QuickWindows:
+        return "QuickWindows";
     case ESettingsWindowNames::FancyZones:
         return "FancyZones";
     case ESettingsWindowNames::FileLocksmith:
@@ -845,6 +847,10 @@ ESettingsWindowNames ESettingsWindowNames_from_string(std::string value)
     else if (value == "LightSwitch")
     {
         return ESettingsWindowNames::LightSwitch;
+    }
+    else if (value == "QuickWindows")
+    {
+        return ESettingsWindowNames::QuickWindows;
     }
     else if (value == "FancyZones")
     {

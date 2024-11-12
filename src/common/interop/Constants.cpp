@@ -55,6 +55,18 @@ namespace winrt::PowerToys::Interop::implementation
     {
         return CommonSharedConstants::TERMINATE_COLOR_PICKER_SHARED_EVENT;
     }
+    hstring Constants::QuickWindowsSendSettingsTelemetryEvent()
+    {
+        return CommonSharedConstants::QUICK_WINDOWS_SEND_SETTINGS_TELEMETRY_EVENT;
+    }
+    hstring Constants::ShowQuickWindowsSharedEvent()
+    {
+        return CommonSharedConstants::SHOW_QUICK_WINDOWS_SHARED_EVENT;
+    }
+    hstring Constants::TerminateQuickWindowsSharedEvent()
+    {
+        return CommonSharedConstants::TERMINATE_QUICK_WINDOWS_SHARED_EVENT;
+    }
     hstring Constants::AdvancedPasteShowUIMessage()
     {
         return CommonSharedConstants::ADVANCED_PASTE_SHOW_UI_MESSAGE;

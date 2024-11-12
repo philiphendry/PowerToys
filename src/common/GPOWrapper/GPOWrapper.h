@@ -12,6 +12,7 @@ namespace winrt::PowerToys::GPOWrapper::implementation
         static GpoRuleConfigured GetConfiguredCmdNotFoundEnabledValue();
         static GpoRuleConfigured GetConfiguredCmdPalEnabledValue();
         static GpoRuleConfigured GetConfiguredColorPickerEnabledValue();
+        static GpoRuleConfigured GetConfiguredQuickWindowsEnabledValue();
         static GpoRuleConfigured GetConfiguredCropAndLockEnabledValue();
         static GpoRuleConfigured GetConfiguredLightSwitchEnabledValue();
         static GpoRuleConfigured GetConfiguredPowerDisplayEnabledValue();

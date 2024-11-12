@@ -421,6 +421,7 @@ namespace Microsoft.PowerToys.Settings.UI
                 case "CmdNotFound": return typeof(CmdNotFoundPage);
                 case "ColorPicker": return typeof(ColorPickerPage);
                 case "LightSwitch": return typeof(LightSwitchPage);
+                case "QuickWindows": return typeof(QuickWindowsPage);
                 case "FancyZones": return typeof(FancyZonesPage);
                 case "FileLocksmith": return typeof(FileLocksmithPage);
                 case "Run": return typeof(PowerLauncherPage);

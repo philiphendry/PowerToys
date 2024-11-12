@@ -14,6 +14,9 @@ namespace PowerToys
             static String ColorPickerSendSettingsTelemetryEvent();
             static String ShowColorPickerSharedEvent();
             static String TerminateColorPickerSharedEvent();
+            static String QuickWindowsSendSettingsTelemetryEvent();
+            static String ShowQuickWindowsSharedEvent();
+            static String TerminateQuickWindowsSharedEvent();
             static String AdvancedPasteShowUIMessage();
             static String AdvancedPasteMarkdownMessage();
             static String AdvancedPasteJsonMessage();

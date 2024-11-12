@@ -1,0 +1,30 @@
+﻿<UserControl
+    x:Class="QuickWindows.Views.MainView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:QuickWindows.ViewModels"
+    d:DataContext="{d:DesignInstance viewModels:MainViewModel,
+                                     IsDesignTimeCreatable=True}"
+    d:DesignHeight="64"
+    mc:Ignorable="d">
+    <Grid Background="Transparent">
+
+        <Border
+            Background="{DynamicResource ApplicationBackgroundBrush}"
+            BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <!--  Disabled due to the poor performance of drawing shadows in WPF  -->
+            <!--<Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="16"
+                    Opacity="0.28"
+                    ShadowDepth="1" />
+            </Border.Effect>-->
+            <Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

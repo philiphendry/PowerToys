@@ -46,6 +46,7 @@ namespace Common.UI
             CmdPal,
             ZoomIt,
             PowerDisplay,
+            QuickWindows,
         }
 
         private static string SettingsWindowNameToString(SettingsWindow value)
@@ -66,6 +67,8 @@ namespace Common.UI
                     return "CmdNotFound";
                 case SettingsWindow.LightSwitch:
                     return "LightSwitch";
+                case SettingsWindow.QuickWindows:
+                    return "QuickWindows";
                 case SettingsWindow.FancyZones:
                     return "FancyZones";
                 case SettingsWindow.FileLocksmith:

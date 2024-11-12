@@ -36,5 +36,6 @@ namespace Microsoft.PowerToys.Settings.UI.OOBE.Enums
         PowerDisplay,
         NewPlus,
         ZoomIt,
+        QuickWindows,
     }
 }

@@ -46,6 +46,20 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys
                     }));
             }
 
+            if (GPOWrapper.GetConfiguredQuickWindowsEnabledValue() != GpoRuleConfigured.Disabled)
+            {
+                _utilities.Add(new Utility(
+                    UtilityKey.QuickWindows,
+                    Resources.Quick_Windows,
+                    generalSettings.Enabled.QuickWindows,
+                    (_) =>
+                    {
+                        using var eventHandle = new EventWaitHandle(false, EventResetMode.AutoReset, Constants.ShowQuickWindowsSharedEvent());
+                        eventHandle.Set();
+                        return true;
+                    }));
+            }
+
             if (GPOWrapper.GetConfiguredFancyZonesEnabledValue() != GpoRuleConfigured.Disabled)
             {
                 _utilities.Add(new Utility(
@@ -236,6 +250,7 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys
                             switch (u.Key)
                             {
                                 case UtilityKey.ColorPicker: u.Enable(generalSettings.Enabled.ColorPicker); break;
+                                case UtilityKey.QuickWindows: u.Enable(generalSettings.Enabled.QuickWindows); break;
                                 case UtilityKey.FancyZones: u.Enable(generalSettings.Enabled.FancyZones); break;
                                 case UtilityKey.Hosts: u.Enable(generalSettings.Enabled.Hosts); break;
                                 case UtilityKey.PowerOCR: u.Enable(generalSettings.Enabled.PowerOcr); break;
