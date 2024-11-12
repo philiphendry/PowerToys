@@ -11,6 +11,7 @@ namespace winrt::PowerToys::GPOWrapper::implementation
         static GpoRuleConfigured GetConfiguredAwakeEnabledValue();
         static GpoRuleConfigured GetConfiguredCmdNotFoundEnabledValue();
         static GpoRuleConfigured GetConfiguredColorPickerEnabledValue();
+        static GpoRuleConfigured GetConfiguredQuickWindowsEnabledValue();
         static GpoRuleConfigured GetConfiguredCropAndLockEnabledValue();
         static GpoRuleConfigured GetConfiguredFancyZonesEnabledValue();
         static GpoRuleConfigured GetConfiguredFileLocksmithEnabledValue();

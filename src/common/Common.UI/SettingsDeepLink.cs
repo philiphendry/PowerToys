@@ -32,6 +32,7 @@ namespace Common.UI
             Dashboard,
             AdvancedPaste,
             Workspaces,
+            QuickWindows,
         }
 
         private static string SettingsWindowNameToString(SettingsWindow value)
@@ -44,6 +45,8 @@ namespace Common.UI
                     return "Awake";
                 case SettingsWindow.ColorPicker:
                     return "ColorPicker";
+                case SettingsWindow.QuickWindows:
+                    return "QuickWindows";
                 case SettingsWindow.FancyZones:
                     return "FancyZones";
                 case SettingsWindow.Run:

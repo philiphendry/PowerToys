@@ -142,6 +142,10 @@
                     Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/QuickAccent.png}"
                     Tag="QuickAccent" />
                 <NavigationViewItem
+                    x:Uid="Shell_QuickWindows"
+                    Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/QuickWindows.png}"
+                    Tag="QuickWindows" />
+                <NavigationViewItem
                     x:Uid="Shell_RegistryPreview"
                     Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/RegistryPreview.png}"
                     Tag="RegistryPreview" />

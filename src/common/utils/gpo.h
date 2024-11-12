@@ -27,6 +27,7 @@ namespace powertoys_gpo {
     const std::wstring POLICY_CONFIGURE_ENABLED_AWAKE = L"ConfigureEnabledUtilityAwake";
     const std::wstring POLICY_CONFIGURE_ENABLED_CMD_NOT_FOUND = L"ConfigureEnabledUtilityCmdNotFound";
     const std::wstring POLICY_CONFIGURE_ENABLED_COLOR_PICKER = L"ConfigureEnabledUtilityColorPicker";
+    const std::wstring POLICY_CONFIGURE_ENABLED_QUICK_WINDOWS = L"ConfigureEnabledUtilityQuickWindows";
     const std::wstring POLICY_CONFIGURE_ENABLED_CROP_AND_LOCK = L"ConfigureEnabledUtilityCropAndLock";
     const std::wstring POLICY_CONFIGURE_ENABLED_FANCYZONES = L"ConfigureEnabledUtilityFancyZones";
     const std::wstring POLICY_CONFIGURE_ENABLED_FILE_LOCKSMITH = L"ConfigureEnabledUtilityFileLocksmith";
@@ -279,6 +280,11 @@ namespace powertoys_gpo {
         return getUtilityEnabledValue(POLICY_CONFIGURE_ENABLED_COLOR_PICKER);
     }
 
+    inline gpo_rule_configured_t getConfiguredQuickWindowsEnabledValue()
+    {
+        return getUtilityEnabledValue(POLICY_CONFIGURE_ENABLED_QUICK_WINDOWS);
+    }
+
     inline gpo_rule_configured_t getConfiguredCropAndLockEnabledValue()
     {
         return getUtilityEnabledValue(POLICY_CONFIGURE_ENABLED_CROP_AND_LOCK);
@@ -494,7 +500,7 @@ namespace powertoys_gpo {
     }
 
     inline gpo_rule_configured_t getRunPluginEnabledValue(std::string pluginID)
-    {     
+    {
         if (pluginID == "" || pluginID == " ")
         {
             // this plugin id can't exist in the registry
@@ -503,7 +509,7 @@ namespace powertoys_gpo {
 
         std::wstring plugin_id(pluginID.begin(), pluginID.end());
         auto individual_plugin_setting = getPolicyListValue(POWER_LAUNCHER_INDIVIDUAL_PLUGIN_ENABLED_LIST_PATH, plugin_id);
-        
+
         if (individual_plugin_setting.has_value())
         {
             if (*individual_plugin_setting == L"0")
@@ -530,7 +536,7 @@ namespace powertoys_gpo {
         {
             // If no individual plugin policy exists, we check the policy with the setting for all plugins.
             return getConfiguredValue(POLICY_CONFIGURE_ENABLED_POWER_LAUNCHER_ALL_PLUGINS);
-        }        
+        }
     }
 
     inline gpo_rule_configured_t getAllowedAdvancedPasteOnlineAIModelsValue()

@@ -16,5 +16,6 @@ namespace Microsoft.PowerToys.Run.Plugin.PowerToys.Components
         CropAndLock = 7,
         EnvironmentVariables = 8,
         Workspaces = 9,
+        QuickWindows = 10,
     }
 }

@@ -195,6 +195,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 ModuleType.ShortcutGuide => GetModuleItemsShortcutGuide(),
                 ModuleType.PowerOCR => GetModuleItemsPowerOCR(),
                 ModuleType.NewPlus => GetModuleItemsNewPlus(),
+                ModuleType.QuickWindows => GetModuleItemsQuickWindows(),
                 _ => new ObservableCollection<DashboardModuleItem>(), // never called, all values listed above
             };
         }
@@ -517,6 +518,18 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             var list = new List<DashboardModuleItem>
             {
                 new DashboardModuleTextItem() { Label = resourceLoader.GetString("NewPlus_Product_Description/Description") },
+            };
+            return new ObservableCollection<DashboardModuleItem>(list);
+        }
+
+        private ObservableCollection<DashboardModuleItem> GetModuleItemsQuickWindows()
+        {
+            ISettingsRepository<QuickWindowsSettings> moduleSettingsRepository = SettingsRepository<QuickWindowsSettings>.GetInstance(new SettingsUtils());
+            var settings = moduleSettingsRepository.SettingsConfig;
+            var hotkey = settings.Properties.ActivationShortcut;
+            var list = new List<DashboardModuleItem>
+            {
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("QuickWindows_ShortDescription"), Shortcut = hotkey.GetKeysList() },
             };
             return new ObservableCollection<DashboardModuleItem>(list);
         }

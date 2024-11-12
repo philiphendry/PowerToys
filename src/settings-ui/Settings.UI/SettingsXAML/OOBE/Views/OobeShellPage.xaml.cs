@@ -5,8 +5,9 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
-
+using AllExperiments;
 using global::PowerToys.GPOWrapper;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.PowerToys.Settings.UI.OOBE.Enums;
 using Microsoft.PowerToys.Settings.UI.OOBE.ViewModel;
@@ -214,6 +215,11 @@ namespace Microsoft.PowerToys.Settings.UI.OOBE.Views
                 ModuleName = "NewPlus",
                 IsNew = true,
             });
+            Modules.Insert((int)PowerToysModules.QuickWindows, new OobePowerToysModule()
+            {
+                ModuleName = "QuickWindows",
+                IsNew = false,
+            });
         }
 
         public void OnClosing()
@@ -273,6 +279,7 @@ namespace Microsoft.PowerToys.Settings.UI.OOBE.Views
                     case "Awake": NavigationFrame.Navigate(typeof(OobeAwake)); break;
                     case "CmdNotFound": NavigationFrame.Navigate(typeof(OobeCmdNotFound)); break;
                     case "ColorPicker": NavigationFrame.Navigate(typeof(OobeColorPicker)); break;
+                    case "QuickWindows": NavigationFrame.Navigate(typeof(OobeQuickWindows)); break;
                     case "CropAndLock": NavigationFrame.Navigate(typeof(OobeCropAndLock)); break;
                     case "EnvironmentVariables": NavigationFrame.Navigate(typeof(OobeEnvironmentVariables)); break;
                     case "FancyZones": NavigationFrame.Navigate(typeof(OobeFancyZones)); break;

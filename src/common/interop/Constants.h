@@ -17,6 +17,9 @@ namespace winrt::PowerToys::Interop::implementation
         static hstring ColorPickerSendSettingsTelemetryEvent();
         static hstring ShowColorPickerSharedEvent();
         static hstring TerminateColorPickerSharedEvent();
+        static hstring QuickWindowsSendSettingsTelemetryEvent();
+        static hstring ShowQuickWindowsSharedEvent();
+        static hstring TerminateQuickWindowsSharedEvent();
         static hstring AdvancedPasteShowUIMessage();
         static hstring AdvancedPasteMarkdownMessage();
         static hstring AdvancedPasteJsonMessage();

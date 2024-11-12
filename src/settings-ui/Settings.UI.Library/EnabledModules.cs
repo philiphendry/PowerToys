@@ -169,6 +169,23 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             }
         }
 
+        private bool quickWindows = true;
+
+        [JsonPropertyName("QuickWindows")]
+        public bool QuickWindows
+        {
+            get => quickWindows;
+            set
+            {
+                if (quickWindows != value)
+                {
+                    LogTelemetryEvent(value);
+                    quickWindows = value;
+                    NotifyChange();
+                }
+            }
+        }
+
         private bool cropAndLock = true;
 
         [JsonPropertyName("CropAndLock")]

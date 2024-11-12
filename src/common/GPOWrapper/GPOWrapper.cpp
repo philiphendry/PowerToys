@@ -20,6 +20,10 @@ namespace winrt::PowerToys::GPOWrapper::implementation
     {
         return static_cast<GpoRuleConfigured>(powertoys_gpo::getConfiguredColorPickerEnabledValue());
     }
+    GpoRuleConfigured GPOWrapper::GetConfiguredQuickWindowsEnabledValue()
+    {
+        return static_cast<GpoRuleConfigured>(powertoys_gpo::getConfiguredQuickWindowsEnabledValue());
+    }
     GpoRuleConfigured GPOWrapper::GetConfiguredCropAndLockEnabledValue()
     {
         return static_cast<GpoRuleConfigured>(powertoys_gpo::getConfiguredCropAndLockEnabledValue());

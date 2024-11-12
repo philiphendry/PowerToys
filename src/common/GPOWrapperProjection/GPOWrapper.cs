@@ -37,6 +37,11 @@ namespace PowerToys.GPOWrapperProjection
             return (GpoRuleConfigured)PowerToys.GPOWrapper.GPOWrapper.GetConfiguredColorPickerEnabledValue();
         }
 
+        public static GpoRuleConfigured GetConfiguredQuickWindowsEnabledValue()
+        {
+            return (GpoRuleConfigured)PowerToys.GPOWrapper.GPOWrapper.GetConfiguredQuickWindowsEnabledValue();
+        }
+
         public static GpoRuleConfigured GetConfiguredImageResizerEnabledValue()
         {
             return (GpoRuleConfigured)PowerToys.GPOWrapper.GPOWrapper.GetConfiguredImageResizerEnabledValue();

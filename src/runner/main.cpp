@@ -143,6 +143,7 @@ int runner(bool isProcessElevated, bool openSettings, std::string settingsWindow
             L"WinUI3Apps/PowerToys.PowerRenameExt.dll",
             L"PowerToys.ShortcutGuideModuleInterface.dll",
             L"PowerToys.ColorPicker.dll",
+            L"PowerToys.QuickWindows.dll",
             L"PowerToys.AwakeModuleInterface.dll",
             L"PowerToys.FindMyMouse.dll",
             L"PowerToys.MouseHighlighter.dll",

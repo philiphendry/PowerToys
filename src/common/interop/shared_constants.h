@@ -23,10 +23,12 @@ namespace CommonSharedConstants
     const wchar_t RUN_SEND_SETTINGS_TELEMETRY_EVENT[] = L"Local\\PowerToysRunInvokeEvent-638ec522-0018-4b96-837d-6bd88e06f0d6";
 
     const wchar_t RUN_EXIT_EVENT[] = L"Local\\PowerToysRunExitEvent-3e38e49d-a762-4ef1-88f2-fd4bc7481516";
-    
+
     const wchar_t FZE_EXIT_EVENT[] = L"Local\\PowerToys-FZE-ExitEvent-ca8c73de-a52c-4274-b691-46e9592d3b43";
 
     const wchar_t COLOR_PICKER_SEND_SETTINGS_TELEMETRY_EVENT[] = L"Local\\ColorPickerSettingsTelemetryEvent-6c7071d8-4014-46ec-b687-913bd8a422f1";
+
+    const wchar_t QUICK_WINDOWS_SEND_SETTINGS_TELEMETRY_EVENT[] = L"Local\\QuickWindowsSettingsTelemetryEvent-777e0398-6ca8-4f70-9da8-e98eb69a60d0";
 
     // IPC Messages used in Advanced Paste
     const wchar_t ADVANCED_PASTE_SHOW_UI_MESSAGE[] = L"ShowUI";
@@ -36,7 +38,7 @@ namespace CommonSharedConstants
     const wchar_t ADVANCED_PASTE_JSON_MESSAGE[] = L"PasteJson";
 
     const wchar_t ADVANCED_PASTE_ADDITIONAL_ACTION_MESSAGE[] = L"AdditionalAction";
-    
+
     const wchar_t ADVANCED_PASTE_CUSTOM_ACTION_MESSAGE[] = L"CustomAction";
 
     const wchar_t ADVANCED_PASTE_TERMINATE_APP_MESSAGE[] = L"TerminateApp";
@@ -44,7 +46,11 @@ namespace CommonSharedConstants
     // Path to the event used to show Color Picker
     const wchar_t SHOW_COLOR_PICKER_SHARED_EVENT[] = L"Local\\ShowColorPickerEvent-8c46be2a-3e05-4186-b56b-4ae986ef2525";
 
+    const wchar_t SHOW_QUICK_WINDOWS_SHARED_EVENT[] = L"Local\\ShowQuickWindowsEvent-074b0b33-da81-41fc-b27e-ce3aba5b42ac";
+
     const wchar_t TERMINATE_COLOR_PICKER_SHARED_EVENT[] = L"Local\\TerminateColorPickerEvent-3d676258-c4d5-424e-a87a-4be22020e813";
+
+    const wchar_t TERMINATE_QUICK_WINDOWS_SHARED_EVENT[] = L"Local\\TerminateQuickWindowsEvent-67d88d3f-fbe4-4301-8743-d49a3b7f056c";
 
     const wchar_t SHORTCUT_GUIDE_TRIGGER_EVENT[] = L"Local\\ShortcutGuide-TriggerEvent-d4275ad3-2531-4d19-9252-c0becbd9b496";
 
@@ -64,7 +70,7 @@ namespace CommonSharedConstants
 
     // Path to the event used by Awake
     const wchar_t AWAKE_EXIT_EVENT[] = L"Local\\PowerToysAwakeExitEvent-c0d5e305-35fc-4fb5-83ec-f6070cfaf7fe";
-    
+
     // Path to the event used by AlwaysOnTop
     const wchar_t ALWAYS_ON_TOP_PIN_EVENT[] = L"Local\\AlwaysOnTopPinEvent-892e0aa2-cfa8-4cc4-b196-ddeb32314ce8";
 
