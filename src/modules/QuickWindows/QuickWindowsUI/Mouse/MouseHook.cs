@@ -5,6 +5,7 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
+using ManagedCommon;
 
 namespace QuickWindows.Mouse;
 
@@ -21,6 +22,7 @@ public class MouseHook : IMouseHook
 {
     private static IntPtr _hookHandle = IntPtr.Zero;
     private static NativeMethods.HookProc? _hookProc;
+    private bool _eventPropagation;
 
     public event EventHandler<MouseEventArgs>? MouseMove;
 
@@ -44,24 +46,9 @@ public class MouseHook : IMouseHook
         public int Delta { get; } = delta;
     }
 
-    private bool _suppressLeftClick;
-
-    public bool SuppressLeftClick
+    public void Install(bool eventPropagation = false)
     {
-        get => _suppressLeftClick;
-        set
-        {
-            _suppressLeftClick = value;
-            if (!value)
-            {
-                // When suppression is disabled, ensure we uninstall the hook
-                Uninstall();
-            }
-        }
-    }
-
-    public void Install()
-    {
+        _eventPropagation = eventPropagation;
         if (_hookHandle != IntPtr.Zero)
         {
             return; // Already installed
@@ -87,6 +74,7 @@ public class MouseHook : IMouseHook
             return;
         }
 
+        Logger.LogDebug("Unhooking windows mouse hook");
         NativeMethods.UnhookWindowsHookEx(_hookHandle);
         _hookHandle = IntPtr.Zero;
     }
@@ -103,10 +91,10 @@ public class MouseHook : IMouseHook
         switch (wParam.ToInt32())
         {
             case NativeMethods.WM_MOUSEWHEEL:
-                if (SuppressLeftClick)
+                int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
+                MouseWheel?.Invoke(this, new MouseWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
+                if (!_eventPropagation)
                 {
-                    int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
-                    MouseWheel?.Invoke(this, new MouseWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
                     return new IntPtr(1);
                 }
 
@@ -120,7 +108,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_RBUTTONDOWN:
                 var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
                 MouseDown?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-                if (SuppressLeftClick)
+                if (!_eventPropagation)
                 {
                     return new IntPtr(1);
                 }
@@ -131,7 +119,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_RBUTTONUP:
                 var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
                 MouseUp?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
-                if (SuppressLeftClick)
+                if (!_eventPropagation)
                 {
                     return new IntPtr(1);
                 }

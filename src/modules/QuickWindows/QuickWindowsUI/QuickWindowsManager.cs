@@ -15,27 +15,37 @@ using QuickWindows.Settings;
 
 namespace QuickWindows;
 
+public enum WindowOperation
+{
+    None,
+    Move,
+    Resize,
+}
+
 [Export(typeof(IQuickWindowsManager))]
 [PartCreationPolicy(CreationPolicy.Shared)]
 public class QuickWindowsManager : IQuickWindowsManager
 {
-    private static readonly object Lock = new object();
+    private static readonly object Lock = new();
     private readonly IUserSettings _userSettings;
     private readonly IKeyboardMonitor _keyboardHook;
     private readonly IMouseHook _mouseHook;
+    private readonly IWindowOperations _windowOperations;
     private bool _isAltPressed;
-    private bool _isMoveOperation;
+    private WindowOperation _currentOperation;
 
     [ImportingConstructor]
     public QuickWindowsManager(
         IUserSettings userSettings,
         IKeyboardMonitor keyboardHook,
         IMouseHook mouseHook,
+        IWindowOperations windowOperations,
         CancellationToken exitToken)
     {
         _userSettings = userSettings;
         _keyboardHook = keyboardHook;
         _mouseHook = mouseHook;
+        _windowOperations = windowOperations;
 
         AddKeyboardListeners();
         AddMouseListeners();
@@ -97,9 +107,9 @@ public class QuickWindowsManager : IQuickWindowsManager
             }
 
             Logger.LogDebug("Installing mouse hook.");
-            _isAltPressed = true;
             _mouseHook.Install();
-            _mouseHook.SuppressLeftClick = true;
+            _isAltPressed = true;
+            _currentOperation = WindowOperation.None;
         }
     }
 
@@ -112,11 +122,11 @@ public class QuickWindowsManager : IQuickWindowsManager
                 return;
             }
 
-            Logger.LogDebug("EndWindowDrag and uninstall mouse hook.");
-            _isAltPressed = false;
-            WindowOperations.EndWindowDrag();
-            _mouseHook.SuppressLeftClick = false;
+            Logger.LogDebug("EndOperation and uninstall mouse hook.");
+            _windowOperations.EndOperation();
             _mouseHook.Uninstall();
+            _isAltPressed = false;
+            _currentOperation = WindowOperation.None;
         }
     }
 
@@ -124,14 +134,14 @@ public class QuickWindowsManager : IQuickWindowsManager
     {
         lock (Lock)
         {
-            if (!_isAltPressed)
+            if (!_isAltPressed || _currentOperation != WindowOperation.None)
             {
                 return;
             }
 
-            _isMoveOperation = args.Button == MouseButton.Left;
-            Logger.LogDebug($"StartWindowOperation _isMoveOperation: {_isMoveOperation}");
-            WindowOperations.StartWindowOperation(args.X, args.Y, _isMoveOperation);
+            _currentOperation = args.Button == MouseButton.Left ? WindowOperation.Move : WindowOperation.Resize;
+            Logger.LogDebug($"StartOperation _currentOperation: {_currentOperation}");
+            _windowOperations.StartOperation(args.X, args.Y, _currentOperation);
         }
     }
 
@@ -144,8 +154,9 @@ public class QuickWindowsManager : IQuickWindowsManager
                 return;
             }
 
-            Logger.LogDebug("EndWindowDrag");
-            WindowOperations.EndWindowDrag();
+            Logger.LogDebug("EndOperation");
+            _windowOperations.EndOperation();
+            _currentOperation = WindowOperation.None;
         }
     }
 
@@ -156,14 +167,13 @@ public class QuickWindowsManager : IQuickWindowsManager
             return;
         }
 
-        Logger.LogDebug($"_isMoveOperation: {_isMoveOperation}");
-        if (_isMoveOperation)
+        if (_currentOperation == WindowOperation.Move)
         {
-            WindowOperations.MoveWindowWithMouse(args.X, args.Y);
+            _windowOperations.MoveWindowWithMouse(args.X, args.Y);
         }
-        else
+        else if (_currentOperation == WindowOperation.Resize)
         {
-            WindowOperations.ResizeWindowWithMouse(args.X, args.Y);
+            _windowOperations.ResizeWindowWithMouse(args.X, args.Y);
         }
     }
 
@@ -177,11 +187,11 @@ public class QuickWindowsManager : IQuickWindowsManager
         // Positive delta means wheel up, negative means wheel down
         if (args.Delta > 0)
         {
-            WindowOperations.SendWindowToBottom(args.X, args.Y);
+            _windowOperations.SendWindowToBottom(args.X, args.Y);
         }
         else
         {
-            WindowOperations.BringBottomWindowToTop(args.X, args.Y);
+            _windowOperations.BringBottomWindowToTop(args.X, args.Y);
         }
     }
 }
