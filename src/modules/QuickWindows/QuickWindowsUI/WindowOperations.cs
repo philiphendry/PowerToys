@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using ManagedCommon;
 
 namespace QuickWindows;
 
@@ -12,6 +13,7 @@ public static class WindowOperations
 {
     private const int MinUpdateIntervalMs = 32; // Approx. 30fps
     private const int MinimumWindowSize = 200;
+
     private static IntPtr _targetWindow = IntPtr.Zero;
     private static NativeMethods.POINT _initialMousePosition;
     private static NativeMethods.Rect _initialWindowRect;
@@ -48,16 +50,21 @@ public static class WindowOperations
         var hwnd = NativeMethods.WindowFromPoint(point);
         if (hwnd == IntPtr.Zero)
         {
+            Logger.LogDebug($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
         var rootHwnd = NativeMethods.GetAncestor(hwnd, NativeMethods.GA_ROOT);
-        if (rootHwnd != IntPtr.Zero && NativeMethods.IsWindow(rootHwnd))
+        if (rootHwnd == IntPtr.Zero)
         {
-            hwnd = rootHwnd;
+            Logger.LogDebug($"{nameof(NativeMethods.GetAncestor)} failed with error code {Marshal.GetLastWin32Error()}");
+            return;
         }
 
-        _targetWindow = hwnd;
+        if (NativeMethods.IsWindow(rootHwnd))
+        {
+            _targetWindow = rootHwnd;
+        }
 
         if (_targetWindow == IntPtr.Zero)
         {
@@ -66,6 +73,7 @@ public static class WindowOperations
 
         if (!NativeMethods.GetWindowRect(_targetWindow, out _initialWindowRect))
         {
+            Logger.LogDebug($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
@@ -100,20 +108,22 @@ public static class WindowOperations
 
     public static void ResizeWindowWithMouse(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero)
+        if (_targetWindow == IntPtr.Zero ||
+            IsRateLimited())
         {
+            return;
+        }
+
+        if (_currentOperation != WindowOperation.ResizeTopLeft &&
+            _currentOperation != WindowOperation.ResizeTopRight &&
+            _currentOperation != WindowOperation.ResizeBottomRight &&
+            _currentOperation != WindowOperation.ResizeBottomLeft)
+        {
+            Logger.LogDebug($"Called with _currentOperation {_currentOperation} so exiting early.");
             return;
         }
 
         UpdateCursorWindowPosition(x, y);
-
-        var now = Environment.TickCount64;
-        if ((now - _lastUpdateTime) < MinUpdateIntervalMs)
-        {
-            return;
-        }
-
-        _lastUpdateTime = now;
 
         var deltaX = x - _initialMousePosition.x;
         var deltaY = y - _initialMousePosition.y;
@@ -161,66 +171,68 @@ public static class WindowOperations
                           NativeMethods.SWP_NOACTIVATE | // Don't activate the window
                           NativeMethods.SWP_NOSENDCHANGING; // Don't send WM_WINDOWPOSCHANGING
 
-        // First update the window frame
-        NativeMethods.SetWindowPos(
+        if (!NativeMethods.SetWindowPos(
             _targetWindow,
             IntPtr.Zero,
             newLeft,
             newTop,
             newRight - newLeft,
             newBottom - newTop,
-            flags);
+            flags))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
     }
 
     public static void MoveWindowWithMouse(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero)
+        if (_targetWindow == IntPtr.Zero ||
+            _currentOperation != WindowOperation.MoveWindow ||
+            IsRateLimited())
         {
             return;
         }
 
         UpdateCursorWindowPosition(x, y);
 
-        var now = Environment.TickCount64;
-        if ((now - _lastUpdateTime) < MinUpdateIntervalMs)
-        {
-            return;
-        }
-
-        _lastUpdateTime = now;
-
         var deltaX = x - _initialMousePosition.x;
         var deltaY = y - _initialMousePosition.y;
 
-        if (_currentOperation != WindowOperation.MoveWindow)
-        {
-            return;
-        }
-
-        // Move operation
-        NativeMethods.SetWindowPos(
+        if (!NativeMethods.SetWindowPos(
             _targetWindow,
             IntPtr.Zero,
             _initialWindowRect.left + deltaX,
             _initialWindowRect.top + deltaY,
             _initialWindowRect.right - _initialWindowRect.left,
             _initialWindowRect.bottom - _initialWindowRect.top,
-            NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_ASYNCWINDOWPOS);
+            NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_ASYNCWINDOWPOS))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
     }
 
     public static void EndWindowDrag()
     {
+        if (_currentOperation == WindowOperation.None)
+        {
+            return;
+        }
+
         RestoreOriginalWindowTransparency();
 
         if (_cursorWindow != IntPtr.Zero)
         {
-            NativeMethods.DestroyWindow(_cursorWindow);
+            if (!NativeMethods.DestroyWindow(_cursorWindow))
+            {
+                Logger.LogDebug($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            }
+
             _cursorWindow = IntPtr.Zero;
 
-            // Unregister the window class
-            NativeMethods.UnregisterClass(
-                CursorWindowClassName,
-                NativeMethods.GetModuleHandle(null));
+            if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
+            {
+                Logger.LogDebug($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
+            }
 
             _wndProcDelegate = null;
         }
@@ -234,88 +246,81 @@ public static class WindowOperations
         var hwndUnderCursor = NativeMethods.WindowFromPoint(new NativeMethods.POINT(x, y));
         if (hwndUnderCursor == IntPtr.Zero)
         {
+            Logger.LogDebug($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
         var rootHwnd = NativeMethods.GetAncestor(hwndUnderCursor, NativeMethods.GA_ROOT);
         if (rootHwnd == IntPtr.Zero || !NativeMethods.IsWindow(rootHwnd))
         {
+            Logger.LogDebug($"{nameof(NativeMethods.GetAncestor)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
-        NativeMethods.SetWindowPos(
-            rootHwnd,
-            NativeMethods.HWND_BOTTOM,
-            0,
-            0,
-            0,
-            0,
-            NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+        if (!NativeMethods.SetWindowPos(rootHwnd, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
     }
 
     public static void BringBottomWindowToTop(int x, int y)
     {
         var bottomWindow = IntPtr.Zero;
-        NativeMethods.EnumWindows(
-            (hWnd, _) =>
-            {
-                if (IsSystemWindow(hWnd))
-                {
-                    return true;
-                }
 
-                if (!IsWindowVisible(hWnd))
-                {
-                    return true;
-                }
-
-                if (!NativeMethods.GetWindowRect(hWnd, out var rect))
-                {
-                    return true;
-                }
-
-                // Check if cursor is over this window
-                if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom)
-                {
-                    return true;
-                }
-
-                // Store the current window as it's under the cursor and so far the lowest in the z-order
-                bottomWindow = hWnd;
-
-                return true;
-            },
-            IntPtr.Zero);
-
-        if (bottomWindow != IntPtr.Zero)
+        if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
         {
-            // First, bring the window above all non-topmost windows
-            NativeMethods.SetWindowPos(
-                bottomWindow,
-                NativeMethods.HWND_TOP,
-                0,
-                0,
-                0,
-                0,
-                NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+            Logger.LogDebug($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
 
-            // Then force it to the absolute top by bringing it to topmost and back
-            NativeMethods.SetWindowPos(
-                bottomWindow,
-                NativeMethods.HWND_TOPMOST,
-                0,
-                0,
-                0,
-                0,
-                NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
-            NativeMethods.SetWindowPos(
-                bottomWindow,
-                NativeMethods.HWND_NOTOPMOST,
-                0,
-                0,
-                0,
-                0,
-                NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+        bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
+        {
+            if (IsSystemWindow(hWnd))
+            {
+                return true;
+            }
+
+            if (!IsWindowVisible(hWnd))
+            {
+                return true;
+            }
+
+            if (!NativeMethods.GetWindowRect(hWnd, out var rect))
+            {
+                return true;
+            }
+
+            // Check if cursor is over this window
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom)
+            {
+                return true;
+            }
+
+            // Store the current window as it's under the cursor and so far the lowest in the z-order
+            bottomWindow = hWnd;
+
+            return true;
+        }
+
+        if (bottomWindow == IntPtr.Zero)
+        {
+            return;
+        }
+
+        // First, bring the window above all non-topmost windows
+        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_TOP, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        // Then force it to the absolute top by bringing it to topmost and back
+        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 
@@ -335,7 +340,7 @@ public static class WindowOperations
 
     private static void SetWindowTransparency()
     {
-        if (_targetWindow == IntPtr.Zero || _originalOpacityLevel.HasValue)
+        if (_targetWindow == IntPtr.Zero)
         {
             return;
         }
@@ -352,14 +357,11 @@ public static class WindowOperations
             if (NativeMethods.GetLayeredWindowAttributes(_targetWindow, out _, out byte alpha, out uint flags))
             {
                 _originalOpacityLevel = (flags & NativeMethods.LWA_ALPHA) != 0 ? alpha : (byte)255;
-                Debug.WriteLine($"### Saving _originalOpacityLevel = {_originalOpacityLevel}");
+                Logger.LogDebug($"Saving _originalOpacityLevel {_originalOpacityLevel}");
             }
         }
 
-        var setWindowLongSuccess = NativeMethods.SetWindowLong(
-            _targetWindow,
-            NativeMethods.GWL_EX_STYLE,
-            _originalExStyle.Value | NativeMethods.WS_EX_LAYERED);
+        var setWindowLongSuccess = NativeMethods.SetWindowLong(_targetWindow, NativeMethods.GWL_EX_STYLE, _originalExStyle.Value | NativeMethods.WS_EX_LAYERED);
         if (setWindowLongSuccess == 0)
         {
             return;
@@ -377,14 +379,14 @@ public static class WindowOperations
 
         // Restore the original opacity level or default to fully opaque
         byte opacity = _originalOpacityLevel ?? 255;
-        Debug.WriteLine($"### Restoring opacity = {opacity}");
+        Logger.LogDebug($"Restoring opacity {opacity}");
         NativeMethods.SetLayeredWindowAttributes(_targetWindow, 0, opacity, NativeMethods.LWA_ALPHA);
 
         // Then restore the original window style
         int result = NativeMethods.SetWindowLong(_targetWindow, NativeMethods.GWL_EX_STYLE, _originalExStyle.Value);
         if (result == 0)
         {
-            Debug.WriteLine("Failed to restore the original window style.");
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         // If the original style didn't include WS_EX_LAYERED, we need to update the window
@@ -439,9 +441,7 @@ public static class WindowOperations
         _wndProcDelegate = CursorWindowProc;
 
         // First try to unregister any existing class
-        NativeMethods.UnregisterClass(
-            CursorWindowClassName,
-            NativeMethods.GetModuleHandle(null));
+        NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null));
 
         // Register window class
         var wndClass = new NativeMethods.WNDCLASSEX
@@ -478,7 +478,7 @@ public static class WindowOperations
 
         if (_cursorWindow == IntPtr.Zero)
         {
-            Debug.WriteLine($"Failed to create cursor window. Error: {Marshal.GetLastWin32Error()}");
+            Logger.LogDebug($"{nameof(NativeMethods.CreateWindowEx)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
@@ -526,5 +526,17 @@ public static class WindowOperations
             16,     // Maintain 16x16 size
             16,
             NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOSIZE);
+    }
+
+    private static bool IsRateLimited()
+    {
+        var now = Environment.TickCount64;
+        if ((now - _lastUpdateTime) < MinUpdateIntervalMs)
+        {
+            return true;
+        }
+
+        _lastUpdateTime = now;
+        return false;
     }
 }
