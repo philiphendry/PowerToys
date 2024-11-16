@@ -4,7 +4,6 @@
 
 using System;
 using System.ComponentModel.Composition;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace QuickWindows.Keyboard;
@@ -16,11 +15,9 @@ public class KeyboardMonitor : IKeyboardMonitor
     private static IntPtr _hookHandle = IntPtr.Zero;
     private static NativeMethods.HookProc? _hookProc;
 
-    public event EventHandler<KeyPressedEventArgs>? AltKeyPressed;
+    public event EventHandler? AltKeyPressed;
 
-    public event EventHandler<KeyPressedEventArgs>? AltKeyReleased;
-
-    public class KeyPressedEventArgs : EventArgs;
+    public event EventHandler? AltKeyReleased;
 
     public void Install()
     {
@@ -60,11 +57,11 @@ public class KeyboardMonitor : IKeyboardMonitor
         {
             case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN when
                 vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
-                AltKeyPressed?.Invoke(this, new KeyPressedEventArgs());
+                AltKeyPressed?.Invoke(this, EventArgs.Empty);
                 break;
             case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP when
                 vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
-                AltKeyReleased?.Invoke(this, new KeyPressedEventArgs());
+                AltKeyReleased?.Invoke(this, EventArgs.Empty);
                 break;
         }
 
