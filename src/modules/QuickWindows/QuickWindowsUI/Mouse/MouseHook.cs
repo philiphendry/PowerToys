@@ -24,24 +24,27 @@ public class MouseHook : IMouseHook
     private static NativeMethods.HookProc? _hookProc;
     private bool _eventPropagation;
 
-    public event EventHandler<MouseEventArgs>? MouseMove;
+    public event EventHandler<MouseMoveEventArgs>? MouseMove;
 
-    public event EventHandler<MouseEventArgs>? MouseDown;
+    public event EventHandler<MouseButtonEventArgs>? MouseDown;
 
-    public event EventHandler<MouseEventArgs>? MouseUp;
+    public event EventHandler<MouseButtonEventArgs>? MouseUp;
 
-    public event EventHandler<MouseWheelEventArgs>? MouseWheel;
+    public event EventHandler<MouseMoveWheelEventArgs>? MouseWheel;
 
-    public class MouseEventArgs(int x, int y, MouseButton button) : EventArgs
+    public class MouseMoveEventArgs(int x, int y) : EventArgs
     {
         public int X { get; } = x;
 
         public int Y { get; } = y;
+    }
 
+    public class MouseButtonEventArgs(int x, int y, MouseButton button) : MouseMoveEventArgs(x, y)
+    {
         public MouseButton Button { get; } = button;
     }
 
-    public class MouseWheelEventArgs(int x, int y, int delta) : MouseEventArgs(x, y, MouseButton.None)
+    public class MouseMoveWheelEventArgs(int x, int y, int delta) : MouseMoveEventArgs(x, y)
     {
         public int Delta { get; } = delta;
     }
@@ -92,7 +95,7 @@ public class MouseHook : IMouseHook
         {
             case NativeMethods.WM_MOUSEWHEEL:
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
-                MouseWheel?.Invoke(this, new MouseWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
+                MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
                 if (!_eventPropagation)
                 {
                     return new IntPtr(1);
@@ -101,13 +104,13 @@ public class MouseHook : IMouseHook
                 break;
 
             case NativeMethods.WM_MOUSEMOVE:
-                MouseMove?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, MouseButton.None));
+                MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
                 break;
 
             case NativeMethods.WM_LBUTTONDOWN:
             case NativeMethods.WM_RBUTTONDOWN:
                 var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
-                MouseDown?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
+                MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
                 if (!_eventPropagation)
                 {
                     return new IntPtr(1);
@@ -118,7 +121,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_LBUTTONUP:
             case NativeMethods.WM_RBUTTONUP:
                 var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
-                MouseUp?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
+                MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
                 if (!_eventPropagation)
                 {
                     return new IntPtr(1);

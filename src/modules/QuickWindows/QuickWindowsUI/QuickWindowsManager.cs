@@ -9,6 +9,7 @@ using System.Windows;
 using Common.UI;
 using ManagedCommon;
 using PowerToys.Interop;
+using QuickWindows.Features;
 using QuickWindows.Keyboard;
 using QuickWindows.Mouse;
 using QuickWindows.Settings;
@@ -30,7 +31,11 @@ public class QuickWindowsManager : IQuickWindowsManager
     private readonly IUserSettings _userSettings;
     private readonly IKeyboardMonitor _keyboardHook;
     private readonly IMouseHook _mouseHook;
-    private readonly IWindowOperations _windowOperations;
+    private readonly IMovingWindows _movingWindows;
+    private readonly IResizingWindows _resizingWindows;
+    private readonly ITransparentWindows _transparentWindows;
+    private readonly IRolodexWindows _rolodexWindows;
+    private readonly ICursorForOperation _cursorForOperation;
     private bool _isAltPressed;
     private WindowOperation _currentOperation;
 
@@ -39,13 +44,21 @@ public class QuickWindowsManager : IQuickWindowsManager
         IUserSettings userSettings,
         IKeyboardMonitor keyboardHook,
         IMouseHook mouseHook,
-        IWindowOperations windowOperations,
+        IMovingWindows movingWindows,
+        IResizingWindows resizingWindows,
+        ITransparentWindows transparentWindows,
+        IRolodexWindows rolodexWindows,
+        ICursorForOperation cursorForOperation,
         CancellationToken exitToken)
     {
         _userSettings = userSettings;
         _keyboardHook = keyboardHook;
         _mouseHook = mouseHook;
-        _windowOperations = windowOperations;
+        _movingWindows = movingWindows;
+        _resizingWindows = resizingWindows;
+        _transparentWindows = transparentWindows;
+        _rolodexWindows = rolodexWindows;
+        _cursorForOperation = cursorForOperation;
 
         AddKeyboardListeners();
         AddMouseListeners();
@@ -97,7 +110,7 @@ public class QuickWindowsManager : IQuickWindowsManager
         _mouseHook.MouseWheel += OnMouseWheel;
     }
 
-    private void OnAltKeyPressed(object? o, KeyboardMonitor.KeyPressedEventArgs keyPressedEventArgs)
+    private void OnAltKeyPressed(object? sender, EventArgs e)
     {
         lock (Lock)
         {
@@ -113,7 +126,7 @@ public class QuickWindowsManager : IQuickWindowsManager
         }
     }
 
-    private void OnAltKeyReleased(object? o, KeyboardMonitor.KeyPressedEventArgs keyPressedEventArgs)
+    private void OnAltKeyReleased(object? sender, EventArgs e)
     {
         lock (Lock)
         {
@@ -123,61 +136,118 @@ public class QuickWindowsManager : IQuickWindowsManager
             }
 
             Logger.LogDebug("EndOperation and uninstall mouse hook.");
-            _windowOperations.EndOperation();
+            switch (_currentOperation)
+            {
+                case WindowOperation.Move:
+                    _movingWindows.StopMove();
+                    break;
+                case WindowOperation.Resize:
+                    _resizingWindows.StopResize();
+                    break;
+            }
+
+            _cursorForOperation.HideCursor();
+            _transparentWindows.EndTransparency();
+
             _mouseHook.Uninstall();
             _isAltPressed = false;
             _currentOperation = WindowOperation.None;
         }
     }
 
-    private void OnMouseDown(object? target, MouseHook.MouseEventArgs args)
+    private void OnMouseDown(object? target, MouseHook.MouseButtonEventArgs args)
     {
         lock (Lock)
         {
-            if (!_isAltPressed || _currentOperation != WindowOperation.None)
+            if (!_isAltPressed)
             {
                 return;
             }
 
-            _currentOperation = args.Button == MouseButton.Left ? WindowOperation.Move : WindowOperation.Resize;
+            switch (args.Button)
+            {
+                case MouseButton.Left:
+                    _currentOperation = WindowOperation.Move;
+                    _movingWindows.StartMove(args.X, args.Y);
+                    _transparentWindows.StartTransparency(args.X, args.Y);
+                    _cursorForOperation.StartMove(args.X, args.Y);
+                    break;
+                case MouseButton.Right:
+                {
+                    _currentOperation = WindowOperation.Resize;
+                    var resizeOperation = _resizingWindows.StartResize(args.X, args.Y);
+
+                    _transparentWindows.StartTransparency(args.X, args.Y);
+
+                    switch (resizeOperation)
+                    {
+                        case ResizingWindows.ResizeOperation.ResizeTopLeft:
+                        case ResizingWindows.ResizeOperation.ResizeBottomRight:
+                            _cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
+                            break;
+                        case ResizingWindows.ResizeOperation.ResizeTopRight:
+                        case ResizingWindows.ResizeOperation.ResizeBottomLeft:
+                            _cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
+                            break;
+                    }
+
+                    break;
+                }
+            }
+
             Logger.LogDebug($"StartOperation _currentOperation: {_currentOperation}");
-            _windowOperations.StartOperation(args.X, args.Y, _currentOperation);
         }
     }
 
-    private void OnMouseUp(object? target, MouseHook.MouseEventArgs args)
+    private void OnMouseUp(object? target, MouseHook.MouseButtonEventArgs args)
     {
         lock (Lock)
         {
-            if (!_isAltPressed || (args.Button != MouseButton.Left && args.Button != MouseButton.Right))
+            if (!(_currentOperation == WindowOperation.Move && args.Button == MouseButton.Left)
+                && !(_currentOperation == WindowOperation.Resize && args.Button == MouseButton.Right))
             {
                 return;
             }
 
             Logger.LogDebug("EndOperation");
-            _windowOperations.EndOperation();
+            switch (_currentOperation)
+            {
+                case WindowOperation.Move:
+                    _movingWindows.StopMove();
+                    _cursorForOperation.HideCursor();
+                    break;
+                case WindowOperation.Resize:
+                    _resizingWindows.StopResize();
+                    _cursorForOperation.HideCursor();
+                    break;
+            }
+
+            _transparentWindows.EndTransparency();
             _currentOperation = WindowOperation.None;
         }
     }
 
-    private void OnMouseMove(object? target, MouseHook.MouseEventArgs args)
+    private void OnMouseMove(object? target, MouseHook.MouseMoveEventArgs args)
     {
-        if (!_isAltPressed && args.Button != MouseButton.Left && args.Button != MouseButton.Right)
+        if (_currentOperation == WindowOperation.None)
         {
             return;
         }
 
-        if (_currentOperation == WindowOperation.Move)
+        switch (_currentOperation)
         {
-            _windowOperations.MoveWindowWithMouse(args.X, args.Y);
-        }
-        else if (_currentOperation == WindowOperation.Resize)
-        {
-            _windowOperations.ResizeWindowWithMouse(args.X, args.Y);
+            case WindowOperation.Move:
+                _movingWindows.MoveWindow(args.X, args.Y);
+                _cursorForOperation.MoveToCursor(args.X, args.Y);
+                break;
+            case WindowOperation.Resize:
+                _resizingWindows.ResizeWindow(args.X, args.Y);
+                _cursorForOperation.MoveToCursor(args.X, args.Y);
+                break;
         }
     }
 
-    private void OnMouseWheel(object? target, MouseHook.MouseWheelEventArgs args)
+    private void OnMouseWheel(object? target, MouseHook.MouseMoveWheelEventArgs args)
     {
         if (!_isAltPressed)
         {
@@ -187,11 +257,11 @@ public class QuickWindowsManager : IQuickWindowsManager
         // Positive delta means wheel up, negative means wheel down
         if (args.Delta > 0)
         {
-            _windowOperations.SendWindowToBottom(args.X, args.Y);
+            _rolodexWindows.SendWindowToBottom(args.X, args.Y);
         }
         else
         {
-            _windowOperations.BringBottomWindowToTop(args.X, args.Y);
+            _rolodexWindows.BringBottomWindowToTop(args.X, args.Y);
         }
     }
 }

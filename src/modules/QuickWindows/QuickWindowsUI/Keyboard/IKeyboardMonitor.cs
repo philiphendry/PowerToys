@@ -8,9 +8,9 @@ namespace QuickWindows.Keyboard;
 
 public interface IKeyboardMonitor
 {
-    event EventHandler<KeyboardMonitor.KeyPressedEventArgs>? AltKeyPressed;
+    event EventHandler AltKeyPressed;
 
-    event EventHandler<KeyboardMonitor.KeyPressedEventArgs>? AltKeyReleased;
+    event EventHandler AltKeyReleased;
 
     void Install();
 
