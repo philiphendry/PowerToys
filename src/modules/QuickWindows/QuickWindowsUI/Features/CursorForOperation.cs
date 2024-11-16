@@ -11,7 +11,7 @@ using ManagedCommon;
 namespace QuickWindows.Features;
 
 [Export(typeof(ICursorForOperation))]
-public class CursorForOperation : ICursorForOperation
+public class CursorForOperation : ICursorForOperation, IDisposable
 {
     private enum CursorStyle
     {
@@ -20,6 +20,7 @@ public class CursorForOperation : ICursorForOperation
         NorthEastSouthWest,
     }
 
+    private readonly object _lock = new();
     private IntPtr _cursorWindow = IntPtr.Zero;
     private WndProc? _wndProcDelegate;
     private CursorStyle _cursorStyle;
@@ -29,6 +30,11 @@ public class CursorForOperation : ICursorForOperation
 
     private const string CursorWindowClassName = "CursorOverlayWindow";
 
+    public CursorForOperation()
+    {
+        CreateCursorWindow(0, 0);
+    }
+
     public void StartMove(int x, int y) => StartOperation(x, y, CursorStyle.AllDirections);
 
     public void StartResizeNorthWestSouthEast(int x, int y) => StartOperation(x, y, CursorStyle.NorthWestSouthEast);
@@ -37,9 +43,17 @@ public class CursorForOperation : ICursorForOperation
 
     private void StartOperation(int x, int y, CursorStyle cursorStyle)
     {
-        _cursorStyle = cursorStyle;
-        CreateCursorWindow(x, y);
-        MoveToCursor(x, y);
+        lock (_lock)
+        {
+            if (_cursorWindow == IntPtr.Zero)
+            {
+                return;
+            }
+
+            _cursorStyle = cursorStyle;
+            NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_SHOWNOACTIVATE);
+            MoveToCursor(x, y);
+        }
     }
 
     public void HideCursor()
@@ -49,18 +63,7 @@ public class CursorForOperation : ICursorForOperation
             return;
         }
 
-        if (!NativeMethods.DestroyWindow(_cursorWindow))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
-
-        _cursorWindow = IntPtr.Zero;
-
-        if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
-
+        NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_HIDE);
         _wndProcDelegate = null;
     }
 
@@ -135,9 +138,26 @@ public class CursorForOperation : ICursorForOperation
 
         // Make the window transparent
         NativeMethods.SetLayeredWindowAttributes(_cursorWindow, 0, 1, NativeMethods.LWA_ALPHA);
+    }
 
-        // Show the window
-        NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_SHOWNOACTIVATE);
+    private void DestroyCursorWindow()
+    {
+        if (_cursorWindow == IntPtr.Zero)
+        {
+            return;
+        }
+
+        if (!NativeMethods.DestroyWindow(_cursorWindow))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        _cursorWindow = IntPtr.Zero;
+
+        if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
     }
 
     private IntPtr CursorWindowProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -157,5 +177,21 @@ public class CursorForOperation : ICursorForOperation
         }
 
         return NativeMethods.DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+
+    private void ReleaseUnmanagedResources()
+    {
+        DestroyCursorWindow();
+    }
+
+    public void Dispose()
+    {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~CursorForOperation()
+    {
+        ReleaseUnmanagedResources();
     }
 }

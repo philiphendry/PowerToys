@@ -27,7 +27,7 @@ public enum WindowOperation
 [PartCreationPolicy(CreationPolicy.Shared)]
 public class QuickWindowsManager : IQuickWindowsManager
 {
-    private static readonly object Lock = new();
+    private readonly object _lock = new();
     private readonly IUserSettings _userSettings;
     private readonly IKeyboardMonitor _keyboardHook;
     private readonly IMouseHook _mouseHook;
@@ -36,7 +36,7 @@ public class QuickWindowsManager : IQuickWindowsManager
     private readonly ITransparentWindows _transparentWindows;
     private readonly IRolodexWindows _rolodexWindows;
     private readonly ICursorForOperation _cursorForOperation;
-    private bool _isAltPressed;
+    private bool _isHotKeyPressed;
     private WindowOperation _currentOperation;
 
     [ImportingConstructor]
@@ -98,8 +98,8 @@ public class QuickWindowsManager : IQuickWindowsManager
 
     private void AddKeyboardListeners()
     {
-        _keyboardHook.AltKeyPressed += OnAltKeyPressed;
-        _keyboardHook.AltKeyReleased += OnAltKeyReleased;
+        _keyboardHook.HotKeyPressed += OnHotKeyPressed;
+        _keyboardHook.HotKeyReleased += OnHotKeyReleased;
     }
 
     private void AddMouseListeners()
@@ -110,31 +110,26 @@ public class QuickWindowsManager : IQuickWindowsManager
         _mouseHook.MouseWheel += OnMouseWheel;
     }
 
-    private void OnAltKeyPressed(object? sender, EventArgs e)
+    private void OnHotKeyPressed(object? sender, EventArgs e)
     {
-        lock (Lock)
+        lock (_lock)
         {
-            if (_isAltPressed)
+            if (_isHotKeyPressed)
             {
                 return;
             }
 
             Logger.LogDebug("Installing mouse hook.");
             _mouseHook.Install();
-            _isAltPressed = true;
+            _isHotKeyPressed = true;
             _currentOperation = WindowOperation.None;
         }
     }
 
-    private void OnAltKeyReleased(object? sender, EventArgs e)
+    private void OnHotKeyReleased(object? sender, EventArgs e)
     {
-        lock (Lock)
+        lock (_lock)
         {
-            if (!_isAltPressed)
-            {
-                return;
-            }
-
             Logger.LogDebug("EndOperation and uninstall mouse hook.");
             switch (_currentOperation)
             {
@@ -148,18 +143,17 @@ public class QuickWindowsManager : IQuickWindowsManager
 
             _cursorForOperation.HideCursor();
             _transparentWindows.EndTransparency();
-
             _mouseHook.Uninstall();
-            _isAltPressed = false;
+            _isHotKeyPressed = false;
             _currentOperation = WindowOperation.None;
         }
     }
 
     private void OnMouseDown(object? target, MouseHook.MouseButtonEventArgs args)
     {
-        lock (Lock)
+        lock (_lock)
         {
-            if (!_isAltPressed)
+            if (!_isHotKeyPressed || _currentOperation != WindowOperation.None)
             {
                 return;
             }
@@ -201,14 +195,8 @@ public class QuickWindowsManager : IQuickWindowsManager
 
     private void OnMouseUp(object? target, MouseHook.MouseButtonEventArgs args)
     {
-        lock (Lock)
+        lock (_lock)
         {
-            if (!(_currentOperation == WindowOperation.Move && args.Button == MouseButton.Left)
-                && !(_currentOperation == WindowOperation.Resize && args.Button == MouseButton.Right))
-            {
-                return;
-            }
-
             Logger.LogDebug("EndOperation");
             switch (_currentOperation)
             {
@@ -229,11 +217,6 @@ public class QuickWindowsManager : IQuickWindowsManager
 
     private void OnMouseMove(object? target, MouseHook.MouseMoveEventArgs args)
     {
-        if (_currentOperation == WindowOperation.None)
-        {
-            return;
-        }
-
         switch (_currentOperation)
         {
             case WindowOperation.Move:
@@ -249,7 +232,7 @@ public class QuickWindowsManager : IQuickWindowsManager
 
     private void OnMouseWheel(object? target, MouseHook.MouseMoveWheelEventArgs args)
     {
-        if (!_isAltPressed)
+        if (!_isHotKeyPressed)
         {
             return;
         }
