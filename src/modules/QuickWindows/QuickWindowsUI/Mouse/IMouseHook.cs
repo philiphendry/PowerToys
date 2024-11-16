@@ -16,9 +16,7 @@ public interface IMouseHook
 
     event EventHandler<MouseHook.MouseWheelEventArgs>? MouseWheel;
 
-    bool SuppressLeftClick { get; set; }
-
-    void Install();
+    void Install(bool eventPropagation = false);
 
     void Uninstall();
 }

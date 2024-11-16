@@ -3,22 +3,24 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows;
 
-public static class WindowOperations
+[Export(typeof(IWindowOperations))]
+public class WindowOperations : IWindowOperations
 {
     private const int MinUpdateIntervalMs = 32; // Approx. 30fps
     private const int MinimumWindowSize = 200;
 
-    private static IntPtr _targetWindow = IntPtr.Zero;
-    private static NativeMethods.POINT _initialMousePosition;
-    private static NativeMethods.Rect _initialWindowRect;
-    private static WindowOperation _currentOperation;
-    private static long _lastUpdateTime = Environment.TickCount64;
+    private IntPtr _targetWindow = IntPtr.Zero;
+    private NativeMethods.POINT _initialMousePosition;
+    private NativeMethods.Rect _initialWindowRect;
+    private WindowOperation _currentOperation;
+    private long _lastUpdateTime = Environment.TickCount64;
 
     private enum WindowOperation
     {
@@ -30,11 +32,11 @@ public static class WindowOperations
         ResizeBottomRight,
     }
 
-    private static readonly byte ResizeOpacityLevel = 210; // 0-255, can be made configurable
-    private static int? _originalExStyle;
+    private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
+    private int? _originalExStyle;
 
-    private static IntPtr _cursorWindow = IntPtr.Zero;
-    private static WndProc? _wndProcDelegate;
+    private IntPtr _cursorWindow = IntPtr.Zero;
+    private WndProc? _wndProcDelegate;
 
     // Add this delegate for the window procedure
     private delegate IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
@@ -42,9 +44,9 @@ public static class WindowOperations
     private const string CursorWindowClassName = "CursorOverlayWindow";
 
     // Add a field to store the original opacity
-    private static byte? _originalOpacityLevel;
+    private byte? _originalOpacityLevel;
 
-    public static void StartWindowOperation(int x, int y, bool isMoveOperation)
+    public void StartOperation(int x, int y, QuickWindows.WindowOperation operation)
     {
         var point = new NativeMethods.POINT(x, y);
         var hwnd = NativeMethods.WindowFromPoint(point);
@@ -83,7 +85,7 @@ public static class WindowOperations
 
         CreateCursorWindow(x, y);
 
-        if (isMoveOperation)
+        if (operation == QuickWindows.WindowOperation.Move)
         {
             _currentOperation = WindowOperation.MoveWindow;
         }
@@ -106,7 +108,7 @@ public static class WindowOperations
         }
     }
 
-    public static void ResizeWindowWithMouse(int x, int y)
+    public void ResizeWindowWithMouse(int x, int y)
     {
         if (_targetWindow == IntPtr.Zero ||
             IsRateLimited())
@@ -184,7 +186,7 @@ public static class WindowOperations
         }
     }
 
-    public static void MoveWindowWithMouse(int x, int y)
+    public void MoveWindowWithMouse(int x, int y)
     {
         if (_targetWindow == IntPtr.Zero ||
             _currentOperation != WindowOperation.MoveWindow ||
@@ -211,7 +213,7 @@ public static class WindowOperations
         }
     }
 
-    public static void EndWindowDrag()
+    public void EndOperation()
     {
         if (_currentOperation == WindowOperation.None)
         {
@@ -241,7 +243,7 @@ public static class WindowOperations
         _currentOperation = WindowOperation.None;
     }
 
-    public static void SendWindowToBottom(int x, int y)
+    public void SendWindowToBottom(int x, int y)
     {
         var hwndUnderCursor = NativeMethods.WindowFromPoint(new NativeMethods.POINT(x, y));
         if (hwndUnderCursor == IntPtr.Zero)
@@ -263,7 +265,7 @@ public static class WindowOperations
         }
     }
 
-    public static void BringBottomWindowToTop(int x, int y)
+    public void BringBottomWindowToTop(int x, int y)
     {
         var bottomWindow = IntPtr.Zero;
 
@@ -324,7 +326,7 @@ public static class WindowOperations
         }
     }
 
-    private static bool IsSystemWindow(IntPtr hWnd)
+    private bool IsSystemWindow(IntPtr hWnd)
     {
         var exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE);
 
@@ -338,7 +340,7 @@ public static class WindowOperations
         return false;
     }
 
-    private static void SetWindowTransparency()
+    private void SetWindowTransparency()
     {
         if (_targetWindow == IntPtr.Zero)
         {
@@ -367,10 +369,10 @@ public static class WindowOperations
             return;
         }
 
-        NativeMethods.SetLayeredWindowAttributes(_targetWindow, 0, ResizeOpacityLevel, NativeMethods.LWA_ALPHA);
+        NativeMethods.SetLayeredWindowAttributes(_targetWindow, 0, _resizeOpacityLevel, NativeMethods.LWA_ALPHA);
     }
 
-    private static void RestoreOriginalWindowTransparency()
+    private void RestoreOriginalWindowTransparency()
     {
         if (_targetWindow == IntPtr.Zero || !_originalExStyle.HasValue)
         {
@@ -403,7 +405,7 @@ public static class WindowOperations
         _originalOpacityLevel = null;
     }
 
-    private static bool IsWindowVisible(IntPtr hWnd)
+    private bool IsWindowVisible(IntPtr hWnd)
     {
         if (!NativeMethods.IsWindowVisible(hWnd))
         {
@@ -430,7 +432,7 @@ public static class WindowOperations
                && (info.dwStyle & NativeMethods.WS_MINIMIZE) == 0;
     }
 
-    private static void CreateCursorWindow(int x, int y)
+    private void CreateCursorWindow(int x, int y)
     {
         if (_cursorWindow != IntPtr.Zero)
         {
@@ -489,7 +491,7 @@ public static class WindowOperations
         NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_SHOWNOACTIVATE);
     }
 
-    private static IntPtr CursorWindowProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
+    private IntPtr CursorWindowProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
         switch (msg)
         {
@@ -511,7 +513,7 @@ public static class WindowOperations
         return NativeMethods.DefWindowProc(hwnd, msg, wParam, lParam);
     }
 
-    private static void UpdateCursorWindowPosition(int x, int y)
+    private void UpdateCursorWindowPosition(int x, int y)
     {
         if (_cursorWindow == IntPtr.Zero)
         {
@@ -528,7 +530,7 @@ public static class WindowOperations
             NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOSIZE);
     }
 
-    private static bool IsRateLimited()
+    private bool IsRateLimited()
     {
         var now = Environment.TickCount64;
         if ((now - _lastUpdateTime) < MinUpdateIntervalMs)
