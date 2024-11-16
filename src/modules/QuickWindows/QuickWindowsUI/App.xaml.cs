@@ -9,112 +9,103 @@ using System.Threading;
 using System.Windows;
 using ManagedCommon;
 using Microsoft.PowerToys.Telemetry;
-using QuickWindows.Mouse;
 
-namespace QuickWindows
+namespace QuickWindows;
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application, IDisposable
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application, IDisposable
+    public ETWTrace EtwTrace { get; } = new();
+
+    private IQuickWindowsManager? _quickWindowsManager;
+    private Mutex? _instanceMutex;
+    private bool _disposedValue;
+
+    private CancellationTokenSource NativeThreadCTS { get; set; } = default!;
+
+    [Export]
+    private static CancellationToken ExitToken { get; set; }
+
+    protected override void OnStartup(StartupEventArgs e)
     {
-        public ETWTrace EtwTrace { get; private set; } = new ETWTrace();
-
-        private Mutex _instanceMutex;
-        private static string[] _args;
-        private int _powerToysRunnerPid;
-        private bool disposedValue;
-
-        private CancellationTokenSource NativeThreadCTS { get; set; }
-
-        [Export]
-        private static CancellationToken ExitToken { get; set; }
-
-        protected override void OnStartup(StartupEventArgs e)
+        try
         {
-            try
+            var appLanguage = LanguageHelper.LoadLanguage();
+            if (!string.IsNullOrEmpty(appLanguage))
             {
-                string appLanguage = LanguageHelper.LoadLanguage();
-                if (!string.IsNullOrEmpty(appLanguage))
-                {
-                    System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(appLanguage);
-                }
-            }
-            catch (CultureNotFoundException ex)
-            {
-                Logger.LogError("CultureNotFoundException: " + ex.Message);
-            }
-
-            NativeThreadCTS = new CancellationTokenSource();
-            ExitToken = NativeThreadCTS.Token;
-
-            _args = e?.Args;
-
-            // allow only one instance of quick windows
-            _instanceMutex = new Mutex(true, @"Local\PowerToys_QuickWindows_InstanceMutex", out bool createdNew);
-            if (!createdNew)
-            {
-                Logger.LogWarning("There is a QuickWindows instance running. Exiting Quick Windows.");
-                _instanceMutex = null;
-                Shutdown(0);
-                return;
-            }
-
-            if (_args?.Length > 0)
-            {
-                _ = int.TryParse(_args[0], out _powerToysRunnerPid);
-
-                Logger.LogInfo($"Quick Windows started from the PowerToys Runner. Runner pid={_powerToysRunnerPid}");
-                RunnerHelper.WaitForPowerToysRunner(_powerToysRunnerPid, () =>
-                {
-                    Logger.LogInfo("PowerToys Runner exited. Exiting QuickWindows");
-                    NativeThreadCTS.Cancel();
-                    Dispatcher.Invoke(Shutdown);
-                });
-            }
-            else
-            {
-                _powerToysRunnerPid = -1;
-            }
-
-            base.OnStartup(e);
-        }
-
-        protected override void OnExit(ExitEventArgs e)
-        {
-            if (_instanceMutex != null)
-            {
-                _instanceMutex.ReleaseMutex();
-            }
-
-            CursorManager.RestoreOriginalCursors();
-            base.OnExit(e);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _instanceMutex?.Dispose();
-                    EtwTrace?.Dispose();
-                }
-
-                disposedValue = true;
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo(appLanguage);
             }
         }
-
-        public void Dispose()
+        catch (CultureNotFoundException ex)
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            Logger.LogError("CultureNotFoundException: " + ex.Message);
         }
 
-        public bool IsRunningDetachedFromPowerToys()
+        NativeThreadCTS = new CancellationTokenSource();
+        ExitToken = NativeThreadCTS.Token;
+
+        // allow only one instance of quick windows
+        _instanceMutex = new Mutex(true, @"Local\PowerToys_QuickWindows_InstanceMutex", out var createdNew);
+        if (!createdNew)
         {
-            return _powerToysRunnerPid == -1;
+            Logger.LogWarning("There is a QuickWindows instance running. Exiting Quick Windows.");
+            _instanceMutex = null;
+            Shutdown(0);
+            return;
         }
+
+        if (e.Args.Length > 0)
+        {
+            _ = int.TryParse(e.Args[0], out var powerToysRunnerPid);
+
+            Logger.LogInfo($"Quick Windows started from the PowerToys Runner. Runner pid={powerToysRunnerPid}");
+            RunnerHelper.WaitForPowerToysRunner(powerToysRunnerPid, () =>
+            {
+                Logger.LogInfo("PowerToys Runner exited. Exiting QuickWindows");
+                NativeThreadCTS.Cancel();
+                Dispatcher.Invoke(Shutdown);
+            });
+        }
+
+        Bootstrapper.InitializeContainer(this);
+        _quickWindowsManager = Bootstrapper.Container.GetExportedValue<IQuickWindowsManager>();
+        _quickWindowsManager!.ActivateHotKey();
+
+        base.OnStartup(e);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _quickWindowsManager?.DeactivateHotKey();
+        _quickWindowsManager = null;
+
+        _instanceMutex?.ReleaseMutex();
+
+        base.OnExit(e);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposedValue)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            _instanceMutex?.Dispose();
+            EtwTrace.Dispose();
+        }
+
+        _disposedValue = true;
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

@@ -4,36 +4,21 @@
 
 using System.ComponentModel;
 
-namespace QuickWindows.Settings
+namespace QuickWindows.Settings;
+
+public sealed class SettingItem<T>(T startValue) : INotifyPropertyChanged
 {
-    public sealed class SettingItem<T> : INotifyPropertyChanged
+    public T Value
     {
-        private T _value;
-
-        public SettingItem(T startValue)
+        get => startValue;
+        set
         {
-            _value = startValue;
-        }
-
-        public T Value
-        {
-            get
-            {
-                return _value;
-            }
-
-            set
-            {
-                _value = value;
-                OnValueChanged();
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnValueChanged()
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
+            startValue = value;
+            OnValueChanged();
         }
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnValueChanged() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
 }

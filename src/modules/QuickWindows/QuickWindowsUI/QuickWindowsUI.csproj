@@ -11,6 +11,7 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateSatelliteAssembliesForCore>true</GenerateSatelliteAssembliesForCore>
     <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
     <StartupObject>QuickWindows.Program</StartupObject>
     <ProjectGuid>{82c104b6-ee4e-41db-bc03-923be386881c}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -29,7 +30,6 @@
     <Resource Include="Assets\QuickWindows\icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Shaders\GridShader.cso" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Composition" />
@@ -54,9 +54,6 @@
     <ProjectReference Include="..\..\..\common\ManagedTelemetry\Telemetry\ManagedTelemetry.csproj" />
     <ProjectReference Include="..\..\..\common\Common.UI\Common.UI.csproj" />
     <ProjectReference Include="..\..\..\settings-ui\Settings.UI.Library\Settings.UI.Library.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Shaders\GridShader.fx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

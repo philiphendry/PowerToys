@@ -1,103 +1,73 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Windows.Input;
-using Microsoft.PowerToys.Settings.UI.Library.Utilities;
-using QuickWindows.Helpers;
-using QuickWindows.Settings;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
-namespace QuickWindows.Keyboard
+namespace QuickWindows.Keyboard;
+
+[Export(typeof(IKeyboardMonitor))]
+[PartCreationPolicy(CreationPolicy.Shared)]
+public class KeyboardMonitor : IKeyboardMonitor
 {
-    [Export(typeof(KeyboardMonitor))]
-    public class KeyboardMonitor : IDisposable
+    private static IntPtr _hookHandle = IntPtr.Zero;
+    private static NativeMethods.HookProc? _hookProc;
+
+    public event EventHandler<KeyPressedEventArgs>? AltKeyPressed;
+
+    public event EventHandler<KeyPressedEventArgs>? AltKeyReleased;
+
+    public class KeyPressedEventArgs : EventArgs;
+
+    public void Install()
     {
-        private readonly AppStateHandler _appStateHandler;
-        private readonly IUserSettings _userSettings;
-        private List<string> _previouslyPressedKeys = new List<string>();
+        _hookProc = KeyboardHookCallback;
+        _hookHandle = NativeMethods.SetWindowsHookEx(
+            NativeMethods.WH_KEYBOARD_LL,
+            _hookProc,
+            Marshal.GetHINSTANCE(typeof(KeyboardMonitor).Module),  // For WH_KEYBOARD_LL, this can be null
+            0);
 
-        private List<string> _activationKeys = new List<string>();
-        private GlobalKeyboardHook _keyboardHook;
-
-        [ImportingConstructor]
-        public KeyboardMonitor(AppStateHandler appStateHandler, IUserSettings userSettings)
+        if (_hookHandle == IntPtr.Zero)
         {
-            _appStateHandler = appStateHandler;
-            _userSettings = userSettings;
-            _userSettings.ActivationShortcut.PropertyChanged += ActivationShortcut_PropertyChanged;
-            SetActivationKeys();
+            throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+        }
+    }
+
+    public void Uninstall()
+    {
+        if (_hookHandle == IntPtr.Zero)
+        {
+            return;
         }
 
-        public void Start()
+        NativeMethods.UnhookWindowsHookEx(_hookHandle);
+        _hookHandle = IntPtr.Zero;
+    }
+
+    private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+    {
+        if (nCode < 0)
         {
-            _keyboardHook = new GlobalKeyboardHook();
-            _keyboardHook.KeyboardPressed += Hook_KeyboardPressed;
+            return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
-        private void SetActivationKeys()
+        var vkCode = Marshal.ReadInt32(lParam);
+        switch (wParam)
         {
-            _activationKeys.Clear();
-
-            if (!string.IsNullOrEmpty(_userSettings.ActivationShortcut.Value))
-            {
-                var keys = _userSettings.ActivationShortcut.Value.Split('+');
-                foreach (var key in keys)
-                {
-                    _activationKeys.Add(key.Trim());
-                }
-
-                _activationKeys.Sort();
-            }
+            case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN when
+                vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
+                AltKeyPressed?.Invoke(this, new KeyPressedEventArgs());
+                break;
+            case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP when
+                vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
+                AltKeyReleased?.Invoke(this, new KeyPressedEventArgs());
+                break;
         }
 
-        private void ActivationShortcut_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            SetActivationKeys();
-        }
-
-        private void Hook_KeyboardPressed(object sender, GlobalKeyboardHookEventArgs e)
-        {
-            var currentlyPressedKeys = new List<string>();
-            var virtualCode = e.KeyboardData.VirtualCode;
-            var name = Helper.GetKeyName((uint)virtualCode);
-        }
-
-        private static void AddModifierKeys(List<string> currentlyPressedKeys)
-        {
-            if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0)
-            {
-                currentlyPressedKeys.Add("Shift");
-            }
-
-            if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0)
-            {
-                currentlyPressedKeys.Add("Ctrl");
-            }
-
-            if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0)
-            {
-                currentlyPressedKeys.Add("Alt");
-            }
-
-            if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_LWIN) & 0x8000) != 0 || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RWIN) & 0x8000) != 0)
-            {
-                currentlyPressedKeys.Add("Win");
-            }
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            _keyboardHook?.Dispose();
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 }

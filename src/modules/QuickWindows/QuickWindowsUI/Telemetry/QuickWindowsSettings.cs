@@ -6,18 +6,17 @@ using System.Diagnostics.Tracing;
 using Microsoft.PowerToys.Telemetry;
 using Microsoft.PowerToys.Telemetry.Events;
 
-namespace QuickWindows.Telemetry
+namespace QuickWindows.Telemetry;
+
+[EventData]
+public class QuickWindowsSettings : EventBase, IEvent
 {
-    [EventData]
-    public class QuickWindowsSettings : EventBase, IEvent
+    public QuickWindowsSettings()
     {
-        public QuickWindowsSettings()
-        {
-            EventName = "QuickWindows_Settings";
-        }
-
-        public string ActivationShortcut { get; set; }
-
-        public PartA_PrivTags PartA_PrivTags => PartA_PrivTags.ProductAndServiceUsage;
+        EventName = "QuickWindows_Settings";
     }
+
+    public string? ActivationShortcut { get; set; }
+
+    public PartA_PrivTags PartA_PrivTags => PartA_PrivTags.ProductAndServiceUsage;
 }

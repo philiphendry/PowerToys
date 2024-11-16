@@ -1,163 +1,144 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
+using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
-using ManagedCommon;
 
-namespace QuickWindows.Mouse
+namespace QuickWindows.Mouse;
+
+public enum MouseButton
 {
-    public delegate void MouseUpEventHandler(object sender, System.Drawing.Point p);
+    None,
+    Left,
+    Right,
+}
 
-    public delegate void SecondaryMouseUpEventHandler(object sender, IntPtr wParam);
+[Export(typeof(IMouseHook))]
+[PartCreationPolicy(CreationPolicy.Shared)]
+public class MouseHook : IMouseHook
+{
+    private static IntPtr _hookHandle = IntPtr.Zero;
+    private static NativeMethods.HookProc? _hookProc;
 
-    internal class MouseHook
+    public event EventHandler<MouseEventArgs>? MouseMove;
+
+    public event EventHandler<MouseEventArgs>? MouseDown;
+
+    public event EventHandler<MouseEventArgs>? MouseUp;
+
+    public event EventHandler<MouseWheelEventArgs>? MouseWheel;
+
+    public class MouseEventArgs(int x, int y, MouseButton button) : EventArgs
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "Interop object")]
-        private const int WH_MOUSE_LL = 14;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "Interop object")]
-        private const int WM_LBUTTONDOWN = 0x0201;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "Interop object")]
-        private const int WM_MOUSEWHEEL = 0x020A;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "Interop object")]
-        private const int WM_RBUTTONUP = 0x0205;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:Field names should not contain underscore", Justification = "Interop object")]
-        private const int WM_RBUTTONDOWN = 0x0204;
+        public int X { get; } = x;
 
-        private IntPtr _mouseHookHandle;
-        private NativeMethods.HookProc _mouseDelegate;
+        public int Y { get; } = y;
 
-        private event MouseUpEventHandler MouseDown;
+        public MouseButton Button { get; } = button;
+    }
 
-        public event MouseUpEventHandler OnMouseDown
+    public class MouseWheelEventArgs(int x, int y, int delta) : MouseEventArgs(x, y, MouseButton.None)
+    {
+        public int Delta { get; } = delta;
+    }
+
+    private bool _suppressLeftClick;
+
+    public bool SuppressLeftClick
+    {
+        get => _suppressLeftClick;
+        set
         {
-            add
+            _suppressLeftClick = value;
+            if (!value)
             {
-                Subscribe();
-                MouseDown += value;
-            }
-
-            remove
-            {
-                MouseDown -= value;
-                Unsubscribe();
+                // When suppression is disabled, ensure we uninstall the hook
+                Uninstall();
             }
         }
+    }
 
-        private event SecondaryMouseUpEventHandler SecondaryMouseUp;
-
-        public event SecondaryMouseUpEventHandler OnSecondaryMouseUp
+    public void Install()
+    {
+        if (_hookHandle != IntPtr.Zero)
         {
-            add
-            {
-                Subscribe();
-                SecondaryMouseUp += value;
-            }
-
-            remove
-            {
-                SecondaryMouseUp -= value;
-                Unsubscribe();
-            }
+            return; // Already installed
         }
 
-        private event MouseWheelEventHandler MouseWheel;
+        _hookProc = MouseHookCallback;
+        _hookHandle = NativeMethods.SetWindowsHookEx(
+            NativeMethods.WH_MOUSE_LL,
+            _hookProc,
+            Marshal.GetHINSTANCE(typeof(MouseHook).Module),
+            0);
 
-        public event MouseWheelEventHandler OnMouseWheel
+        if (_hookHandle == IntPtr.Zero)
         {
-            add
-            {
-                Subscribe();
-                MouseWheel += value;
-            }
+            throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+        }
+    }
 
-            remove
-            {
-                MouseWheel -= value;
-                Unsubscribe();
-            }
+    public void Uninstall()
+    {
+        if (_hookHandle == IntPtr.Zero)
+        {
+            return;
         }
 
-        private void Unsubscribe()
+        NativeMethods.UnhookWindowsHookEx(_hookHandle);
+        _hookHandle = IntPtr.Zero;
+    }
+
+    private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+    {
+        if (nCode < 0)
         {
-            if (_mouseHookHandle != IntPtr.Zero)
-            {
-                var result = NativeMethods.UnhookWindowsHookEx(_mouseHookHandle);
-                _mouseHookHandle = IntPtr.Zero;
-                _mouseDelegate = null;
-                if (!result)
-                {
-                    int errorCode = Marshal.GetLastWin32Error();
-                    Logger.LogError("Failed to unsubscribe mouse hook with the error code" + errorCode);
-                }
-            }
+            return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
-        private void Subscribe()
-        {
-            if (_mouseHookHandle == IntPtr.Zero)
-            {
-                _mouseDelegate = MouseHookProc;
-                _mouseHookHandle = NativeMethods.SetWindowsHookEx(
-                    WH_MOUSE_LL,
-                    _mouseDelegate,
-                    NativeMethods.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName),
-                    0);
+        var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
 
-                if (_mouseHookHandle == IntPtr.Zero)
+        switch (wParam.ToInt32())
+        {
+            case NativeMethods.WM_MOUSEWHEEL:
+                if (SuppressLeftClick)
                 {
-                    int errorCode = Marshal.GetLastWin32Error();
-                    Logger.LogError("Failed to subscribe mouse hook with the error code" + errorCode);
+                    int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
+                    MouseWheel?.Invoke(this, new MouseWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
+                    return new IntPtr(1);
                 }
-            }
+
+                break;
+
+            case NativeMethods.WM_MOUSEMOVE:
+                MouseMove?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, MouseButton.None));
+                break;
+
+            case NativeMethods.WM_LBUTTONDOWN:
+            case NativeMethods.WM_RBUTTONDOWN:
+                var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
+                MouseDown?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
+                if (SuppressLeftClick)
+                {
+                    return new IntPtr(1);
+                }
+
+                break;
+
+            case NativeMethods.WM_LBUTTONUP:
+            case NativeMethods.WM_RBUTTONUP:
+                var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
+                MouseUp?.Invoke(this, new MouseEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
+                if (SuppressLeftClick)
+                {
+                    return new IntPtr(1);
+                }
+
+                break;
         }
 
-        private IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            if (nCode >= 0)
-            {
-                NativeMethods.MSLLHOOKSTRUCT mouseHookStruct = (NativeMethods.MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(NativeMethods.MSLLHOOKSTRUCT));
-                if (wParam.ToInt32() == WM_LBUTTONDOWN)
-                {
-                    if (MouseDown != null)
-                    {
-                        MouseDown.Invoke(null, new System.Drawing.Point(mouseHookStruct.pt.x, mouseHookStruct.pt.y));
-                    }
-
-                    return new IntPtr(-1);
-                }
-
-                if (wParam.ToInt32() == WM_RBUTTONUP)
-                {
-                    if (SecondaryMouseUp != null)
-                    {
-                        SecondaryMouseUp.Invoke(null, wParam);
-                    }
-
-                    return new IntPtr(-1);
-                }
-
-                if (wParam.ToInt32() == WM_RBUTTONDOWN)
-                {
-                    // Consume the event to avoid triggering context menus while in a Quick Windows session.
-                    return new IntPtr(-1);
-                }
-
-                if (wParam.ToInt32() == WM_MOUSEWHEEL)
-                {
-                    if (MouseWheel != null)
-                    {
-                        MouseDevice mouseDev = InputManager.Current.PrimaryMouseDevice;
-                        MouseWheel.Invoke(null, new MouseWheelEventArgs(mouseDev, Environment.TickCount, (int)mouseHookStruct.mouseData >> 16));
-                        return new IntPtr(-1);
-                    }
-                }
-            }
-
-            return NativeMethods.CallNextHookEx(_mouseHookHandle, nCode, wParam, lParam);
-        }
+        return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 }
