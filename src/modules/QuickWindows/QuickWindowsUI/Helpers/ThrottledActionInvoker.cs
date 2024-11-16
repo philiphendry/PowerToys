@@ -6,45 +6,43 @@ using System;
 using System.ComponentModel.Composition;
 using System.Windows.Threading;
 
-namespace QuickWindows.Helpers
+namespace QuickWindows.Helpers;
+
+[Export(typeof(IThrottledActionInvoker))]
+public sealed class ThrottledActionInvoker : IThrottledActionInvoker
 {
-    [Export(typeof(IThrottledActionInvoker))]
-    public sealed class ThrottledActionInvoker : IThrottledActionInvoker
+    private readonly object _invokerLock = new();
+    private readonly DispatcherTimer _timer;
+    private Action? _actionToRun;
+
+    public ThrottledActionInvoker()
     {
-        private object _invokerLock = new object();
-        private Action _actionToRun;
+        _timer = new DispatcherTimer();
+        _timer.Tick += Timer_Tick;
+    }
 
-        private DispatcherTimer _timer;
-
-        public ThrottledActionInvoker()
+    public void ScheduleAction(Action action, int milliseconds)
+    {
+        lock (_invokerLock)
         {
-            _timer = new DispatcherTimer();
-            _timer.Tick += Timer_Tick;
-        }
-
-        public void ScheduleAction(Action action, int milliseconds)
-        {
-            lock (_invokerLock)
-            {
-                if (_timer.IsEnabled)
-                {
-                    _timer.Stop();
-                }
-
-                _actionToRun = action;
-                _timer.Interval = new TimeSpan(0, 0, 0, 0, milliseconds);
-
-                _timer.Start();
-            }
-        }
-
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            lock (_invokerLock)
+            if (_timer.IsEnabled)
             {
                 _timer.Stop();
-                _actionToRun.Invoke();
             }
+
+            _actionToRun = action;
+            _timer.Interval = new TimeSpan(0, 0, 0, 0, milliseconds);
+
+            _timer.Start();
+        }
+    }
+
+    private void Timer_Tick(object? sender, EventArgs e)
+    {
+        lock (_invokerLock)
+        {
+            _timer.Stop();
+            _actionToRun!.Invoke();
         }
     }
 }

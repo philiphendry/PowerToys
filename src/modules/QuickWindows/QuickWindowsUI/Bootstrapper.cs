@@ -8,21 +8,18 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("UnitTest-QuickWindowsUI")]
 
-namespace QuickWindows
+namespace QuickWindows;
+
+public static class Bootstrapper
 {
-    public static class Bootstrapper
+    public static CompositionContainer Container { get; private set; } = default!;
+
+    public static void InitializeContainer(object initPoint)
     {
-        public static CompositionContainer Container { get; private set; }
-
-        public static void InitializeContainer(object initPoint)
-        {
-            var catalog = new AssemblyCatalog(System.Reflection.Assembly.GetExecutingAssembly());
-            Container = new CompositionContainer(catalog);
-
-            Container.SatisfyImportsOnce(initPoint);
-        }
-
-        public static void Dispose()
-            => Container.Dispose();
+        var catalog = new AssemblyCatalog(System.Reflection.Assembly.GetExecutingAssembly());
+        Container = new CompositionContainer(catalog);
+        Container.SatisfyImportsOnce(initPoint);
     }
+
+    public static void Dispose() => Container.Dispose();
 }

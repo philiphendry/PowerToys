@@ -6,18 +6,17 @@ using System.Diagnostics.Tracing;
 using Microsoft.PowerToys.Telemetry;
 using Microsoft.PowerToys.Telemetry.Events;
 
-namespace QuickWindows.Telemetry
+namespace QuickWindows.Telemetry;
+
+[EventData]
+public class QuickWindowsSession : EventBase, IEvent
 {
-    [EventData]
-    public class QuickWindowsSession : EventBase, IEvent
+    public QuickWindowsSession()
     {
-        public QuickWindowsSession()
-        {
-            EventName = "QuickWindows_Session";
-        }
-
-        public int Duration { get; set; }
-
-        public PartA_PrivTags PartA_PrivTags => PartA_PrivTags.ProductAndServiceUsage;
+        EventName = "QuickWindows_Session";
     }
+
+    public int Duration { get; set; }
+
+    public PartA_PrivTags PartA_PrivTags => PartA_PrivTags.ProductAndServiceUsage;
 }

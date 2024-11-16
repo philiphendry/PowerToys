@@ -1,0 +1,18 @@
+// Copyright (c) Microsoft Corporation
+// The Microsoft Corporation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+
+namespace QuickWindows.Keyboard;
+
+public interface IKeyboardMonitor
+{
+    event EventHandler<KeyboardMonitor.KeyPressedEventArgs>? AltKeyPressed;
+
+    event EventHandler<KeyboardMonitor.KeyPressedEventArgs>? AltKeyReleased;
+
+    void Install();
+
+    void Uninstall();
+}

@@ -4,56 +4,45 @@
 
 using System;
 using ManagedCommon;
-using QuickWindows.Mouse;
 
-namespace QuickWindows
+namespace QuickWindows;
+
+public static class Program
 {
-    public static class Program
+    [STAThread]
+    public static void Main(string[] args)
     {
-        private static string[] _args;
+        Logger.InitializeLogger("\\QuickWindows\\Logs");
+        Logger.LogInfo($"Quick Windows started with pid={Environment.ProcessId}");
 
-        [STAThread]
-        public static void Main(string[] args)
+        if (PowerToys.GPOWrapperProjection.GPOWrapper.GetConfiguredQuickWindowsEnabledValue() == PowerToys.GPOWrapperProjection.GpoRuleConfigured.Disabled)
         {
-            Logger.InitializeLogger("\\QuickWindows\\Logs");
-
-            _args = args;
-            Logger.LogInfo($"Quick Windows started with pid={Environment.ProcessId}");
-
-            if (PowerToys.GPOWrapperProjection.GPOWrapper.GetConfiguredQuickWindowsEnabledValue() == PowerToys.GPOWrapperProjection.GpoRuleConfigured.Disabled)
-            {
-                Logger.LogWarning("Tried to start with a GPO policy setting the utility to always be disabled. Please contact your systems administrator.");
-                return;
-            }
-
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            try
-            {
-                using (var application = new App())
-                {
-                    application.InitializeComponent();
-                    application.Run();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Unhandled exception", ex);
-                CursorManager.RestoreOriginalCursors();
-            }
+            Logger.LogWarning("Tried to start with a GPO policy setting the utility to always be disabled. Please contact your systems administrator.");
+            return;
         }
 
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        try
         {
-            if (e.ExceptionObject is Exception ex)
-            {
-                Logger.LogError("Unhandled exception", ex);
-            }
-            else
-            {
-                Logger.LogError("Unhandled exception");
-            }
+            using var application = new App();
+            application.InitializeComponent();
+            application.Run();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Unhandled exception", ex);
+        }
+    }
 
-            CursorManager.RestoreOriginalCursors();
+    private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            Logger.LogError("Unhandled exception", ex);
+        }
+        else
+        {
+            Logger.LogError("Unhandled exception");
         }
     }
 }

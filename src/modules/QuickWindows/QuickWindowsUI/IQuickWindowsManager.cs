@@ -2,11 +2,11 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+namespace QuickWindows;
 
-namespace QuickWindows.Helpers;
-
-public interface IThrottledActionInvoker
+public interface IQuickWindowsManager
 {
-    void ScheduleAction(Action action, int milliseconds);
+    void ActivateHotKey();
+
+    void DeactivateHotKey();
 }
