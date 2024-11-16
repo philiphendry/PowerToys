@@ -15,9 +15,9 @@ public class KeyboardMonitor : IKeyboardMonitor
     private static IntPtr _hookHandle = IntPtr.Zero;
     private static NativeMethods.HookProc? _hookProc;
 
-    public event EventHandler? AltKeyPressed;
+    public event EventHandler? HotKeyPressed;
 
-    public event EventHandler? AltKeyReleased;
+    public event EventHandler? HotKeyReleased;
 
     public void Install()
     {
@@ -55,16 +55,19 @@ public class KeyboardMonitor : IKeyboardMonitor
         var vkCode = Marshal.ReadInt32(lParam);
         switch (wParam)
         {
-            case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN when
-                vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
-                AltKeyPressed?.Invoke(this, EventArgs.Empty);
+            case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN when IsHotKey(vkCode):
+                HotKeyPressed?.Invoke(this, EventArgs.Empty);
                 break;
-            case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP when
-                vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU:
-                AltKeyReleased?.Invoke(this, EventArgs.Empty);
+            case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP when IsHotKey(vkCode):
+                HotKeyReleased?.Invoke(this, EventArgs.Empty);
                 break;
         }
 
         return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+    }
+
+    private static bool IsHotKey(int vkCode)
+    {
+        return vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU;
     }
 }

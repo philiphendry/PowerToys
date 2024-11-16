@@ -323,6 +323,7 @@ internal static class NativeMethods
     internal const uint WM_SETCURSOR = 0x0020;
     internal const uint WS_POPUP = 0x80000000;
     internal const uint WS_EX_TOPMOST = 0x00000008;
+    internal const uint SW_HIDE = 0;
     internal const uint SW_SHOWNOACTIVATE = 4;
 
     [StructLayout(LayoutKind.Sequential)]
