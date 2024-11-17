@@ -20,8 +20,9 @@ public enum MouseButton
 [PartCreationPolicy(CreationPolicy.Shared)]
 public class MouseHook : IMouseHook
 {
-    private static IntPtr _hookHandle = IntPtr.Zero;
-    private static NativeMethods.HookProc? _hookProc;
+    private readonly object _lock = new();
+    private IntPtr _hookHandle = IntPtr.Zero;
+    private NativeMethods.HookProc? _hookProc;
     private bool _eventPropagation;
 
     public event EventHandler<MouseMoveEventArgs>? MouseMove;
@@ -51,85 +52,89 @@ public class MouseHook : IMouseHook
 
     public void Install(bool eventPropagation = false)
     {
-        _eventPropagation = eventPropagation;
-        if (_hookHandle != IntPtr.Zero)
+        lock (_lock)
         {
-            return; // Already installed
-        }
+            _eventPropagation = eventPropagation;
+            if (_hookHandle != IntPtr.Zero)
+            {
+                return; // Already installed
+            }
 
-        _hookProc = MouseHookCallback;
-        _hookHandle = NativeMethods.SetWindowsHookEx(
-            NativeMethods.WH_MOUSE_LL,
-            _hookProc,
-            Marshal.GetHINSTANCE(typeof(MouseHook).Module),
-            0);
-
-        if (_hookHandle == IntPtr.Zero)
-        {
-            throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+            _hookProc = MouseHookCallback;
+            _hookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_MOUSE_LL, _hookProc, Marshal.GetHINSTANCE(typeof(MouseHook).Module), 0);
+            if (_hookHandle == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+            }
         }
     }
 
     public void Uninstall()
     {
-        if (_hookHandle == IntPtr.Zero)
+        lock (_lock)
         {
-            return;
-        }
+            if (_hookHandle == IntPtr.Zero)
+            {
+                return;
+            }
 
-        Logger.LogDebug("Unhooking windows mouse hook");
-        NativeMethods.UnhookWindowsHookEx(_hookHandle);
-        _hookHandle = IntPtr.Zero;
+            Logger.LogDebug("Unhooking windows mouse hook");
+            NativeMethods.UnhookWindowsHookEx(_hookHandle);
+            _hookHandle = IntPtr.Zero;
+        }
     }
 
     private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode < 0)
+        lock (_lock)
         {
+            if (nCode < 0)
+            {
+                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+            }
+
+            var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+
+            switch (wParam.ToInt32())
+            {
+                case NativeMethods.WM_MOUSEWHEEL:
+                    int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
+                    MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
+                    if (!_eventPropagation)
+                    {
+                        return new IntPtr(1);
+                    }
+
+                    break;
+
+                case NativeMethods.WM_MOUSEMOVE:
+                    MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
+                    break;
+
+                case NativeMethods.WM_LBUTTONDOWN:
+                case NativeMethods.WM_RBUTTONDOWN:
+                    var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
+                    MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
+                    if (!_eventPropagation)
+                    {
+                        return new IntPtr(1);
+                    }
+
+                    break;
+
+                case NativeMethods.WM_LBUTTONUP:
+                case NativeMethods.WM_RBUTTONUP:
+                    var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
+                    MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
+                    if (!_eventPropagation)
+                    {
+                        return new IntPtr(1);
+                    }
+
+                    break;
+            }
+
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
-
-        var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
-
-        switch (wParam.ToInt32())
-        {
-            case NativeMethods.WM_MOUSEWHEEL:
-                int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
-                MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
-
-            case NativeMethods.WM_MOUSEMOVE:
-                MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
-                break;
-
-            case NativeMethods.WM_LBUTTONDOWN:
-            case NativeMethods.WM_RBUTTONDOWN:
-                var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
-                MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
-
-            case NativeMethods.WM_LBUTTONUP:
-            case NativeMethods.WM_RBUTTONUP:
-                var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
-                MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
-        }
-
-        return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 }
