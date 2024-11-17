@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Windows;
-using System.Windows.Interop;
 
 namespace QuickWindows;
 
@@ -279,8 +278,11 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr GetOpenClipboardWindow();
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    internal static extern int GetWindowText(int hwnd, StringBuilder text, int count);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    internal static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int count);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    internal static extern int GetClassName(IntPtr hWnd, StringBuilder text, int count);
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern int GetWindowLong(IntPtr hWnd, int nIndex);
@@ -291,13 +293,7 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool GetWindowInfo(IntPtr hwnd, ref WINDOWINFO pwi);
 
-    internal static void SetToolWindowStyle(Window win)
-    {
-        var hwnd = new WindowInteropHelper(win).Handle;
-        _ = SetWindowLong(hwnd, GWL_EX_STYLE, GetWindowLong(hwnd, GWL_EX_STYLE) | WS_EX_TOOLWINDOW);
-    }
-
-    [DllImport("KERNEL32.dll", ExactSpelling = true)]
+    [DllImport("KERNEL32.dll", ExactSpelling = true, SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     public static extern uint GetCurrentThreadId();
 
@@ -331,10 +327,10 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern ushort RegisterClassEx([In] ref WNDCLASSEX lpwcx);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetCursor(IntPtr hCursor);
 
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -355,16 +351,16 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool DestroyWindow(IntPtr hWnd);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     internal static extern bool UnregisterClass(string lpClassName, IntPtr hInstance);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
 
     internal const uint RDW_ERASE = 0x0004;
