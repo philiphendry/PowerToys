@@ -10,7 +10,7 @@ namespace QuickWindows.Features;
 
 public static class WindowHelpers
 {
-    public static nint GetWindowAtCursor(int x, int y)
+    public static IntPtr GetWindowAtCursor(int x, int y)
     {
         var point = new NativeMethods.POINT(x, y);
         var hwnd = NativeMethods.WindowFromPoint(point);

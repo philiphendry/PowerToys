@@ -78,6 +78,8 @@ public partial class App : Application, IDisposable
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Logger.LogDebug("Exiting Quick Windows.");
+
         _quickWindowsManager?.DeactivateHotKey();
         _quickWindowsManager = null;
 

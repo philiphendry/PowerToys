@@ -21,12 +21,14 @@ public enum WindowOperation
     None,
     Move,
     Resize,
+    Detect,
 }
 
 [Export(typeof(IQuickWindowsManager))]
 [PartCreationPolicy(CreationPolicy.Shared)]
 public class QuickWindowsManager : IQuickWindowsManager
 {
+    private readonly WindowOperation _defaultOperation = WindowOperation.None;
     private readonly object _lock = new();
     private readonly IUserSettings _userSettings;
     private readonly IKeyboardMonitor _keyboardHook;
@@ -36,6 +38,7 @@ public class QuickWindowsManager : IQuickWindowsManager
     private readonly ITransparentWindows _transparentWindows;
     private readonly IRolodexWindows _rolodexWindows;
     private readonly ICursorForOperation _cursorForOperation;
+    private readonly IWindowIdentifier _windowIdentifier;
     private bool _isHotKeyPressed;
     private WindowOperation _currentOperation;
 
@@ -49,6 +52,7 @@ public class QuickWindowsManager : IQuickWindowsManager
         ITransparentWindows transparentWindows,
         IRolodexWindows rolodexWindows,
         ICursorForOperation cursorForOperation,
+        IWindowIdentifier windowIdentifier,
         CancellationToken exitToken)
     {
         _userSettings = userSettings;
@@ -59,9 +63,7 @@ public class QuickWindowsManager : IQuickWindowsManager
         _transparentWindows = transparentWindows;
         _rolodexWindows = rolodexWindows;
         _cursorForOperation = cursorForOperation;
-
-        AddKeyboardListeners();
-        AddMouseListeners();
+        _windowIdentifier = windowIdentifier;
 
         NativeEventWaiter.WaitForEventLoop(
             Constants.TerminateQuickWindowsSharedEvent(),
@@ -81,6 +83,8 @@ public class QuickWindowsManager : IQuickWindowsManager
         try
         {
             Logger.LogDebug("Installing keyboard hook.");
+            AddKeyboardListeners();
+            AddMouseListeners();
             _keyboardHook.Install();
         }
         catch (Exception ex)
@@ -94,20 +98,8 @@ public class QuickWindowsManager : IQuickWindowsManager
         Logger.LogDebug("Uninstalling mouse and keyboard hooks.");
         _mouseHook.Uninstall();
         _keyboardHook.Uninstall();
-    }
-
-    private void AddKeyboardListeners()
-    {
-        _keyboardHook.HotKeyPressed += OnHotKeyPressed;
-        _keyboardHook.HotKeyReleased += OnHotKeyReleased;
-    }
-
-    private void AddMouseListeners()
-    {
-        _mouseHook.MouseDown += OnMouseDown;
-        _mouseHook.MouseMove += OnMouseMove;
-        _mouseHook.MouseUp += OnMouseUp;
-        _mouseHook.MouseWheel += OnMouseWheel;
+        RemoveKeyboardListeners();
+        RemoveMouseListeners();
     }
 
     private void OnHotKeyPressed(object? sender, EventArgs e)
@@ -122,7 +114,7 @@ public class QuickWindowsManager : IQuickWindowsManager
             Logger.LogDebug("Installing mouse hook.");
             _mouseHook.Install();
             _isHotKeyPressed = true;
-            _currentOperation = WindowOperation.None;
+            _currentOperation = _defaultOperation;
         }
     }
 
@@ -145,7 +137,7 @@ public class QuickWindowsManager : IQuickWindowsManager
             _transparentWindows.EndTransparency();
             _mouseHook.Uninstall();
             _isHotKeyPressed = false;
-            _currentOperation = WindowOperation.None;
+            _currentOperation = _defaultOperation;
         }
     }
 
@@ -153,6 +145,12 @@ public class QuickWindowsManager : IQuickWindowsManager
     {
         lock (_lock)
         {
+            if (_isHotKeyPressed && _currentOperation == WindowOperation.Detect)
+            {
+                _windowIdentifier.IdentifyWindow(args.X, args.Y);
+                return;
+            }
+
             if (!_isHotKeyPressed || _currentOperation != WindowOperation.None)
             {
                 return;
@@ -211,7 +209,7 @@ public class QuickWindowsManager : IQuickWindowsManager
             }
 
             _transparentWindows.EndTransparency();
-            _currentOperation = WindowOperation.None;
+            _currentOperation = _defaultOperation;
         }
     }
 
@@ -246,5 +244,33 @@ public class QuickWindowsManager : IQuickWindowsManager
         {
             _rolodexWindows.BringBottomWindowToTop(args.X, args.Y);
         }
+    }
+
+    private void AddKeyboardListeners()
+    {
+        _keyboardHook.HotKeyPressed += OnHotKeyPressed;
+        _keyboardHook.HotKeyReleased += OnHotKeyReleased;
+    }
+
+    private void AddMouseListeners()
+    {
+        _mouseHook.MouseDown += OnMouseDown;
+        _mouseHook.MouseMove += OnMouseMove;
+        _mouseHook.MouseUp += OnMouseUp;
+        _mouseHook.MouseWheel += OnMouseWheel;
+    }
+
+    private void RemoveKeyboardListeners()
+    {
+        _keyboardHook.HotKeyPressed -= OnHotKeyPressed;
+        _keyboardHook.HotKeyReleased -= OnHotKeyReleased;
+    }
+
+    private void RemoveMouseListeners()
+    {
+        _mouseHook.MouseDown -= OnMouseDown;
+        _mouseHook.MouseMove -= OnMouseMove;
+        _mouseHook.MouseUp -= OnMouseUp;
+        _mouseHook.MouseWheel -= OnMouseWheel;
     }
 }
