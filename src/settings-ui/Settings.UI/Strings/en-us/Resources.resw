@@ -769,7 +769,7 @@
   <data name="ColorPicker_ChangeCursor.Content" xml:space="preserve">
     <value>Change cursor when picking a color</value>
   </data>
-  <data name="QuickWindows.ModuleDescription" xml:space="preserve">
+  <data name="QuickWindows_ModuleDescription" xml:space="preserve">
     <value>A faster way to move and resize windows.</value>
   </data>
   <data name="QuickWindows_EnableQuickWindows.Header" xml:space="preserve">
@@ -2723,6 +2723,35 @@ From there, simply click on one of the supported files in the File Explorer and 
   <data name="ColorPicker.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>
     <comment>giving credit to the projects this utility was based on</comment>
+  </data>
+  <data name="QuickWindows_Activation_GroupSettings.Header" xml:space="preserve">
+    <value>Activation</value>
+  </data>
+  <data name="QuickWindows_Activation_Shortcut.Header" xml:space="preserve">
+    <value>Activation key</value>
+    <comment>key refers to a physical key on a keyboard</comment>
+  </data>
+  <data name="QuickWindows_Activation_Shortcut.Description" xml:space="preserve">
+    <comment>key refers to a physical key on a keyboard</comment>
+  </data>
+  <data name="QuickWindows_Activation_Key_Alt.Header" xml:space="preserve">
+    <value>Hold Alt to activate Quick Windows</value>
+  </data>
+  <data name="QuickWindows_Activation_Key_Shift.Header" xml:space="preserve">
+    <value>Hold Shift to activate Quick Windows</value>
+  </data>
+  <data name="QuickWindows_Activation_Key_Ctrl.Header" xml:space="preserve">
+    <value>Hold Ctrl to activate Quick Windows</value>
+  </data>
+  <data name="QuickWindows_Prevent_Activation_On_Game_Mode.Content" xml:space="preserve">
+    <value>Do not activate when Game Mode is on</value>
+    <comment>"Game mode" is the Windows feature to prevent notification when playing a game.</comment>
+  </data>
+  <data name="QuickWindows_Behavior.Header" xml:space="preserve">
+    <value>Behavior</value>
+  </data>
+  <data name="QuickWindows_Transparency.Header" xml:space="preserve">
+    <value>Transparent windows when moving or resizing</value>
   </data>
   <data name="QuickWindows.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>

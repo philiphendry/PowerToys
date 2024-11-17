@@ -26,12 +26,14 @@
                 x:Name="QuickWindowsView"
                 ChildrenTransitions="{StaticResource SettingsCardsAnimations}"
                 Orientation="Vertical">
+
                 <tkcontrols:SettingsCard
                     x:Uid="QuickWindows_EnableQuickWindows"
                     HeaderIcon="{ui:BitmapIcon Source=/Assets/Settings/Icons/QuickWindows.png}"
                     IsEnabled="{x:Bind ViewModel.IsEnabledGpoConfigured, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
                     <ToggleSwitch x:Uid="ToggleSwitch" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" />
                 </tkcontrols:SettingsCard>
+
                 <InfoBar
                     x:Uid="GPO_SettingIsManaged"
                     IsClosable="False"
@@ -39,9 +41,24 @@
                     IsTabStop="{x:Bind ViewModel.IsEnabledGpoConfigured, Mode=OneWay}"
                     Severity="Informational" />
 
-                <controls:SettingsGroup x:Uid="Shortcut" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
-                    <tkcontrols:SettingsCard x:Uid="Activation_Shortcut" HeaderIcon="{ui:FontIcon Glyph=&#xEDA7;}">
-                        <controls:ShortcutControl MinWidth="{StaticResource SettingActionControlMinWidth}" HotkeySettings="{x:Bind Path=ViewModel.ActivationShortcut, Mode=TwoWay}" />
+                <controls:SettingsGroup x:Uid="QuickWindows_Activation_GroupSettings" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_Activation_Key_Alt" HeaderIcon="{ui:FontIcon Glyph=&#xE92E;}">
+                        <ToggleSwitch x:Uid="QuickWindows_Activation_Key_Alt_Toggle" IsOn="{x:Bind ViewModel.ActivateOnAlt, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_Activation_Key_Shift" HeaderIcon="{ui:FontIcon Glyph=&#xE92E;}">
+                        <ToggleSwitch x:Uid="QuickWindows_Activation_Key_Shift_Toggle" IsOn="{x:Bind ViewModel.ActivateOnShift, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_Activation_Key_Ctrl" HeaderIcon="{ui:FontIcon Glyph=&#xE92E;}">
+                        <ToggleSwitch x:Uid="QuickWindows_Activation_Key_Ctrl_Toggle" IsOn="{x:Bind ViewModel.ActivateOnCtrl, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard ContentAlignment="Left">
+                        <CheckBox x:Uid="QuickWindows_Prevent_Activation_On_Game_Mode" IsChecked="{x:Bind ViewModel.DoNotActivateOnGameMode, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                </controls:SettingsGroup>
+
+                <controls:SettingsGroup x:Uid="QuickWindows_Behavior" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_Transparency" HeaderIcon="{ui:FontIcon Glyph=&#xE727;}">
+                        <ToggleSwitch x:Uid="QuickWindows_UnicodeDescription_ToggleSwitch" IsOn="{x:Bind ViewModel.TransparentWindowOnMove, Mode=TwoWay}" />
                     </tkcontrols:SettingsCard>
                 </controls:SettingsGroup>
 

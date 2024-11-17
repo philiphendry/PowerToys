@@ -2,29 +2,27 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using ManagedCommon;
-using Microsoft.PowerToys.Settings.UI.Library.Enumerations;
-using Settings.UI.Library.Attributes;
+namespace Microsoft.PowerToys.Settings.UI.Library;
 
-namespace Microsoft.PowerToys.Settings.UI.Library
+public class QuickWindowsProperties
 {
-    public class QuickWindowsProperties
-    {
-        [CmdConfigureIgnore]
-        public HotkeySettings DefaultActivationShortcut => new HotkeySettings(false, false, true, false, 0x0);
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool ActivateOnAlt { get; set; } = true;
 
-        public QuickWindowsProperties()
-        {
-            ActivationShortcut = DefaultActivationShortcut;
-        }
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool ActivateOnShift { get; set; } = false;
 
-        public HotkeySettings ActivationShortcut { get; set; }
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool ActivateOnCtrl { get; set; } = false;
 
-        public override string ToString()
-            => JsonSerializer.Serialize(this);
-    }
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool DoNotActivateOnGameMode { get; set; } = true;
+
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool TransparentWindowOnMove { get; set; } = true;
+
+    public override string ToString() => JsonSerializer.Serialize(this);
 }

@@ -16,7 +16,7 @@ public class QuickWindowsSettings : EventBase, IEvent
         EventName = "QuickWindows_Settings";
     }
 
-    public string? ActivationShortcut { get; set; }
+    public bool TransparentWindowOnMove { get; set; }
 
     public PartA_PrivTags PartA_PrivTags => PartA_PrivTags.ProductAndServiceUsage;
 }

@@ -42,11 +42,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             settingsUtils.SaveSettings(JsonSerializer.Serialize(this, options), ModuleName);
         }
 
-        public string GetModuleName()
-            => Name;
+        public string GetModuleName() => Name;
 
         // This can be utilized in the future if the settings.json file is to be modified/deleted.
-        public bool UpgradeSettingsConfiguration()
-            => false;
+        public bool UpgradeSettingsConfiguration() => false;
     }
 }

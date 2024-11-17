@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
@@ -16,26 +17,22 @@ namespace QuickWindows.Settings;
 
 public class UserSettings : IUserSettings
 {
+    private static readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
+    private readonly object _loadingSettingsLock = new();
     private readonly SettingsUtils _settingsUtils;
+    private readonly IFileSystemWatcher _watcher;
     private const string QuickWindowsModuleName = "QuickWindows";
     private const string DefaultActivationShortcut = "Alt";
     private const int MaxNumberOfRetry = 5;
     private const int SettingsReadOnChangeDelayInMs = 300;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Actually, call back is LoadSettingsFromJson")]
-    private readonly IFileSystemWatcher _watcher;
-
-    private readonly object _loadingSettingsLock = new object();
-
-    private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
-    {
-        WriteIndented = true,
-    };
+    public event EventHandler? Changed;
 
     public UserSettings(Helpers.IThrottledActionInvoker throttledActionInvoker)
     {
         _settingsUtils = new SettingsUtils();
-        ActivationShortcut = new SettingItem<string>(DefaultActivationShortcut);
+
+        TransparentWindowOnMove = new SettingItem<bool>(true);
 
         LoadSettingsFromJson();
 
@@ -43,58 +40,63 @@ public class UserSettings : IUserSettings
         _watcher = Helper.GetFileWatcher(QuickWindowsModuleName, "settings.json", () => throttledActionInvoker.ScheduleAction(LoadSettingsFromJson, SettingsReadOnChangeDelayInMs));
     }
 
-    public SettingItem<string> ActivationShortcut { get; private set; }
+    public SettingItem<bool> TransparentWindowOnMove { get; private set; }
 
     private void LoadSettingsFromJson()
     {
-        // TODO this IO call should by Async, update GetFileWatcher helper to support async
         lock (_loadingSettingsLock)
         {
+            var retry = true;
+            var retryCount = 0;
+
+            while (retry)
             {
-                var retry = true;
-                var retryCount = 0;
-
-                while (retry)
+                try
                 {
-                    try
+                    retryCount++;
+
+                    if (!_settingsUtils.SettingsExists(QuickWindowsModuleName))
                     {
-                        retryCount++;
+                        Logger.LogInfo("QuickWindows settings.json was missing, creating a new one");
+                        var defaultQuickWindowsSettings = new QuickWindowsSettings();
+                        defaultQuickWindowsSettings.Save(_settingsUtils);
+                    }
 
-                        if (!_settingsUtils.SettingsExists(QuickWindowsModuleName))
+                    var settings = _settingsUtils.GetSettingsOrDefault<QuickWindowsSettings>(QuickWindowsModuleName);
+                    if (settings != null)
+                    {
+                        void UpdateSettings()
                         {
-                            Logger.LogInfo("QuickWindows settings.json was missing, creating a new one");
-                            var defaultQuickWindowsSettings = new QuickWindowsSettings();
-                            defaultQuickWindowsSettings.Save(_settingsUtils);
+                            TransparentWindowOnMove.Value = settings.Properties.TransparentWindowOnMove;
+
+                            Logger.LogDebug("Publishing changes to settings.");
+                            Changed?.Invoke(this, EventArgs.Empty);
                         }
 
-                        var settings = _settingsUtils.GetSettingsOrDefault<QuickWindowsSettings>(QuickWindowsModuleName);
-                        if (settings != null)
-                        {
-                            ActivationShortcut.Value = settings.Properties.ActivationShortcut.ToString();
-                        }
+                        Task.Factory.StartNew(UpdateSettings, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext()).Wait();
+                    }
 
+                    retry = false;
+                }
+                catch (IOException ex)
+                {
+                    if (retryCount > MaxNumberOfRetry)
+                    {
                         retry = false;
                     }
-                    catch (IOException ex)
-                    {
-                        if (retryCount > MaxNumberOfRetry)
-                        {
-                            retry = false;
-                        }
 
-                        Logger.LogError("Failed to read changed settings", ex);
-                        Thread.Sleep(500);
-                    }
-                    catch (Exception ex)
+                    Logger.LogError("Failed to read changed settings", ex);
+                    Thread.Sleep(500);
+                }
+                catch (Exception ex)
+                {
+                    if (retryCount > MaxNumberOfRetry)
                     {
-                        if (retryCount > MaxNumberOfRetry)
-                        {
-                            retry = false;
-                        }
-
-                        Logger.LogError("Failed to read changed settings", ex);
-                        Thread.Sleep(500);
+                        retry = false;
                     }
+
+                    Logger.LogError("Failed to read changed settings", ex);
+                    Thread.Sleep(500);
                 }
             }
         }
@@ -113,7 +115,7 @@ public class UserSettings : IUserSettings
 
         var telemetrySettings = new Telemetry.QuickWindowsSettings()
         {
-            ActivationShortcut = properties.ActivationShortcut.ToString(),
+            TransparentWindowOnMove = properties.TransparentWindowOnMove,
         };
 
         PowerToysTelemetry.Log.WriteEvent(telemetrySettings);

@@ -526,10 +526,9 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         {
             ISettingsRepository<QuickWindowsSettings> moduleSettingsRepository = SettingsRepository<QuickWindowsSettings>.GetInstance(new SettingsUtils());
             var settings = moduleSettingsRepository.SettingsConfig;
-            var hotkey = settings.Properties.ActivationShortcut;
             var list = new List<DashboardModuleItem>
             {
-                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("QuickWindows_ShortDescription"), Shortcut = hotkey.GetKeysList() },
+                new DashboardModuleTextItem() { Label = resourceLoader.GetString("QuickWindows_ModuleDescription") },
             };
             return new ObservableCollection<DashboardModuleItem>(list);
         }
