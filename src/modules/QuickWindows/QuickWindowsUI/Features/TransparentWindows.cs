@@ -3,14 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-[Export(typeof(ITransparentWindows))]
-public class TransparentWindows : ITransparentWindows
+public class TransparentWindows(IWindowHelpers windowHelpers) : ITransparentWindows
 {
     // TODO: Make this configurable and fetched form IUserSettings
     private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
@@ -23,7 +21,7 @@ public class TransparentWindows : ITransparentWindows
     {
         lock (_lock)
         {
-            _targetWindow = WindowHelpers.GetWindowAtCursor(x, y);
+            _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
             if (_targetWindow == IntPtr.Zero)
             {
                 return;

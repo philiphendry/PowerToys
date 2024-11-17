@@ -60,7 +60,7 @@ public class MonitorResolutionHelper
         return AllMonitors.Count() > 1;
     }
 
-    private class MonitorEnumCallback
+    private sealed class MonitorEnumCallback
     {
         public ArrayList Monitors { get; } = new();
 

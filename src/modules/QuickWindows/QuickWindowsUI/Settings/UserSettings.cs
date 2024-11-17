@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.IO;
 using System.IO.Abstractions;
 using System.Text.Json;
@@ -15,7 +14,6 @@ using Microsoft.PowerToys.Telemetry;
 
 namespace QuickWindows.Settings;
 
-[Export(typeof(IUserSettings))]
 public class UserSettings : IUserSettings
 {
     private readonly SettingsUtils _settingsUtils;
@@ -34,7 +32,6 @@ public class UserSettings : IUserSettings
         WriteIndented = true,
     };
 
-    [ImportingConstructor]
     public UserSettings(Helpers.IThrottledActionInvoker throttledActionInvoker)
     {
         _settingsUtils = new SettingsUtils();

@@ -3,29 +3,21 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-[Export(typeof(IMovingWindows))]
-public class MovingWindows : IMovingWindows
+public class MovingWindows(IRateLimiter rateLimiter,
+    IWindowHelpers windowHelpers) : IMovingWindows
 {
-    private readonly IRateLimiter _rateLimiter;
     private IntPtr _targetWindow = IntPtr.Zero;
     private NativeMethods.POINT _initialMousePosition;
     private NativeMethods.Rect _initialWindowRect;
 
-    [ImportingConstructor]
-    public MovingWindows(IRateLimiter rateLimiter)
-    {
-        _rateLimiter = rateLimiter;
-    }
-
     public void StartMove(int x, int y)
     {
-        _targetWindow = WindowHelpers.GetWindowAtCursor(x, y);
+        _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
         if (_targetWindow == IntPtr.Zero)
         {
             return;
@@ -42,7 +34,7 @@ public class MovingWindows : IMovingWindows
 
     public void MoveWindow(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero || _rateLimiter.IsLimited())
+        if (_targetWindow == IntPtr.Zero || rateLimiter.IsLimited())
         {
             return;
         }

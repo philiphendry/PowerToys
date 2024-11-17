@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
@@ -16,8 +15,6 @@ public enum MouseButton
     Right,
 }
 
-[Export(typeof(IMouseHook))]
-[PartCreationPolicy(CreationPolicy.Shared)]
 public class MouseHook : IMouseHook
 {
     private readonly object _lock = new();

@@ -8,9 +8,9 @@ using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-public static class WindowHelpers
+public class WindowHelpers : IWindowHelpers
 {
-    public static IntPtr GetWindowAtCursor(int x, int y)
+    public IntPtr GetWindowAtCursor(int x, int y)
     {
         var point = new NativeMethods.POINT(x, y);
         var hwnd = NativeMethods.WindowFromPoint(point);

@@ -3,16 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-[Export(typeof(IResizingWindows))]
-public class ResizingWindows : IResizingWindows
+public class ResizingWindows(IRateLimiter rateLimiter,
+    IWindowHelpers windowHelpers) : IResizingWindows
 {
-    private readonly IRateLimiter _rateLimiter;
     private const int MinimumWindowSize = 200;
 
     private IntPtr _targetWindow = IntPtr.Zero;
@@ -28,15 +26,9 @@ public class ResizingWindows : IResizingWindows
         ResizeBottomRight,
     }
 
-    [ImportingConstructor]
-    public ResizingWindows(IRateLimiter rateLimiter)
-    {
-        _rateLimiter = rateLimiter;
-    }
-
     public ResizeOperation? StartResize(int x, int y)
     {
-        _targetWindow = WindowHelpers.GetWindowAtCursor(x, y);
+        _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
         if (_targetWindow == IntPtr.Zero)
         {
             return null;
@@ -68,7 +60,7 @@ public class ResizingWindows : IResizingWindows
 
     public void ResizeWindow(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero || _rateLimiter.IsLimited())
+        if (_targetWindow == IntPtr.Zero || rateLimiter.IsLimited())
         {
             return;
         }
