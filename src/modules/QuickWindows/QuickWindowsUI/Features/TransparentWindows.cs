@@ -5,23 +5,43 @@
 using System;
 using System.Runtime.InteropServices;
 using ManagedCommon;
+using QuickWindows.Settings;
 
 namespace QuickWindows.Features;
 
-public class TransparentWindows(IWindowHelpers windowHelpers) : ITransparentWindows
+public class TransparentWindows : ITransparentWindows
 {
     // TODO: Make this configurable and fetched form IUserSettings
     private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
     private readonly object _lock = new();
+    private readonly IWindowHelpers _windowHelpers;
+    private readonly IUserSettings _userSettings;
+
+    private bool _enabled = true;
     private IntPtr _targetWindow = IntPtr.Zero;
     private int? _originalExStyle;
     private byte? _originalOpacityLevel;
 
+    public TransparentWindows(
+        IWindowHelpers windowHelpers,
+        IUserSettings userSettings)
+    {
+        _windowHelpers = windowHelpers;
+        _userSettings = userSettings;
+
+        _userSettings.Changed += UserSettings_Changed;
+    }
+
     public void StartTransparency(int x, int y)
     {
+        if (!_enabled)
+        {
+            return;
+        }
+
         lock (_lock)
         {
-            _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
+            _targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
             if (_targetWindow == IntPtr.Zero)
             {
                 return;
@@ -57,6 +77,11 @@ public class TransparentWindows(IWindowHelpers windowHelpers) : ITransparentWind
 
     public void EndTransparency()
     {
+        if (!_enabled)
+        {
+            return;
+        }
+
         lock (_lock)
         {
             if (_targetWindow == IntPtr.Zero || _originalExStyle == null)
@@ -92,5 +117,16 @@ public class TransparentWindows(IWindowHelpers windowHelpers) : ITransparentWind
             _originalOpacityLevel = null;
             _targetWindow = IntPtr.Zero;
         }
+    }
+
+    private void UserSettings_Changed(object? sender, EventArgs e)
+    {
+        var enabled = _userSettings.TransparentWindowOnMove.Value;
+        if (!enabled)
+        {
+            EndTransparency();
+        }
+
+        _enabled = enabled;
     }
 }

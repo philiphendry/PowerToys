@@ -119,16 +119,77 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             get => _enabledStateIsGPOConfigured;
         }
 
-        public HotkeySettings ActivationShortcut
+        public bool ActivateOnAlt
         {
-            get => _quickWindowsSettings.Properties.ActivationShortcut;
+            get => _quickWindowsSettings.Properties.ActivateOnAlt;
+
             set
             {
-                if (_quickWindowsSettings.Properties.ActivationShortcut != value)
+                if (_quickWindowsSettings.Properties.ActivateOnAlt != value)
                 {
-                    _quickWindowsSettings.Properties.ActivationShortcut = value ?? _quickWindowsSettings.Properties.DefaultActivationShortcut;
-                    OnPropertyChanged(nameof(ActivationShortcut));
-                    NotifySettingsChanged();
+                    _quickWindowsSettings.Properties.ActivateOnAlt = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public bool ActivateOnShift
+        {
+            get => _quickWindowsSettings.Properties.ActivateOnShift;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.ActivateOnShift != value)
+                {
+                    _quickWindowsSettings.Properties.ActivateOnShift = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public bool ActivateOnCtrl
+        {
+            get => _quickWindowsSettings.Properties.ActivateOnCtrl;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.ActivateOnCtrl != value)
+                {
+                    _quickWindowsSettings.Properties.ActivateOnCtrl = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public bool DoNotActivateOnGameMode
+        {
+            get => _quickWindowsSettings.Properties.DoNotActivateOnGameMode;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.DoNotActivateOnGameMode != value)
+                {
+                    _quickWindowsSettings.Properties.DoNotActivateOnGameMode = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public bool TransparentWindowOnMove
+        {
+            get => _quickWindowsSettings.Properties.TransparentWindowOnMove;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.TransparentWindowOnMove != value)
+                {
+                    _quickWindowsSettings.Properties.TransparentWindowOnMove = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
                 }
             }
         }
