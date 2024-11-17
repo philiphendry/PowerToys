@@ -12,8 +12,10 @@ namespace QuickWindows.Keyboard;
 [PartCreationPolicy(CreationPolicy.Shared)]
 public class KeyboardMonitor : IKeyboardMonitor
 {
-    private static IntPtr _hookHandle = IntPtr.Zero;
-    private static NativeMethods.HookProc? _hookProc;
+    private readonly object _lock = new();
+    private IntPtr _hookHandle = IntPtr.Zero;
+    private NativeMethods.HookProc? _hookProc;
+    private bool _isHotKeyPressed;
 
     public event EventHandler? HotKeyPressed;
 
@@ -21,49 +23,72 @@ public class KeyboardMonitor : IKeyboardMonitor
 
     public void Install()
     {
-        _hookProc = KeyboardHookCallback;
-        _hookHandle = NativeMethods.SetWindowsHookEx(
-            NativeMethods.WH_KEYBOARD_LL,
-            _hookProc,
-            Marshal.GetHINSTANCE(typeof(KeyboardMonitor).Module),  // For WH_KEYBOARD_LL, this can be null
-            0);
-
-        if (_hookHandle == IntPtr.Zero)
+        lock (_lock)
         {
-            throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+            _hookProc = KeyboardHookCallback;
+            _hookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _hookProc, Marshal.GetHINSTANCE(typeof(KeyboardMonitor).Module), 0);
+            if (_hookHandle == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
+            }
         }
     }
 
     public void Uninstall()
     {
-        if (_hookHandle == IntPtr.Zero)
+        lock (_lock)
         {
-            return;
-        }
+            if (_hookHandle == IntPtr.Zero)
+            {
+                return;
+            }
 
-        NativeMethods.UnhookWindowsHookEx(_hookHandle);
-        _hookHandle = IntPtr.Zero;
+            NativeMethods.UnhookWindowsHookEx(_hookHandle);
+            _hookHandle = IntPtr.Zero;
+        }
     }
 
     private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode < 0)
+        lock (_lock)
         {
+            if (nCode < 0)
+            {
+                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+            }
+
+            var keyboardHookStruct = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
+            switch (wParam)
+            {
+                case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN:
+                    if (IsHotKey(keyboardHookStruct.vkCode))
+                    {
+                        if (!_isHotKeyPressed)
+                        {
+                            _isHotKeyPressed = true;
+                            HotKeyPressed?.Invoke(this, EventArgs.Empty);
+                        }
+                    }
+                    else if (_isHotKeyPressed)
+                    {
+                        _isHotKeyPressed = false;
+                        HotKeyReleased?.Invoke(this, EventArgs.Empty);
+                    }
+
+                    break;
+
+                case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP:
+                    if (IsHotKey(keyboardHookStruct.vkCode))
+                    {
+                        _isHotKeyPressed = false;
+                        HotKeyReleased?.Invoke(this, EventArgs.Empty);
+                    }
+
+                    break;
+            }
+
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
-
-        var vkCode = Marshal.ReadInt32(lParam);
-        switch (wParam)
-        {
-            case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN when IsHotKey(vkCode):
-                HotKeyPressed?.Invoke(this, EventArgs.Empty);
-                break;
-            case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP when IsHotKey(vkCode):
-                HotKeyReleased?.Invoke(this, EventArgs.Empty);
-                break;
-        }
-
-        return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 
     private static bool IsHotKey(int vkCode)

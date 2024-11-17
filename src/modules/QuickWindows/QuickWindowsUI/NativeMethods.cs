@@ -183,7 +183,7 @@ internal static class NativeMethods
         internal int X;
         internal int Y;
 
-        public static explicit operator System.Windows.Point(PointInter point) => new System.Windows.Point(point.X, point.Y);
+        public static explicit operator Point(PointInter point) => new Point(point.X, point.Y);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -252,32 +252,13 @@ internal static class NativeMethods
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct LowLevelKeyboardInputEvent
+    internal struct KBDLLHOOKSTRUCT
     {
-        /// <summary>
-        /// A virtual-key code. The code must be a value in the range 1 to 254.
-        /// </summary>
-        internal int VirtualCode;
-
-        /// <summary>
-        /// A hardware scan code for the key.
-        /// </summary>
-        internal int HardwareScanCode;
-
-        /// <summary>
-        /// The extended-key flag, event-injected Flags, context code, and transition-state flag. This member is specified as follows. An application can use the following values to test the keystroke Flags. Testing LLKHF_INJECTED (bit 4) will tell you whether the event was injected. If it was, then testing LLKHF_LOWER_IL_INJECTED (bit 1) will tell you whether or not the event was injected from a process running at lower integrity level.
-        /// </summary>
-        internal int Flags;
-
-        /// <summary>
-        /// The time stamp for this message, equivalent to what GetMessageTime would return for this message.
-        /// </summary>
-        internal int TimeStamp;
-
-        /// <summary>
-        /// Additional information associated with the message.
-        /// </summary>
-        internal IntPtr AdditionalInformation;
+        internal int vkCode;
+        internal int scanCode;
+        internal int flags;
+        internal int time;
+        internal IntPtr dwExtraInfo;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -315,6 +296,10 @@ internal static class NativeMethods
         var hwnd = new WindowInteropHelper(win).Handle;
         _ = SetWindowLong(hwnd, GWL_EX_STYLE, GetWindowLong(hwnd, GWL_EX_STYLE) | WS_EX_TOOLWINDOW);
     }
+
+    [DllImport("KERNEL32.dll", ExactSpelling = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    public static extern uint GetCurrentThreadId();
 
     internal const uint IDC_ARROW = 32512;
     internal const uint IDC_SIZENWSE = 32642;
