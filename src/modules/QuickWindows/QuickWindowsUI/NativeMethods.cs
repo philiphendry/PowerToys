@@ -196,7 +196,7 @@ internal static class NativeMethods
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "false positive, used in MonitorResolutionHelper")]
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
-    internal class MonitorInfoEx
+    internal sealed class MonitorInfoEx
     {
         internal int cbSize = Marshal.SizeOf(typeof(MonitorInfoEx));
         internal Rect rcMonitor;

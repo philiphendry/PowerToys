@@ -3,13 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 
 namespace QuickWindows.Keyboard;
 
-[Export(typeof(IKeyboardMonitor))]
-[PartCreationPolicy(CreationPolicy.Shared)]
 public class KeyboardMonitor : IKeyboardMonitor
 {
     private readonly object _lock = new();

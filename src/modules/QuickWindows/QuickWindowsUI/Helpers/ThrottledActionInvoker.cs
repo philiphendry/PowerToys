@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Windows.Threading;
 
 namespace QuickWindows.Helpers;
 
-[Export(typeof(IThrottledActionInvoker))]
 public sealed class ThrottledActionInvoker : IThrottledActionInvoker
 {
     private readonly object _invokerLock = new();

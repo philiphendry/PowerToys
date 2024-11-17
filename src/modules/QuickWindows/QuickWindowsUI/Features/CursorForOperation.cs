@@ -3,14 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-[Export(typeof(ICursorForOperation))]
 public class CursorForOperation : ICursorForOperation, IDisposable
 {
     private enum CursorStyle
@@ -111,7 +108,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
         if (atom == 0)
         {
             var error = Marshal.GetLastWin32Error();
-            Debug.WriteLine($"Failed to register window class. Error: {error}");
+            Logger.LogDebug($"Failed to register window class. Error: {error}");
             return;
         }
 

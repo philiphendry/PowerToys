@@ -3,13 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-[Export(typeof(IRolodexWindows))]
 public class RolodexWindows : IRolodexWindows
 {
     public void SendWindowToBottom(int x, int y)

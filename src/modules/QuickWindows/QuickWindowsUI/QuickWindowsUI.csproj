@@ -32,7 +32,7 @@
     </Resource>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Composition" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="System.IO.Abstractions" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
     <PackageReference Include="System.Drawing.Common" />

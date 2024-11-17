@@ -3,12 +3,21 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Threading;
 using System.Windows;
+using Common.UI;
 using ManagedCommon;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.PowerToys.Telemetry;
+using PowerToys.Interop;
+using QuickWindows.Features;
+using QuickWindows.Helpers;
+using QuickWindows.Keyboard;
+using QuickWindows.Mouse;
+using QuickWindows.Settings;
+using WindowHelpers = QuickWindows.Features.WindowHelpers;
 
 namespace QuickWindows;
 
@@ -25,7 +34,6 @@ public partial class App : Application, IDisposable
 
     private CancellationTokenSource NativeThreadCTS { get; set; } = default!;
 
-    [Export]
     private static CancellationToken ExitToken { get; set; }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -69,16 +77,46 @@ public partial class App : Application, IDisposable
             });
         }
 
-        Bootstrapper.InitializeContainer(this);
-        _quickWindowsManager = Bootstrapper.Container.GetExportedValue<IQuickWindowsManager>();
-        _quickWindowsManager!.ActivateHotKey();
+        IHost host = default!;
+
+        NativeEventWaiter.WaitForEventLoop(
+            Constants.TerminateQuickWindowsSharedEvent(),
+            Current.Shutdown,
+            Current.Dispatcher,
+            ExitToken);
+
+        NativeEventWaiter.WaitForEventLoop(
+            Constants.QuickWindowsSendSettingsTelemetryEvent(),
+            () => host.Services.GetService<IUserSettings>()!.SendSettingsTelemetry(),
+            Current.Dispatcher,
+            ExitToken);
 
         base.OnStartup(e);
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.Services.AddSingleton<ICursorForOperation, CursorForOperation>();
+        builder.Services.AddSingleton<IMovingWindows, MovingWindows>();
+        builder.Services.AddSingleton<IRateLimiter, RateLimiter>();
+        builder.Services.AddSingleton<IResizingWindows, ResizingWindows>();
+        builder.Services.AddSingleton<IRolodexWindows, RolodexWindows>();
+        builder.Services.AddSingleton<ITransparentWindows, TransparentWindows>();
+        builder.Services.AddSingleton<IWindowIdentifier, WindowIdentifier>();
+        builder.Services.AddSingleton<IThrottledActionInvoker, ThrottledActionInvoker>();
+        builder.Services.AddSingleton<IWindowHelpers, WindowHelpers>();
+        builder.Services.AddSingleton<IUserSettings, UserSettings>();
+        builder.Services.AddSingleton<IKeyboardMonitor, KeyboardMonitor>();
+        builder.Services.AddSingleton<IMouseHook, MouseHook>();
+        builder.Services.AddHostedService<QuickWindowsManager>();
+
+        host = builder.Build();
+        host.RunAsync(ExitToken);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         Logger.LogDebug("Exiting Quick Windows.");
+
+        NativeThreadCTS.Cancel();
 
         _quickWindowsManager?.DeactivateHotKey();
         _quickWindowsManager = null;
