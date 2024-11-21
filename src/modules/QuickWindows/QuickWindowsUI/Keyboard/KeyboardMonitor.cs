@@ -3,11 +3,19 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Input;
+using ManagedCommon;
+using QuickWindows.Features;
+using QuickWindows.Settings;
 
 namespace QuickWindows.Keyboard;
 
-public class KeyboardMonitor : IKeyboardMonitor
+public class KeyboardMonitor(
+    IUserSettings userSettings,
+    IWindowHelpers windowHelpers)
+    : IKeyboardMonitor, IDisposable
 {
     private readonly object _lock = new();
     private IntPtr _hookHandle = IntPtr.Zero;
@@ -54,34 +62,63 @@ public class KeyboardMonitor : IKeyboardMonitor
                 return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
             }
 
-            var keyboardHookStruct = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
-            switch (wParam)
+            if (userSettings.DoNotActivateOnGameMode.Value && windowHelpers.DetectGameMode())
             {
-                case NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN:
-                    if (IsHotKey(keyboardHookStruct.vkCode))
+                Logger.LogDebug("Game mode detected, not activating QuickWindows");
+                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+            }
+
+            var isKeyDown = wParam == NativeMethods.WM_KEYDOWN || wParam == NativeMethods.WM_SYSKEYDOWN;
+            var isAltPressed = isKeyDown
+                                && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0
+                                || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LMENU) & 0x8000) != 0
+                                || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RMENU) & 0x8000) != 0);
+            var isShiftPressed = isKeyDown
+                                 && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0
+                                     || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LSHIFT) & 0x8000) != 0
+                                     || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RSHIFT) & 0x8000) != 0);
+            var isCtrlPressed = isKeyDown
+                                && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0
+                                    || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LCONTROL) & 0x8000) != 0
+                                    || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RCONTROL) & 0x8000) != 0);
+
+            var anyOtherKeyPressed = false;
+            for (var key = 0; key < 256; key++)
                     {
-                        if (!_isHotKeyPressed)
+                if ((userSettings.ActivateOnAlt.Value && key is NativeMethods.VK_MENU or NativeMethods.VK_LMENU or NativeMethods.VK_RMENU)
+                    || (userSettings.ActivateOnShift.Value && key is NativeMethods.VK_SHIFT or NativeMethods.VK_LSHIFT or NativeMethods.VK_RSHIFT)
+                    || (userSettings.ActivateOnCtrl.Value && key is NativeMethods.VK_CONTROL or NativeMethods.VK_LCONTROL or NativeMethods.VK_RCONTROL))
                         {
-                            _isHotKeyPressed = true;
-                            HotKeyPressed?.Invoke(this, EventArgs.Empty);
-                        }
+                    continue;
                     }
-                    else if (_isHotKeyPressed)
+
+                if ((NativeMethods.GetAsyncKeyState(key) & 0x8000) != 0)
+                    {
+                    anyOtherKeyPressed = true;
+                    break;
+                }
+                    }
+
+            Logger.LogDebug($"### Alt: {isAltPressed}, Shift: {isShiftPressed}, Ctrl: {isCtrlPressed}, AnyOther: {anyOtherKeyPressed}, isKeyDown: {isKeyDown}");
+
+            if (anyOtherKeyPressed
+                || (userSettings.ActivateOnAlt.Value && !isAltPressed)
+                || (userSettings.ActivateOnShift.Value && !isShiftPressed)
+                || (userSettings.ActivateOnCtrl.Value && !isCtrlPressed))
+            {
+                if (_isHotKeyPressed)
                     {
                         _isHotKeyPressed = false;
                         HotKeyReleased?.Invoke(this, EventArgs.Empty);
                     }
-
-                    break;
-
-                case NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP:
-                    if (IsHotKey(keyboardHookStruct.vkCode))
-                    {
-                        _isHotKeyPressed = false;
-                        HotKeyReleased?.Invoke(this, EventArgs.Empty);
-                    }
-
-                    break;
+            }
+            else
+            {
+                if (!_isHotKeyPressed)
+                {
+                    _isHotKeyPressed = true;
+                    HotKeyPressed?.Invoke(this, EventArgs.Empty);
+                }
             }
 
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
