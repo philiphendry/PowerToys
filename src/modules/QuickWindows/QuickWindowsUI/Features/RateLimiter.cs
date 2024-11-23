@@ -8,13 +8,14 @@ namespace QuickWindows.Features;
 
 public class RateLimiter : IRateLimiter
 {
-    private const int MinUpdateIntervalMs = 32; // Approx. 30fps
     private long _lastUpdateTime = Environment.TickCount64;
+
+    public int Interval { get; set; } = 32;
 
     public bool IsLimited()
     {
         var now = Environment.TickCount64;
-        if ((now - _lastUpdateTime) < MinUpdateIntervalMs)
+        if ((now - _lastUpdateTime) < Interval)
         {
             return true;
         }

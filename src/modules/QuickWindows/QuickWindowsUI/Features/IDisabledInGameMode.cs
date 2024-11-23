@@ -4,9 +4,7 @@
 
 namespace QuickWindows.Features;
 
-public interface IRateLimiter
+public interface IDisabledInGameMode
 {
-    bool IsLimited();
-
-    int Interval { get; set; }
+    bool IsDisabledInGameMode();
 }
