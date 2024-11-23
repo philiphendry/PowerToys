@@ -8,15 +8,26 @@ using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-public class ResizingWindows(IRateLimiter rateLimiter,
-    IWindowHelpers windowHelpers) : IResizingWindows
+public class ResizingWindows : IResizingWindows
 {
+    private const int MinUpdateIntervalMs = 32; // Approx. 30fps
     private const int MinimumWindowSize = 200;
 
+    private readonly IRateLimiter _rateLimiter;
+    private readonly IWindowHelpers _windowHelpers;
     private IntPtr _targetWindow = IntPtr.Zero;
     private NativeMethods.POINT _initialMousePosition;
     private NativeMethods.Rect _initialWindowRect;
     private ResizeOperation _currentOperation;
+
+    public ResizingWindows(
+        IRateLimiter rateLimiter,
+        IWindowHelpers windowHelpers)
+    {
+        _rateLimiter = rateLimiter;
+        _rateLimiter.Interval = MinUpdateIntervalMs;
+        _windowHelpers = windowHelpers;
+    }
 
     public enum ResizeOperation
     {
@@ -28,7 +39,7 @@ public class ResizingWindows(IRateLimiter rateLimiter,
 
     public ResizeOperation? StartResize(int x, int y)
     {
-        _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
+        _targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
         if (_targetWindow == IntPtr.Zero)
         {
             return null;
@@ -60,7 +71,7 @@ public class ResizingWindows(IRateLimiter rateLimiter,
 
     public void ResizeWindow(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero || rateLimiter.IsLimited())
+        if (_targetWindow == IntPtr.Zero || _rateLimiter.IsLimited())
         {
             return;
         }

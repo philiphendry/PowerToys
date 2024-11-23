@@ -94,20 +94,7 @@ public partial class App : Application, IDisposable
         base.OnStartup(e);
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Services.AddSingleton<ICursorForOperation, CursorForOperation>();
-        builder.Services.AddSingleton<IMovingWindows, MovingWindows>();
-        builder.Services.AddSingleton<IRateLimiter, RateLimiter>();
-        builder.Services.AddSingleton<IResizingWindows, ResizingWindows>();
-        builder.Services.AddSingleton<IRolodexWindows, RolodexWindows>();
-        builder.Services.AddSingleton<ITransparentWindows, TransparentWindows>();
-        builder.Services.AddSingleton<IWindowIdentifier, WindowIdentifier>();
-        builder.Services.AddSingleton<IThrottledActionInvoker, ThrottledActionInvoker>();
-        builder.Services.AddSingleton<IWindowHelpers, WindowHelpers>();
-        builder.Services.AddSingleton<IUserSettings, UserSettings>();
-        builder.Services.AddSingleton<IKeyboardMonitor, KeyboardMonitor>();
-        builder.Services.AddSingleton<IMouseHook, MouseHook>();
-        builder.Services.AddHostedService<QuickWindowsManager>();
-
+        DependencyInjection.Configure(builder.Services);
         host = builder.Build();
         host.RunAsync(ExitToken);
     }

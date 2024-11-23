@@ -13,7 +13,7 @@ namespace QuickWindows.Keyboard;
 
 public class KeyboardMonitor(
     IUserSettings userSettings,
-    IWindowHelpers windowHelpers)
+    IDisabledInGameMode disabledInGameMode)
     : IKeyboardMonitor, IDisposable
 {
     private readonly List<string> _activationKeys = new();
@@ -67,7 +67,7 @@ public class KeyboardMonitor(
 
     private void Hook_KeyboardPressed(object? sender, GlobalKeyboardHookEventArgs e)
     {
-        if (windowHelpers.DetectGameMode())
+        if (disabledInGameMode.IsDisabledInGameMode())
         {
             DeactivateHotKey();
             return;

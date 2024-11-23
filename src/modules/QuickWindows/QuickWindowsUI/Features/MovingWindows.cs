@@ -8,16 +8,27 @@ using ManagedCommon;
 
 namespace QuickWindows.Features;
 
-public class MovingWindows(IRateLimiter rateLimiter,
-    IWindowHelpers windowHelpers) : IMovingWindows
+public class MovingWindows : IMovingWindows
 {
+    private const int MinUpdateIntervalMs = 32; // Approx. 30fps
+    private readonly IRateLimiter _rateLimiter;
+    private readonly IWindowHelpers _windowHelpers;
     private IntPtr _targetWindow = IntPtr.Zero;
     private NativeMethods.POINT _initialMousePosition;
     private NativeMethods.Rect _initialWindowRect;
 
+    public MovingWindows(
+        IRateLimiter rateLimiter,
+        IWindowHelpers windowHelpers)
+    {
+        _rateLimiter = rateLimiter;
+        _rateLimiter.Interval = MinUpdateIntervalMs;
+        _windowHelpers = windowHelpers;
+    }
+
     public void StartMove(int x, int y)
     {
-        _targetWindow = windowHelpers.GetWindowAtCursor(x, y);
+        _targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
         if (_targetWindow == IntPtr.Zero)
         {
             return;
@@ -34,7 +45,7 @@ public class MovingWindows(IRateLimiter rateLimiter,
 
     public void MoveWindow(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero || rateLimiter.IsLimited())
+        if (_targetWindow == IntPtr.Zero || _rateLimiter.IsLimited())
         {
             return;
         }

@@ -96,8 +96,9 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     [ResourceExposure(ResourceScope.None)]
-    internal static extern bool GetMonitorInfo(
-        HandleRef hmonitor, [In, Out] MonitorInfoEx info);
+    internal static extern bool GetMonitorInfo(HandleRef hmonitor, [In, Out] MonitorInfoEx info);
+
+    internal const uint MONITOR_DEFAULTTONEAREST = 2;
 
     [DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
     [ResourceExposure(ResourceScope.None)]
@@ -127,7 +128,13 @@ internal static class NativeMethods
     internal static extern IntPtr WindowFromPoint(POINT point);
 
     [DllImport("user32.dll", SetLastError = true)]
+    internal static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
@@ -341,6 +348,7 @@ internal static class NativeMethods
     internal const uint WM_SETCURSOR = 0x0020;
     internal const uint WS_POPUP = 0x80000000;
     internal const uint WS_EX_TOPMOST = 0x00000008;
+    internal const uint WS_CAPTION = 0x00C00000;
     internal const uint SW_HIDE = 0;
     internal const uint SW_SHOWNOACTIVATE = 4;
 
