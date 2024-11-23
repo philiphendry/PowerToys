@@ -9,4 +9,6 @@ namespace QuickWindows.Features;
 public interface IWindowHelpers
 {
     IntPtr GetWindowAtCursor(int x, int y);
+
+    bool DetectGameMode();
 }

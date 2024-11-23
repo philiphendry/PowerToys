@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using QuickWindows.Features;
 using QuickWindows.Keyboard;
 using QuickWindows.Mouse;
-using QuickWindows.Settings;
 
 namespace QuickWindows;
 
@@ -24,7 +23,6 @@ public enum WindowOperation
 }
 
 public class QuickWindowsManager(
-    IUserSettings userSettings,
     IKeyboardMonitor keyboardHook,
     IMouseHook mouseHook,
     IMovingWindows movingWindows,
@@ -37,7 +35,6 @@ public class QuickWindowsManager(
 {
     private readonly WindowOperation _defaultOperation = WindowOperation.None;
     private readonly object _lock = new();
-    private readonly IUserSettings _userSettings = userSettings;
     private bool _isHotKeyPressed;
     private WindowOperation _currentOperation;
 
