@@ -10,7 +10,15 @@ public interface IUserSettings
 {
     event EventHandler? Changed;
 
-    void SendSettingsTelemetry();
+    SettingItem<bool> ActivateOnAlt { get; }
+
+    SettingItem<bool> ActivateOnShift { get; }
+
+    SettingItem<bool> ActivateOnCtrl { get; }
+
+    SettingItem<bool> DoNotActivateOnGameMode { get; }
 
     SettingItem<bool> TransparentWindowOnMove { get; }
+
+    void SendSettingsTelemetry();
 }

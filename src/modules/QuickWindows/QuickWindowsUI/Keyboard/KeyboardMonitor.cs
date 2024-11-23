@@ -3,10 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Windows.Input;
-using ManagedCommon;
+using Microsoft.PowerToys.Settings.UI.Library.Utilities;
 using QuickWindows.Features;
 using QuickWindows.Settings;
 
@@ -17,9 +16,9 @@ public class KeyboardMonitor(
     IWindowHelpers windowHelpers)
     : IKeyboardMonitor, IDisposable
 {
-    private readonly object _lock = new();
-    private IntPtr _hookHandle = IntPtr.Zero;
-    private NativeMethods.HookProc? _hookProc;
+    private readonly List<string> _activationKeys = new();
+    private List<string> _previouslyPressedKeys = new();
+    private GlobalKeyboardHook? _keyboardHook;
     private bool _isHotKeyPressed;
 
     public event EventHandler? HotKeyPressed;
@@ -28,105 +27,171 @@ public class KeyboardMonitor(
 
     public void Install()
     {
-        lock (_lock)
-        {
-            _hookProc = KeyboardHookCallback;
-            _hookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _hookProc, Marshal.GetHINSTANCE(typeof(KeyboardMonitor).Module), 0);
-            if (_hookHandle == IntPtr.Zero)
-            {
-                throw new InvalidOperationException($"Failed to set hook. Error: {Marshal.GetLastWin32Error()}");
-            }
-        }
+        _keyboardHook = new GlobalKeyboardHook();
+        _keyboardHook.KeyboardPressed += Hook_KeyboardPressed;
+
+        userSettings.ActivateOnAlt.PropertyChanged += (_, _) => SetActivationKeys();
+        userSettings.ActivateOnCtrl.PropertyChanged += (_, _) => SetActivationKeys();
+        userSettings.ActivateOnShift.PropertyChanged += (_, _) => SetActivationKeys();
+
+        SetActivationKeys();
     }
 
     public void Uninstall()
     {
-        lock (_lock)
-        {
-            if (_hookHandle == IntPtr.Zero)
-            {
-                return;
-            }
+        _keyboardHook?.Dispose();
+        _keyboardHook = null;
+    }
 
-            NativeMethods.UnhookWindowsHookEx(_hookHandle);
-            _hookHandle = IntPtr.Zero;
+    private void SetActivationKeys()
+    {
+        _activationKeys.Clear();
+
+        if (userSettings.ActivateOnAlt.Value)
+        {
+            _activationKeys.Add("Alt");
+        }
+
+        if (userSettings.ActivateOnCtrl.Value)
+        {
+            _activationKeys.Add("Ctrl");
+        }
+
+        if (userSettings.ActivateOnShift.Value)
+        {
+            _activationKeys.Add("Shift");
+        }
+
+        _activationKeys.Sort();
+    }
+
+    private void Hook_KeyboardPressed(object? sender, GlobalKeyboardHookEventArgs e)
+    {
+        if (windowHelpers.DetectGameMode())
+        {
+            DeactivateHotKey();
+            return;
+        }
+
+        var currentlyPressedKeys = new List<string>();
+        var virtualCode = e.KeyboardData.VirtualCode;
+
+        // ESC pressed
+        if (virtualCode == KeyInterop.VirtualKeyFromKey(Key.Escape)
+            && e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown
+            )
+        {
+            DeactivateHotKey();
+            return;
+        }
+
+        var name = Helper.GetKeyName((uint)virtualCode)
+            .Replace(" (Left)", string.Empty)
+            .Replace(" (Right)", string.Empty);
+
+        if (e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown || e.KeyboardState == GlobalKeyboardHook.KeyboardState.SysKeyDown)
+        {
+            // Check pressed modifier keys.
+            AddModifierKeys(currentlyPressedKeys);
+            if (!currentlyPressedKeys.Contains(name))
+            {
+                currentlyPressedKeys.Add(name);
+            }
+        }
+
+        currentlyPressedKeys.Sort();
+
+#if DEBUG
+        // Logger.LogDebug($"### currentlyPressedKeys: {string.Join(", ", currentlyPressedKeys)}, _activationKeys: {string.Join(", ", _activationKeys)}");
+#endif
+
+        if (currentlyPressedKeys.Count == 0 && _previouslyPressedKeys.Count != 0)
+        {
+            DeactivateHotKey();
+        }
+
+        _previouslyPressedKeys = currentlyPressedKeys;
+
+        if (ArraysAreSame(currentlyPressedKeys, _activationKeys))
+        {
+            // avoid triggering this action multiple times as this will be called nonstop while keys are pressed
+            if (!_isHotKeyPressed)
+            {
+                _isHotKeyPressed = true;
+                HotKeyPressed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        else
+        {
+            DeactivateHotKey();
         }
     }
 
-    private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+    private void DeactivateHotKey()
     {
-        lock (_lock)
+        if (_isHotKeyPressed)
         {
-            if (nCode < 0)
-            {
-                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
-            }
-
-            if (userSettings.DoNotActivateOnGameMode.Value && windowHelpers.DetectGameMode())
-            {
-                Logger.LogDebug("Game mode detected, not activating QuickWindows");
-                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
-            }
-
-            var isKeyDown = wParam == NativeMethods.WM_KEYDOWN || wParam == NativeMethods.WM_SYSKEYDOWN;
-            var isAltPressed = isKeyDown
-                                && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0
-                                || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LMENU) & 0x8000) != 0
-                                || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RMENU) & 0x8000) != 0);
-            var isShiftPressed = isKeyDown
-                                 && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0
-                                     || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LSHIFT) & 0x8000) != 0
-                                     || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RSHIFT) & 0x8000) != 0);
-            var isCtrlPressed = isKeyDown
-                                && ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0
-                                    || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LCONTROL) & 0x8000) != 0
-                                    || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RCONTROL) & 0x8000) != 0);
-
-            var anyOtherKeyPressed = false;
-            for (var key = 0; key < 256; key++)
-                    {
-                if ((userSettings.ActivateOnAlt.Value && key is NativeMethods.VK_MENU or NativeMethods.VK_LMENU or NativeMethods.VK_RMENU)
-                    || (userSettings.ActivateOnShift.Value && key is NativeMethods.VK_SHIFT or NativeMethods.VK_LSHIFT or NativeMethods.VK_RSHIFT)
-                    || (userSettings.ActivateOnCtrl.Value && key is NativeMethods.VK_CONTROL or NativeMethods.VK_LCONTROL or NativeMethods.VK_RCONTROL))
-                        {
-                    continue;
-                    }
-
-                if ((NativeMethods.GetAsyncKeyState(key) & 0x8000) != 0)
-                    {
-                    anyOtherKeyPressed = true;
-                    break;
-                }
-                    }
-
-            Logger.LogDebug($"### Alt: {isAltPressed}, Shift: {isShiftPressed}, Ctrl: {isCtrlPressed}, AnyOther: {anyOtherKeyPressed}, isKeyDown: {isKeyDown}");
-
-            if (anyOtherKeyPressed
-                || (userSettings.ActivateOnAlt.Value && !isAltPressed)
-                || (userSettings.ActivateOnShift.Value && !isShiftPressed)
-                || (userSettings.ActivateOnCtrl.Value && !isCtrlPressed))
-            {
-                if (_isHotKeyPressed)
-                    {
-                        _isHotKeyPressed = false;
-                        HotKeyReleased?.Invoke(this, EventArgs.Empty);
-                    }
-            }
-            else
-            {
-                if (!_isHotKeyPressed)
-                {
-                    _isHotKeyPressed = true;
-                    HotKeyPressed?.Invoke(this, EventArgs.Empty);
-                }
-            }
-
-            return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+            _isHotKeyPressed = false;
+            HotKeyReleased?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    private static bool IsHotKey(int vkCode)
+    public void Temp()
     {
-        return vkCode == NativeMethods.VK_MENU || vkCode == NativeMethods.VK_LMENU || vkCode == NativeMethods.VK_RMENU;
+        HotKeyReleased?.Invoke(this, EventArgs.Empty);
+        HotKeyPressed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static bool ArraysAreSame(List<string> first, List<string> second)
+    {
+        if (first.Count != second.Count || (first.Count == 0 && second.Count == 0))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < first.Count; i++)
+        {
+            if (first[i] != second[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static void AddModifierKeys(List<string> currentlyPressedKeys)
+    {
+        if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LSHIFT) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RSHIFT) & 0x8000) != 0)
+        {
+            currentlyPressedKeys.Add("Shift");
+        }
+
+        if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LCONTROL) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RCONTROL) & 0x8000) != 0)
+        {
+            currentlyPressedKeys.Add("Ctrl");
+        }
+
+        if ((NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LMENU) & 0x8000) != 0
+            || (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RMENU) & 0x8000) != 0)
+        {
+            currentlyPressedKeys.Add("Alt");
+        }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        Uninstall();
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

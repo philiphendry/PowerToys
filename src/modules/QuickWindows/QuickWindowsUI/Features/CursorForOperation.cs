@@ -17,7 +17,6 @@ public class CursorForOperation : ICursorForOperation, IDisposable
         NorthEastSouthWest,
     }
 
-    private readonly object _lock = new();
     private IntPtr _cursorWindow = IntPtr.Zero;
     private WndProc? _wndProcDelegate;
     private CursorStyle _cursorStyle;
@@ -27,11 +26,6 @@ public class CursorForOperation : ICursorForOperation, IDisposable
 
     private const string CursorWindowClassName = "CursorOverlayWindow";
 
-    public CursorForOperation()
-    {
-        CreateCursorWindow(0, 0);
-    }
-
     public void StartMove(int x, int y) => StartOperation(x, y, CursorStyle.AllDirections);
 
     public void StartResizeNorthWestSouthEast(int x, int y) => StartOperation(x, y, CursorStyle.NorthWestSouthEast);
@@ -40,17 +34,17 @@ public class CursorForOperation : ICursorForOperation, IDisposable
 
     private void StartOperation(int x, int y, CursorStyle cursorStyle)
     {
-        lock (_lock)
+        if (_cursorWindow != IntPtr.Zero)
         {
-            if (_cursorWindow == IntPtr.Zero)
-            {
-                return;
-            }
-
-            _cursorStyle = cursorStyle;
-            NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_SHOWNOACTIVATE);
-            MoveToCursor(x, y);
+            Logger.LogDebug("Cursor window already exists");
+            return;
         }
+
+        Logger.LogDebug($"Starting operation {cursorStyle} at {x}, {y}");
+
+        _cursorStyle = cursorStyle;
+        CreateCursorWindow(0, 0);
+        MoveToCursor(x, y);
     }
 
     public void HideCursor()
@@ -60,7 +54,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
             return;
         }
 
-        NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_HIDE);
+        DestroyCursorWindow();
         _wndProcDelegate = null;
     }
 
@@ -135,6 +129,8 @@ public class CursorForOperation : ICursorForOperation, IDisposable
 
         // Make the window transparent
         NativeMethods.SetLayeredWindowAttributes(_cursorWindow, 0, 1, NativeMethods.LWA_ALPHA);
+
+        NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_SHOWNOACTIVATE);
     }
 
     private void DestroyCursorWindow()
@@ -143,6 +139,8 @@ public class CursorForOperation : ICursorForOperation, IDisposable
         {
             return;
         }
+
+        NativeMethods.ShowWindow(_cursorWindow, (int)NativeMethods.SW_HIDE);
 
         if (!NativeMethods.DestroyWindow(_cursorWindow))
         {

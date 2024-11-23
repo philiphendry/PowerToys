@@ -32,15 +32,21 @@ public class UserSettings : IUserSettings
     {
         _settingsUtils = new SettingsUtils();
 
-        TransparentWindowOnMove = new SettingItem<bool>(true);
-
         LoadSettingsFromJson();
 
         // delay loading settings on change by some time to avoid file in use exception
         _watcher = Helper.GetFileWatcher(QuickWindowsModuleName, "settings.json", () => throttledActionInvoker.ScheduleAction(LoadSettingsFromJson, SettingsReadOnChangeDelayInMs));
     }
 
-    public SettingItem<bool> TransparentWindowOnMove { get; private set; }
+    public SettingItem<bool> ActivateOnAlt { get; } = new(true);
+
+    public SettingItem<bool> ActivateOnShift { get; } = new(false);
+
+    public SettingItem<bool> ActivateOnCtrl { get; } = new(false);
+
+    public SettingItem<bool> DoNotActivateOnGameMode { get; } = new(true);
+
+    public SettingItem<bool> TransparentWindowOnMove { get; } = new(true);
 
     private void LoadSettingsFromJson()
     {
@@ -67,6 +73,10 @@ public class UserSettings : IUserSettings
                     {
                         void UpdateSettings()
                         {
+                            ActivateOnAlt.Value = settings.Properties.ActivateOnAlt;
+                            ActivateOnShift.Value = settings.Properties.ActivateOnShift;
+                            ActivateOnCtrl.Value = settings.Properties.ActivateOnCtrl;
+                            DoNotActivateOnGameMode.Value = settings.Properties.DoNotActivateOnGameMode;
                             TransparentWindowOnMove.Value = settings.Properties.TransparentWindowOnMove;
 
                             Logger.LogDebug("Publishing changes to settings.");

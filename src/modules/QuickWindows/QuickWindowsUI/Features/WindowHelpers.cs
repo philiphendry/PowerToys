@@ -34,4 +34,14 @@ public class WindowHelpers : IWindowHelpers
 
         return rootHwnd;
     }
+
+    public bool DetectGameMode()
+    {
+        if (NativeMethods.SHQueryUserNotificationState(out var notificationState) == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        return notificationState == NativeMethods.QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN;
+    }
 }
