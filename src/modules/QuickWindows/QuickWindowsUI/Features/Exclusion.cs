@@ -4,7 +4,4 @@
 
 namespace QuickWindows.Features;
 
-public interface IWindowIdentifier
-{
-    void IdentifyWindow(int x, int y);
-}
+public sealed record Exclusion(string WindowTitle, string WindowClass);

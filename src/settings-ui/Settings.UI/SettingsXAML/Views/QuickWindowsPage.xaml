@@ -62,6 +62,32 @@
                     </tkcontrols:SettingsCard>
                 </controls:SettingsGroup>
 
+                <controls:SettingsGroup x:Uid="ExcludedApps" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_ExcludeApps_Enabled" HeaderIcon="{ui:FontIcon Glyph=&#xE792;}">
+                        <ToggleSwitch x:Uid="QuickWindows_ExcludeApps_Enabled_Toggle" IsOn="{x:Bind ViewModel.ExcludeAppDetection, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsExpander
+                        x:Uid="QuickWindows_ExcludeApps"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xECE4;}"
+                        IsExpanded="True">
+                        <tkcontrols:SettingsExpander.Items>
+                            <tkcontrols:SettingsCard HorizontalContentAlignment="Stretch" ContentAlignment="Vertical">
+                                <TextBox
+                                    x:Uid="QuickWindows_ExcludeApps_TextBoxControl"
+                                    MinWidth="240"
+                                    MinHeight="160"
+                                    AcceptsReturn="True"
+                                    ScrollViewer.IsVerticalRailEnabled="True"
+                                    ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                    ScrollViewer.VerticalScrollMode="Enabled"
+                                    Text="{x:Bind ViewModel.ExcludedApps, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextWrapping="Wrap" />
+                            </tkcontrols:SettingsCard>
+                        </tkcontrols:SettingsExpander.Items>
+                    </tkcontrols:SettingsExpander>
+                </controls:SettingsGroup>
+
+
             </StackPanel>
         </controls:SettingsPageControl.ModuleContent>
 

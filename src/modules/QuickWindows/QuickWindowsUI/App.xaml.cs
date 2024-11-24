@@ -12,12 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.PowerToys.Telemetry;
 using PowerToys.Interop;
-using QuickWindows.Features;
-using QuickWindows.Helpers;
-using QuickWindows.Keyboard;
-using QuickWindows.Mouse;
 using QuickWindows.Settings;
-using WindowHelpers = QuickWindows.Features.WindowHelpers;
 
 namespace QuickWindows;
 

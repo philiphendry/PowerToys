@@ -4,16 +4,8 @@
 
 using System;
 using System.Runtime.InteropServices;
-using ManagedCommon;
 
 namespace QuickWindows.Mouse;
-
-public enum MouseButton
-{
-    None,
-    Left,
-    Right,
-}
 
 public class MouseHook : IMouseHook
 {

@@ -24,5 +24,10 @@ public class QuickWindowsProperties
     [JsonConverter(typeof(BoolPropertyJsonConverter))]
     public bool TransparentWindowOnMove { get; set; } = true;
 
+    [JsonConverter(typeof(BoolPropertyJsonConverter))]
+    public bool ExcludeAppDetection { get; set; } = false;
+
+    public string ExcludedApplications { get; set; }
+
     public override string ToString() => JsonSerializer.Serialize(this);
 }
