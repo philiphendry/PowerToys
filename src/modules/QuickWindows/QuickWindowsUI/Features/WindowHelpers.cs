@@ -4,7 +4,9 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using ManagedCommon;
+using QuickWindows.Interfaces;
 
 namespace QuickWindows.Features;
 
@@ -33,5 +35,34 @@ public class WindowHelpers : IWindowHelpers
         }
 
         return rootHwnd;
+    }
+
+    public (bool Success, string WindowTitle, string ClassName) GetWindowInfoAtCursor()
+    {
+        if (NativeMethods.GetCursorPos(out var cursorPosition) == false)
+        {
+            Logger.LogError($"GetCursorPos failed with error: {Marshal.GetLastWin32Error()}");
+            return (false, string.Empty, string.Empty);
+        }
+
+        var windowAtCursorHandle = GetWindowAtCursor(cursorPosition.X, cursorPosition.Y);
+
+        var windowTitle = new StringBuilder(200);
+        var result = NativeMethods.GetWindowText(windowAtCursorHandle, windowTitle, 200);
+        if (result == 0)
+        {
+            Logger.LogError($"GetWindowText failed with error: {Marshal.GetLastWin32Error()}");
+            return (false, string.Empty, string.Empty);
+        }
+
+        var className = new StringBuilder(200);
+        result = NativeMethods.GetClassName(windowAtCursorHandle, className, 200);
+        if (result == 0)
+        {
+            Logger.LogError($"GetClassName failed with error: {Marshal.GetLastWin32Error()}");
+            return (false, string.Empty, string.Empty);
+        }
+
+        return (true, windowTitle.ToString(), className.ToString());
     }
 }
