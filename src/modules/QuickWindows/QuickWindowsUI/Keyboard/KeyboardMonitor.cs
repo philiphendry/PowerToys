@@ -5,8 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;
+using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
-using QuickWindows.Features;
+using QuickWindows.Interfaces;
 using QuickWindows.Settings;
 
 namespace QuickWindows.Keyboard;
@@ -21,7 +22,7 @@ public class KeyboardMonitor(
     private GlobalKeyboardHook? _keyboardHook;
     private bool _isHotKeyPressed;
 
-    public event EventHandler? HotKeyPressed;
+    public event EventHandler<HotKeyEventArgs>? HotKeyPressed;
 
     public event EventHandler? HotKeyReleased;
 
@@ -117,8 +118,12 @@ public class KeyboardMonitor(
             // avoid triggering this action multiple times as this will be called nonstop while keys are pressed
             if (!_isHotKeyPressed)
             {
-                _isHotKeyPressed = true;
-                HotKeyPressed?.Invoke(this, EventArgs.Empty);
+                var eventArgs = new HotKeyEventArgs();
+                HotKeyPressed?.Invoke(this, eventArgs);
+                if (!eventArgs.SuppressHotKey)
+                {
+                    _isHotKeyPressed = true;
+                }
             }
         }
         else
@@ -134,12 +139,6 @@ public class KeyboardMonitor(
             _isHotKeyPressed = false;
             HotKeyReleased?.Invoke(this, EventArgs.Empty);
         }
-    }
-
-    public void Temp()
-    {
-        HotKeyReleased?.Invoke(this, EventArgs.Empty);
-        HotKeyPressed?.Invoke(this, EventArgs.Empty);
     }
 
     private static bool ArraysAreSame(List<string> first, List<string> second)

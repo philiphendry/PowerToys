@@ -9,18 +9,11 @@ using System.Windows;
 using ManagedCommon;
 using Microsoft.Extensions.Hosting;
 using QuickWindows.Features;
+using QuickWindows.Interfaces;
 using QuickWindows.Keyboard;
 using QuickWindows.Mouse;
 
 namespace QuickWindows;
-
-public enum WindowOperation
-{
-    None,
-    Move,
-    Resize,
-    Detect,
-}
 
 public class QuickWindowsManager(
     IKeyboardMonitor keyboardHook,
@@ -30,10 +23,10 @@ public class QuickWindowsManager(
     ITransparentWindows transparentWindows,
     IRolodexWindows rolodexWindows,
     ICursorForOperation cursorForOperation,
-    IWindowIdentifier windowIdentifier)
+    IExclusionDetector exclusionDetector,
+    IExclusionFilter exclusionFilter)
     : IQuickWindowsManager, IHostedService
 {
-    private readonly WindowOperation _defaultOperation = WindowOperation.None;
     private readonly object _lock = new();
     private bool _isHotKeyPressed;
     private WindowOperation _currentOperation;
@@ -76,7 +69,7 @@ public class QuickWindowsManager(
         RemoveMouseListeners();
     }
 
-    private void OnHotKeyPressed(object? sender, EventArgs e)
+    private void OnHotKeyPressed(object? sender, HotKeyEventArgs e)
     {
         lock (_lock)
         {
@@ -85,10 +78,16 @@ public class QuickWindowsManager(
                 return;
             }
 
+            if (exclusionFilter.IsWindowAtCursorExcluded())
+            {
+                e.SuppressHotKey = true;
+                return;
+            }
+
             Logger.LogDebug("Installing mouse hook.");
             mouseHook.Install();
             _isHotKeyPressed = true;
-            _currentOperation = _defaultOperation;
+            _currentOperation = WindowOperation.None;
         }
     }
 
@@ -111,7 +110,7 @@ public class QuickWindowsManager(
             transparentWindows.EndTransparency();
             mouseHook.Uninstall();
             _isHotKeyPressed = false;
-            _currentOperation = _defaultOperation;
+            _currentOperation = WindowOperation.None;
         }
     }
 
@@ -119,13 +118,18 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (_isHotKeyPressed && _currentOperation == WindowOperation.Detect)
+            if (_isHotKeyPressed && exclusionDetector.IsEnabled)
             {
-                windowIdentifier.IdentifyWindow(args.X, args.Y);
+                exclusionDetector.ExcludeWindowAtCursor();
                 return;
             }
 
             if (!_isHotKeyPressed || _currentOperation != WindowOperation.None)
+            {
+                return;
+            }
+
+            if (exclusionFilter.IsWindowAtCursorExcluded())
             {
                 return;
             }
@@ -169,7 +173,11 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            Logger.LogDebug("EndOperation");
+            if (exclusionFilter.IsWindowAtCursorExcluded())
+            {
+                return;
+            }
+
             switch (_currentOperation)
             {
                 case WindowOperation.Move:
@@ -183,40 +191,52 @@ public class QuickWindowsManager(
             }
 
             transparentWindows.EndTransparency();
-            _currentOperation = _defaultOperation;
+            _currentOperation = WindowOperation.None;
+            Logger.LogDebug("EndOperation");
         }
     }
 
     private void OnMouseMove(object? target, MouseHook.MouseMoveEventArgs args)
     {
-        switch (_currentOperation)
+        lock (_lock)
         {
-            case WindowOperation.Move:
-                movingWindows.MoveWindow(args.X, args.Y);
-                cursorForOperation.MoveToCursor(args.X, args.Y);
-                break;
-            case WindowOperation.Resize:
-                resizingWindows.ResizeWindow(args.X, args.Y);
-                cursorForOperation.MoveToCursor(args.X, args.Y);
-                break;
+            if (exclusionFilter.IsWindowAtCursorExcluded())
+            {
+                return;
+            }
+
+            switch (_currentOperation)
+            {
+                case WindowOperation.Move:
+                    movingWindows.MoveWindow(args.X, args.Y);
+                    cursorForOperation.MoveToCursor(args.X, args.Y);
+                    break;
+                case WindowOperation.Resize:
+                    resizingWindows.ResizeWindow(args.X, args.Y);
+                    cursorForOperation.MoveToCursor(args.X, args.Y);
+                    break;
+            }
         }
     }
 
     private void OnMouseWheel(object? target, MouseHook.MouseMoveWheelEventArgs args)
     {
-        if (!_isHotKeyPressed)
+        lock (_lock)
         {
-            return;
-        }
+            if (!_isHotKeyPressed)
+            {
+                return;
+            }
 
-        // Positive delta means wheel up, negative means wheel down
-        if (args.Delta > 0)
-        {
-            rolodexWindows.SendWindowToBottom(args.X, args.Y);
-        }
-        else
-        {
-            rolodexWindows.BringBottomWindowToTop(args.X, args.Y);
+            // Positive delta means wheel up, negative means wheel down
+            if (args.Delta > 0)
+            {
+                rolodexWindows.SendWindowToBottom(args.X, args.Y);
+            }
+            else
+            {
+                rolodexWindows.BringBottomWindowToTop(args.X, args.Y);
+            }
         }
     }
 

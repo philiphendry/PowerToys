@@ -6,13 +6,7 @@ using System;
 
 namespace QuickWindows.Keyboard;
 
-public interface IKeyboardMonitor
+public class HotKeyEventArgs : EventArgs
 {
-    event EventHandler<HotKeyEventArgs> HotKeyPressed;
-
-    event EventHandler HotKeyReleased;
-
-    void Install();
-
-    void Uninstall();
+    public bool SuppressHotKey { get; set; }
 }

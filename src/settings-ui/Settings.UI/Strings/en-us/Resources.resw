@@ -2757,6 +2757,18 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>Attribution</value>
     <comment>giving credit to the projects this utility was based on</comment>
   </data>
+  <data name="QuickWindows_ExcludeApps_Enabled.Header" xml:space="preserve">
+    <value>Exclude apps from quick windows</value>
+  </data>
+  <data name="QuickWindows_ExcludeApps_Enabled.Description" xml:space="preserve">
+    <value>Enable this option then when you activate quick windows and click on a window it will be added to the exclusion list.</value>
+  </data>
+  <data name="QuickWindows_ExcludeApps.Header" xml:space="preserve">
+    <value>Excluded apps</value>
+  </data>
+  <data name="QuickWindows_ExcludeApps.Description" xml:space="preserve">
+    <value>Excludes an application from quick window operations - add one application name per line</value>
+  </data>
   <data name="General.SecondaryLinksHeader" xml:space="preserve">
     <value>Related information</value>
   </data>

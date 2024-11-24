@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,12 +18,10 @@ namespace QuickWindows.Settings;
 
 public class UserSettings : IUserSettings
 {
-    private static readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
     private readonly object _loadingSettingsLock = new();
     private readonly SettingsUtils _settingsUtils;
     private readonly IFileSystemWatcher _watcher;
     private const string QuickWindowsModuleName = "QuickWindows";
-    private const string DefaultActivationShortcut = "Alt";
     private const int MaxNumberOfRetry = 5;
     private const int SettingsReadOnChangeDelayInMs = 300;
 
@@ -47,6 +46,52 @@ public class UserSettings : IUserSettings
     public SettingItem<bool> DoNotActivateOnGameMode { get; } = new(true);
 
     public SettingItem<bool> TransparentWindowOnMove { get; } = new(true);
+
+    public SettingItem<bool> ExcludeAppDetection { get; } = new(false);
+
+    public SettingItem<string> ExcludedApplications { get; set; } = new(string.Empty);
+
+    public void AddExcludedApplication(string windowTitle, string windowClass)
+    {
+        try
+        {
+            var exclusions = ExcludedApplications.Value
+                .Split('\r')
+                .Where(i => i.Trim().Length > 0)
+                .ToList();
+
+            var newExclusion = $"{windowTitle}||{windowClass}";
+            if (exclusions.Contains(newExclusion))
+            {
+                return;
+            }
+
+            if (exclusions.Count > 0)
+            {
+                newExclusion = '\r' + newExclusion;
+            }
+
+            ExcludedApplications.Value += newExclusion;
+            SaveSettings();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError("Failed to add excluded application", exception);
+        }
+    }
+
+    private void SaveSettings()
+    {
+        var settings = new QuickWindowsSettings();
+        settings.Properties.ActivateOnAlt = ActivateOnAlt.Value;
+        settings.Properties.ActivateOnShift = ActivateOnShift.Value;
+        settings.Properties.ActivateOnCtrl = ActivateOnCtrl.Value;
+        settings.Properties.DoNotActivateOnGameMode = DoNotActivateOnGameMode.Value;
+        settings.Properties.TransparentWindowOnMove = TransparentWindowOnMove.Value;
+        settings.Properties.ExcludeAppDetection = ExcludeAppDetection.Value;
+        settings.Properties.ExcludedApplications = ExcludedApplications.Value;
+        settings.Save(_settingsUtils);
+    }
 
     private void LoadSettingsFromJson()
     {
@@ -78,6 +123,8 @@ public class UserSettings : IUserSettings
                             ActivateOnCtrl.Value = settings.Properties.ActivateOnCtrl;
                             DoNotActivateOnGameMode.Value = settings.Properties.DoNotActivateOnGameMode;
                             TransparentWindowOnMove.Value = settings.Properties.TransparentWindowOnMove;
+                            ExcludeAppDetection.Value = settings.Properties.ExcludeAppDetection;
+                            ExcludedApplications.Value = settings.Properties.ExcludedApplications ?? string.Empty;
 
                             Logger.LogDebug("Publishing changes to settings.");
                             Changed?.Invoke(this, EventArgs.Empty);

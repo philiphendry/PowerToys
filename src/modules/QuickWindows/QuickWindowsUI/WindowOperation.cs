@@ -2,11 +2,11 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+namespace QuickWindows;
 
-namespace QuickWindows.Features;
-
-public interface IWindowHelpers
+public enum WindowOperation
 {
-    IntPtr GetWindowAtCursor(int x, int y);
+    None,
+    Move,
+    Resize,
 }

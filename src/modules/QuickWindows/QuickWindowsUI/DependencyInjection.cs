@@ -5,6 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using QuickWindows.Features;
 using QuickWindows.Helpers;
+using QuickWindows.Interfaces;
 using QuickWindows.Keyboard;
 using QuickWindows.Mouse;
 using QuickWindows.Settings;
@@ -21,7 +22,8 @@ public class DependencyInjection
         services.AddSingleton<IRolodexWindows, RolodexWindows>();
         services.AddSingleton<ITransparentWindows, TransparentWindows>();
         services.AddSingleton<IDisabledInGameMode, DisabledInGameMode>();
-        services.AddSingleton<IWindowIdentifier, WindowIdentifier>();
+        services.AddSingleton<IExclusionDetector, ExclusionDetector>();
+        services.AddSingleton<IExclusionFilter, ExclusionFilter>();
         services.AddSingleton<IThrottledActionInvoker, ThrottledActionInvoker>();
         services.AddSingleton<IWindowHelpers, WindowHelpers>();
         services.AddSingleton<IUserSettings, UserSettings>();

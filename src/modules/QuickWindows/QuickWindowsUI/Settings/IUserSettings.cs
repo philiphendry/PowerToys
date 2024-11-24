@@ -20,5 +20,11 @@ public interface IUserSettings
 
     SettingItem<bool> TransparentWindowOnMove { get; }
 
+    SettingItem<bool> ExcludeAppDetection { get; }
+
+    SettingItem<string> ExcludedApplications { get; }
+
+    void AddExcludedApplication(string windowTitle, string windowClass);
+
     void SendSettingsTelemetry();
 }

@@ -21,6 +21,11 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
 {
     public class QuickWindowsViewModel : Observable, IDisposable
     {
+        private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+        };
+
         private bool disposedValue;
 
         // Delay saving of settings in order to avoid calling save multiple times and hitting file in use exception. If there is no other request to save settings in given interval, we proceed to save it, otherwise we schedule saving it after this interval
@@ -31,7 +36,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         private readonly ISettingsUtils _settingsUtils;
         private readonly object _delayedActionLock = new object();
 
-        private readonly QuickWindowsSettings _quickWindowsSettings;
+        private QuickWindowsSettings _quickWindowsSettings;
         private Timer _delayedTimer;
 
         private GpoRuleConfigured _enabledGpoRuleConfiguration;
@@ -72,6 +77,19 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             _delayedTimer.Interval = SaveSettingsDelayInMs;
             _delayedTimer.Elapsed += DelayedTimer_Tick;
             _delayedTimer.AutoReset = false;
+        }
+
+        public void LoadUpdatedSettings()
+        {
+            try
+            {
+                _quickWindowsSettings = _settingsUtils.GetSettings<QuickWindowsSettings>("QuickWindows");
+                OnPropertyChanged(null); // Notify all properties might have changed.
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex.Message);
+            }
         }
 
         private void InitializeEnabledValue()
@@ -194,6 +212,39 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             }
         }
 
+        public bool ExcludeAppDetection
+        {
+            get => _quickWindowsSettings.Properties.ExcludeAppDetection;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.ExcludeAppDetection != value)
+                {
+                    _quickWindowsSettings.Properties.ExcludeAppDetection = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public string ExcludedApps
+        {
+            get
+            {
+                return _quickWindowsSettings.Properties.ExcludedApplications;
+            }
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.ExcludedApplications != value)
+                {
+                    _quickWindowsSettings.Properties.ExcludedApplications = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
         private void ScheduleSavingOfSettings()
         {
             lock (_delayedActionLock)
@@ -224,7 +275,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                        CultureInfo.InvariantCulture,
                        "{{ \"powertoys\": {{ \"{0}\": {1} }} }}",
                        QuickWindowsSettings.ModuleName,
-                       JsonSerializer.Serialize(_quickWindowsSettings)));
+                       JsonSerializer.Serialize(_quickWindowsSettings, _serializerOptions)));
         }
 
         public void RefreshEnabledState()
