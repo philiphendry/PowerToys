@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 using ManagedCommon;
+using QuickWindows.Interfaces;
 
 namespace QuickWindows.Features;
 
