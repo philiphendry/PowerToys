@@ -345,6 +345,8 @@ internal static class NativeMethods
     internal const uint IDC_SIZENWSE = 32642;
     internal const uint IDC_SIZENESW = 32643;
     internal const uint IDC_SIZEALL = 32646;
+    internal const uint IDC_CROSS = 32515;
+    internal const uint IDC_HAND = 32649;
     internal const uint WM_SETCURSOR = 0x0020;
     internal const uint WS_POPUP = 0x80000000;
     internal const uint WS_EX_TOPMOST = 0x00000008;

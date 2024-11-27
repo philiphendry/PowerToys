@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Input;
-using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
@@ -18,13 +17,12 @@ public class KeyboardMonitor(
     : IKeyboardMonitor, IDisposable
 {
     private readonly List<string> _activationKeys = new();
-    private List<string> _previouslyPressedKeys = new();
     private GlobalKeyboardHook? _keyboardHook;
     private bool _isHotKeyPressed;
 
     public event EventHandler<HotKeyEventArgs>? HotKeyPressed;
 
-    public event EventHandler? HotKeyReleased;
+    public event EventHandler<HotKeyEventArgs>? HotKeyReleased;
 
     public void Install()
     {
@@ -70,7 +68,7 @@ public class KeyboardMonitor(
     {
         if (disabledInGameMode.IsDisabledInGameMode())
         {
-            DeactivateHotKey();
+            e.Handled = DeactivateHotKey();
             return;
         }
 
@@ -78,11 +76,9 @@ public class KeyboardMonitor(
         var virtualCode = e.KeyboardData.VirtualCode;
 
         // ESC pressed
-        if (virtualCode == KeyInterop.VirtualKeyFromKey(Key.Escape)
-            && e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown
-            )
+        if (virtualCode == KeyInterop.VirtualKeyFromKey(Key.Escape) && e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown)
         {
-            DeactivateHotKey();
+            e.Handled = DeactivateHotKey();
             return;
         }
 
@@ -102,17 +98,6 @@ public class KeyboardMonitor(
 
         currentlyPressedKeys.Sort();
 
-#if DEBUG
-        // Logger.LogDebug($"### currentlyPressedKeys: {string.Join(", ", currentlyPressedKeys)}, _activationKeys: {string.Join(", ", _activationKeys)}");
-#endif
-
-        if (currentlyPressedKeys.Count == 0 && _previouslyPressedKeys.Count != 0)
-        {
-            DeactivateHotKey();
-        }
-
-        _previouslyPressedKeys = currentlyPressedKeys;
-
         if (ArraysAreSame(currentlyPressedKeys, _activationKeys))
         {
             // avoid triggering this action multiple times as this will be called nonstop while keys are pressed
@@ -128,17 +113,21 @@ public class KeyboardMonitor(
         }
         else
         {
-            DeactivateHotKey();
+            e.Handled = DeactivateHotKey();
         }
     }
 
-    private void DeactivateHotKey()
+    private bool DeactivateHotKey()
     {
-        if (_isHotKeyPressed)
+        if (!_isHotKeyPressed)
         {
-            _isHotKeyPressed = false;
-            HotKeyReleased?.Invoke(this, EventArgs.Empty);
+            return false;
         }
+
+        _isHotKeyPressed = false;
+        var eventArgs = new HotKeyEventArgs();
+        HotKeyReleased?.Invoke(this, eventArgs);
+        return eventArgs.SuppressHotKey;
     }
 
     private static bool ArraysAreSame(List<string> first, List<string> second)

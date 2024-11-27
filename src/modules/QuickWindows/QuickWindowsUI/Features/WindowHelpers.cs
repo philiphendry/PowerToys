@@ -48,18 +48,28 @@ public class WindowHelpers : IWindowHelpers
         var windowAtCursorHandle = GetWindowAtCursor(cursorPosition.X, cursorPosition.Y);
 
         var windowTitle = new StringBuilder(200);
-        var result = NativeMethods.GetWindowText(windowAtCursorHandle, windowTitle, 200);
-        if (result == 0)
+        var textLength = NativeMethods.GetWindowText(windowAtCursorHandle, windowTitle, 200);
+        if (textLength == 0)
         {
-            Logger.LogError($"GetWindowText failed with error: {Marshal.GetLastWin32Error()}");
+            var lastWin32Error = Marshal.GetLastWin32Error();
+            if (lastWin32Error != 0)
+            {
+                Logger.LogError($"GetWindowText failed with error: {lastWin32Error}");
+            }
+
             return (false, string.Empty, string.Empty);
         }
 
         var className = new StringBuilder(200);
-        result = NativeMethods.GetClassName(windowAtCursorHandle, className, 200);
-        if (result == 0)
+        textLength = NativeMethods.GetClassName(windowAtCursorHandle, className, 200);
+        if (textLength == 0)
         {
-            Logger.LogError($"GetClassName failed with error: {Marshal.GetLastWin32Error()}");
+            var lastWin32Error = Marshal.GetLastWin32Error();
+            if (lastWin32Error != 0)
+            {
+                Logger.LogError($"GetClassName failed with error: {lastWin32Error}");
+            }
+
             return (false, string.Empty, string.Empty);
         }
 
