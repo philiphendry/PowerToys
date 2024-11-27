@@ -10,7 +10,7 @@ public interface IKeyboardMonitor
 {
     event EventHandler<HotKeyEventArgs> HotKeyPressed;
 
-    event EventHandler HotKeyReleased;
+    event EventHandler<HotKeyEventArgs> HotKeyReleased;
 
     void Install();
 

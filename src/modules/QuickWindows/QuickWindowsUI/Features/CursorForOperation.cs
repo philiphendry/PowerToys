@@ -16,6 +16,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
         AllDirections,
         NorthWestSouthEast,
         NorthEastSouthWest,
+        Pick,
     }
 
     private IntPtr _cursorWindow = IntPtr.Zero;
@@ -32,6 +33,8 @@ public class CursorForOperation : ICursorForOperation, IDisposable
     public void StartResizeNorthWestSouthEast(int x, int y) => StartOperation(x, y, CursorStyle.NorthWestSouthEast);
 
     public void StartResizeNorthEastSouthWest(int x, int y) => StartOperation(x, y, CursorStyle.NorthEastSouthWest);
+
+    public void StartExclusionDetection(int x, int y) => StartOperation(x, y, CursorStyle.Pick);
 
     private void StartOperation(int x, int y, CursorStyle cursorStyle)
     {
@@ -166,6 +169,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
                     CursorStyle.NorthWestSouthEast => NativeMethods.LoadCursor(IntPtr.Zero, (int)NativeMethods.IDC_SIZENWSE),
                     CursorStyle.NorthEastSouthWest => NativeMethods.LoadCursor(IntPtr.Zero, (int)NativeMethods.IDC_SIZENESW),
                     CursorStyle.AllDirections => NativeMethods.LoadCursor(IntPtr.Zero, (int)NativeMethods.IDC_SIZEALL),
+                    CursorStyle.Pick => NativeMethods.LoadCursor(IntPtr.Zero, (int)NativeMethods.IDC_CROSS),
                     _ => NativeMethods.LoadCursor(IntPtr.Zero, (int)NativeMethods.IDC_ARROW),
                 };
                 NativeMethods.SetCursor(cursor);

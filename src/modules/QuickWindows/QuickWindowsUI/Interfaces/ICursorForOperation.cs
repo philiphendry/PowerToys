@@ -12,6 +12,8 @@ public interface ICursorForOperation
 
     void StartResizeNorthEastSouthWest(int x, int y);
 
+    void StartExclusionDetection(int x, int y);
+
     void HideCursor();
 
     void MoveToCursor(int x, int y);

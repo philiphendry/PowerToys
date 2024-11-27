@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using ManagedCommon;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
 
@@ -33,6 +34,8 @@ public class ExclusionDetector : IExclusionDetector
     public void ExcludeWindowAtCursor()
     {
         var (success, windowTitle, windowClass) = _windowHelpers.GetWindowInfoAtCursor();
+
+        Logger.LogDebug($"Detected window: {windowTitle} - {windowClass} with succes: {success}");
         if (!success)
         {
             return;

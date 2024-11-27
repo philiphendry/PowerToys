@@ -9,4 +9,5 @@ public enum WindowOperation
     None,
     Move,
     Resize,
+    ExclusionDetection,
 }
