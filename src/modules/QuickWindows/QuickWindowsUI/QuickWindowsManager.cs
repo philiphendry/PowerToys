@@ -29,10 +29,13 @@ public class QuickWindowsManager(
     private readonly object _lock = new();
     private WindowOperation _currentOperation;
 
-    private bool _isActivated;
-    private bool _isHotKeyPressed;
-    private bool _operationInProgress;
-    private bool _operationHasOccurred;
+    internal bool IsActivated { get; private set; }
+
+    internal bool IsHotKeyPressed { get; private set; }
+
+    internal bool OperationInProgress { get; private set; }
+
+    internal bool OperationHasOccurred { get; private set; }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -72,13 +75,7 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (_operationInProgress)
-            {
-                e.SuppressHotKey = true;
-                return;
-            }
-
-            if (exclusionFilter.IsWindowAtCursorExcluded())
+            if (OperationInProgress)
             {
                 e.SuppressHotKey = true;
                 return;
@@ -86,8 +83,8 @@ public class QuickWindowsManager(
 
             mouseHook.Install();
 
-            _isActivated = true;
-            _isHotKeyPressed = true;
+            IsActivated = true;
+            IsHotKeyPressed = true;
             _currentOperation = WindowOperation.None;
         }
     }
@@ -96,23 +93,23 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            _isHotKeyPressed = false;
+            IsHotKeyPressed = false;
 
-            if (_operationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
+            if (OperationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
             {
                 e.SuppressHotKey = true;
                 return;
             }
 
-            if (_operationHasOccurred)
+            if (OperationHasOccurred)
             {
                 e.SuppressHotKey = true;
-                _operationHasOccurred = false;
+                OperationHasOccurred = false;
             }
 
             EndOperation();
             mouseHook.Uninstall();
-            _isActivated = false;
+            IsActivated = false;
         }
     }
 
@@ -129,7 +126,7 @@ public class QuickWindowsManager(
         }
 
         _currentOperation = WindowOperation.None;
-        _operationInProgress = false;
+        OperationInProgress = false;
 
         cursorForOperation.HideCursor();
         transparentWindows.EndTransparency();
@@ -139,7 +136,7 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (!_isActivated)
+            if (!IsActivated)
             {
                 return;
             }
@@ -163,7 +160,7 @@ public class QuickWindowsManager(
                     cursorForOperation.StartMove(args.X, args.Y);
 
                     _currentOperation = WindowOperation.Move;
-                    _operationInProgress = true;
+                    OperationInProgress = true;
                     break;
                 case MouseButton.Right:
                 {
@@ -182,7 +179,7 @@ public class QuickWindowsManager(
                     }
 
                     _currentOperation = WindowOperation.Resize;
-                    _operationInProgress = true;
+                    OperationInProgress = true;
                     break;
                 }
             }
@@ -193,17 +190,12 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (!_operationInProgress)
-            {
-                return;
-            }
-
             EndOperation();
 
-            if (!_isHotKeyPressed)
+            if (!IsHotKeyPressed)
             {
                 mouseHook.Uninstall();
-                _isActivated = false;
+                IsActivated = false;
             }
         }
     }
@@ -216,10 +208,10 @@ public class QuickWindowsManager(
             {
                 cursorForOperation.StartExclusionDetection(args.X, args.Y);
                 _currentOperation = WindowOperation.ExclusionDetection;
-                _operationInProgress = true;
+                OperationInProgress = true;
             }
 
-            if (!_operationInProgress)
+            if (!OperationInProgress)
             {
                 return;
             }
@@ -229,16 +221,16 @@ public class QuickWindowsManager(
                 case WindowOperation.Move:
                     movingWindows.MoveWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
-                    _operationHasOccurred = true;
+                    OperationHasOccurred = true;
                     break;
                 case WindowOperation.Resize:
                     resizingWindows.ResizeWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
-                    _operationHasOccurred = true;
+                    OperationHasOccurred = true;
                     break;
                 case WindowOperation.ExclusionDetection:
                     cursorForOperation.MoveToCursor(args.X, args.Y);
-                    _operationHasOccurred = true;
+                    OperationHasOccurred = true;
                     break;
             }
         }
@@ -248,7 +240,7 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (!_isActivated)
+            if (!IsActivated)
             {
                 return;
             }
