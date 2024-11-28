@@ -3,18 +3,19 @@
   <Import Project="..\..\..\Common.Dotnet.CsWinRT.props" />
 
   <PropertyGroup>
-    <ProjectGuid>{090CD7B7-3B0C-4D1D-BC98-83EB5D799BC1}</ProjectGuid>
-    <RootNamespace>Microsoft.ColorPicker.UnitTests</RootNamespace>
+    <ProjectGuid>{40EE596E-F52F-4AEC-A1A3-BE427402A04E}</ProjectGuid>
+    <RootNamespace>Microsoft.QuickWindows.UnitTests</RootNamespace>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <PropertyGroup>
-    <OutputPath>..\..\..\..\$(Platform)\$(Configuration)\tests\UnitTest-ColorPickerUI\</OutputPath>
+    <OutputPath>..\..\..\..\$(Platform)\$(Configuration)\tests\UnitTest-QuickWindowsUI\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Moq" />
     <PackageReference Include="MSTest" />
     <PackageReference Include="Microsoft.Win32.SystemEvents">
       <!-- This package is a dependency of System.Drawing.Common, but we need to set it here so we can exclude the assets, so it doesn't conflict with the 8.0.1 dll coming from .NET SDK. -->
@@ -31,7 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\settings-ui\Settings.UI.Library\Settings.UI.Library.csproj" />
-    <ProjectReference Include="..\ColorPickerUI\ColorPickerUI.csproj" />
+    <ProjectReference Include="..\QuickWindowsUI\QuickWindowsUI.csproj" />
   </ItemGroup>
 
 
