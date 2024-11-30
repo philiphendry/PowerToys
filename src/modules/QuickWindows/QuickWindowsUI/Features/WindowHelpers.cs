@@ -55,9 +55,8 @@ public class WindowHelpers : IWindowHelpers
             if (lastWin32Error != 0)
             {
                 Logger.LogError($"GetWindowText failed with error: {lastWin32Error}");
+                return (false, string.Empty, string.Empty);
             }
-
-            return (false, string.Empty, string.Empty);
         }
 
         var className = new StringBuilder(200);
@@ -68,9 +67,8 @@ public class WindowHelpers : IWindowHelpers
             if (lastWin32Error != 0)
             {
                 Logger.LogError($"GetClassName failed with error: {lastWin32Error}");
+                return (false, string.Empty, string.Empty);
             }
-
-            return (false, string.Empty, string.Empty);
         }
 
         return (true, windowTitle.ToString(), className.ToString());

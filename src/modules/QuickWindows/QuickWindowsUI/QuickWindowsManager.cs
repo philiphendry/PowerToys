@@ -144,6 +144,8 @@ public class QuickWindowsManager(
 
             if (exclusionDetector.IsEnabled)
             {
+                // Hide the cursor since otherwise we'll just detect the cursor window
+                cursorForOperation.HideCursor();
                 exclusionDetector.ExcludeWindowAtCursor();
                 return;
             }

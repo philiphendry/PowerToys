@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ManagedCommon;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
 
@@ -35,7 +36,7 @@ public class ExclusionFilter : IExclusionFilter
         }
 
         var isWindowAtCursorExcluded = _exclusions.Any(i =>
-            i.WindowTitle.Equals(windowTitle, StringComparison.OrdinalIgnoreCase)
+            (string.IsNullOrEmpty(i.WindowTitle) || i.WindowTitle.Equals(windowTitle, StringComparison.OrdinalIgnoreCase))
             && i.WindowClass.Equals(windowClass, StringComparison.OrdinalIgnoreCase));
 
         return isWindowAtCursorExcluded;
