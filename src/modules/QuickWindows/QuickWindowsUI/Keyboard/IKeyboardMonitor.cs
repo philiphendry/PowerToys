@@ -15,4 +15,6 @@ public interface IKeyboardMonitor
     void Install();
 
     void Uninstall();
+
+    void SendControlKey();
 }
