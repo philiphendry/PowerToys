@@ -15,7 +15,7 @@ using QuickWindows.Mouse;
 namespace QuickWindows;
 
 public class QuickWindowsManager(
-    IKeyboardMonitor keyboardHook,
+    IKeyboardMonitor keyboardMonitor,
     IMouseHook mouseHook,
     IMovingWindows movingWindows,
     IResizingWindows resizingWindows,
@@ -55,7 +55,7 @@ public class QuickWindowsManager(
         {
             AddKeyboardListeners();
             AddMouseListeners();
-            keyboardHook.Install();
+            keyboardMonitor.Install();
         }
         catch (Exception ex)
         {
@@ -66,7 +66,7 @@ public class QuickWindowsManager(
     public void DeactivateHotKey()
     {
         mouseHook.Uninstall();
-        keyboardHook.Uninstall();
+        keyboardMonitor.Uninstall();
         RemoveKeyboardListeners();
         RemoveMouseListeners();
     }
@@ -77,7 +77,6 @@ public class QuickWindowsManager(
         {
             if (OperationInProgress)
             {
-                e.SuppressHotKey = true;
                 return;
             }
 
@@ -97,13 +96,15 @@ public class QuickWindowsManager(
 
             if (OperationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
             {
-                e.SuppressHotKey = true;
+                // Send control key when releasing Alt hot key prevents the window menus being activated.
+                keyboardMonitor.SendControlKey();
                 return;
             }
 
             if (OperationHasOccurred)
             {
-                e.SuppressHotKey = true;
+                // Send control key when releasing Alt hot key prevents the window menus being activated.
+                keyboardMonitor.SendControlKey();
                 OperationHasOccurred = false;
             }
 
@@ -163,25 +164,25 @@ public class QuickWindowsManager(
                     OperationInProgress = true;
                     break;
                 case MouseButton.Right:
-                {
-                    var resizeOperation = resizingWindows.StartResize(args.X, args.Y);
-                    transparentWindows.StartTransparency(args.X, args.Y);
-                    switch (resizeOperation)
                     {
-                        case ResizingWindows.ResizeOperation.ResizeTopLeft:
-                        case ResizingWindows.ResizeOperation.ResizeBottomRight:
-                            cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
-                            break;
-                        case ResizingWindows.ResizeOperation.ResizeTopRight:
-                        case ResizingWindows.ResizeOperation.ResizeBottomLeft:
-                            cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
-                            break;
-                    }
+                        var resizeOperation = resizingWindows.StartResize(args.X, args.Y);
+                        transparentWindows.StartTransparency(args.X, args.Y);
+                        switch (resizeOperation)
+                        {
+                            case ResizingWindows.ResizeOperation.ResizeTopLeft:
+                            case ResizingWindows.ResizeOperation.ResizeBottomRight:
+                                cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
+                                break;
+                            case ResizingWindows.ResizeOperation.ResizeTopRight:
+                            case ResizingWindows.ResizeOperation.ResizeBottomLeft:
+                                cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
+                                break;
+                        }
 
-                    _currentOperation = WindowOperation.Resize;
-                    OperationInProgress = true;
-                    break;
-                }
+                        _currentOperation = WindowOperation.Resize;
+                        OperationInProgress = true;
+                        break;
+                    }
             }
         }
     }
@@ -259,8 +260,8 @@ public class QuickWindowsManager(
 
     private void AddKeyboardListeners()
     {
-        keyboardHook.HotKeyPressed += OnHotKeyPressed;
-        keyboardHook.HotKeyReleased += OnHotKeyReleased;
+        keyboardMonitor.HotKeyPressed += OnHotKeyPressed;
+        keyboardMonitor.HotKeyReleased += OnHotKeyReleased;
     }
 
     private void AddMouseListeners()
@@ -273,8 +274,8 @@ public class QuickWindowsManager(
 
     private void RemoveKeyboardListeners()
     {
-        keyboardHook.HotKeyPressed -= OnHotKeyPressed;
-        keyboardHook.HotKeyReleased -= OnHotKeyReleased;
+        keyboardMonitor.HotKeyPressed -= OnHotKeyPressed;
+        keyboardMonitor.HotKeyReleased -= OnHotKeyReleased;
     }
 
     private void RemoveMouseListeners()

@@ -4,7 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
+using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
@@ -40,6 +42,25 @@ public class KeyboardMonitor(
     {
         _keyboardHook?.Dispose();
         _keyboardHook = null;
+    }
+
+    public void SendControlKey()
+    {
+        var inputs = new NativeMethods.INPUT[2];
+
+        inputs[0].type = NativeMethods.INPUT_KEYBOARD;
+        inputs[0].u.ki.wVk = NativeMethods.VK_CONTROL;
+        inputs[0].u.ki.dwFlags = 0;
+
+        inputs[1].type = NativeMethods.INPUT_KEYBOARD;
+        inputs[1].u.ki.wVk = NativeMethods.VK_CONTROL;
+        inputs[1].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
+
+        var result = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
+        if (result == 0)
+        {
+            Logger.LogError($"SendInput failed with error code {Marshal.GetLastWin32Error()}");
+        }
     }
 
     private void SetActivationKeys()

@@ -131,25 +131,25 @@ public class QuickWindowsManagerTests
     }
 
     [TestMethod]
-    public void WhenTheHotKeyIsPressedButAnOperationIsInProgressTheHotKeyIsSuppressedAndManagerStillActive()
+    public void WhenTheHotKeyIsReleasedWithAnOperationInProgressThenTheControlKeyIsPressedToSuppressMenuActivation()
     {
         HotKeyPress();
         MouseLeftButtonDown();
         var hotKeyEventArgs = HotKeyRelease();
-        Assert.IsTrue(hotKeyEventArgs.SuppressHotKey);
+        _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
         Assert.IsTrue(_quickWindowsManager.IsActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
     }
 
     [TestMethod]
-    public void WhenTheHotKeyIsPressedAnOperationIsStartedThenTheHotKeyReleasedAndPressedAgainTheHotKeyIsSupressed()
+    public void WhenTheHotKeyIsReleasedAfterAnOperationHasOccurredThenTheControlKeyIsPressedToSuppressMenuActivation()
     {
         HotKeyPress();
         MouseLeftButtonDown();
         HotKeyRelease();
         _mockMouseHook.Reset();
         var eventArgs = HotKeyPress();
-        Assert.IsTrue(eventArgs.SuppressHotKey);
+        _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
         _mockMouseHook.Verify(m => m.Install(false), Times.Never);
     }
 
