@@ -79,10 +79,50 @@ public class SnappingWindowsTests
      */
 
     [TestMethod]
-    public void GivenTheLeftEdgeHasSnappedThenTopEdgeWithinThresholdAndBelowWillAlignWithTheTopEdgeOfTheWindow()
+    public void GivenTheLeftEdgeHasSnappedToTheRightThenTopEdgeWithinThresholdAndBelowWillAlignWithTheTopEdgeOfTheWindow()
         => Assert.AreEqual((410, 100, 510, 200), _snappingWindows.SnapMovingWindow(415, 115, 515, 215));
 
     [TestMethod]
-    public void GivenTheLeftEdgeHasSnappedThenTopEdgeWithinThresholdAndAboveWillAlignWithTheTopEdgeOfTheWindow()
+    public void GivenTheLeftEdgeHasSnappedToTheRightThenTopEdgeWithinThresholdAndAboveWillAlignWithTheTopEdgeOfTheWindow()
         => Assert.AreEqual((410, 100, 510, 200), _snappingWindows.SnapMovingWindow(415, 85, 515, 185));
+
+    [TestMethod]
+    public void GivenTheLeftEdgeHasSnappedToTheRightThenBottomEdgeWithinThresholdAndBelowWillAlignWithTheBottomEdgeOfTheWindow()
+        => Assert.AreEqual((410, 300, 510, 400), _snappingWindows.SnapMovingWindow(415, 315, 515, 415));
+
+    [TestMethod]
+    public void GivenTheLeftEdgeHasSnappedToTheRightThenBottomEdgeWithinThresholdAndAboveWillAlignWithTheBottomEdgeOfTheWindow()
+        => Assert.AreEqual((410, 300, 510, 400), _snappingWindows.SnapMovingWindow(415, 285, 515, 385));
+
+    [TestMethod]
+    public void GivenTheRightEdgeHasSnappedToTheLeftThenTopEdgeWithinThresholdAndBelowWillAlignWithTheTopEdgeOfTheWindow()
+        => Assert.AreEqual((-10, 100, 90, 200), _snappingWindows.SnapMovingWindow(-15, 115, 85, 215));
+
+    [TestMethod]
+    public void GivenTheRightEdgeHasSnappedToTheLeftThenTopEdgeWithinThresholdAndAboveWillAlignWithTheTopEdgeOfTheWindow()
+        => Assert.AreEqual((-10, 100, 90, 200), _snappingWindows.SnapMovingWindow(-15, 85, 85, 185));
+
+    [TestMethod]
+    public void GivenTheRightEdgeHasSnappedToTheLeftThenBottomEdgeWithinThresholdAndBelowWillAlignWithTheBottomEdgeOfTheWindow()
+        => Assert.AreEqual((-10, 300, 90, 400), _snappingWindows.SnapMovingWindow(-15, 315, 85, 415));
+
+    [TestMethod]
+    public void GivenTheRightEdgeHasSnappedToTheLeftThenBottomEdgeWithinThresholdAndAboveWillAlignWithTheBottomEdgeOfTheWindow()
+        => Assert.AreEqual((-10, 300, 90, 400), _snappingWindows.SnapMovingWindow(-15, 285, 85, 385));
+
+    [TestMethod]
+    public void GivenTheTopEdgeHasSnappedToTheBottomThenLeftEdgeWithinThresholdAndRightWillAlignWithTheLeftEdgeOfTheWindow()
+        => Assert.AreEqual((100, 410, 200, 510), _snappingWindows.SnapMovingWindow(115, 415, 215, 515));
+
+    [TestMethod]
+    public void GivenTheTopEdgeHasSnappedToTheBottomThenLeftEdgeWithinThresholdAndLeftWillAlignWithTheLeftEdgeOfTheWindow()
+        => Assert.AreEqual((100, 410, 200, 510), _snappingWindows.SnapMovingWindow(85, 415, 185, 515));
+
+    [TestMethod]
+    public void GivenTheTopEdgeHasSnappedToTheBottomThenRightEdgeWithinThresholdAndRightWillAlignWithTheRightEdgeOfTheWindow()
+        => Assert.AreEqual((0, 410, 100, 510), _snappingWindows.SnapMovingWindow(15, 415, 115, 515));
+
+    [TestMethod]
+    public void GivenTheTopEdgeHasSnappedToTheBottomThenRightEdgeWithinThresholdAndLeftWillAlignWithTheRightEdgeOfTheWindow()
+        => Assert.AreEqual((0, 410, 100, 510), _snappingWindows.SnapMovingWindow(-15, 415, 85, 515));
 }
