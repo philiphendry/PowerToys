@@ -27,15 +27,14 @@ public class SnappingWindows : ISnappingWindows
 
         userSettings.SnappingThreshold.PropertyChanged += (_, _) => _snappingThreshold = userSettings.SnappingThreshold.Value;
         userSettings.SnappingPadding.PropertyChanged += (_, _) => _snappingPadding = userSettings.SnappingPadding.Value;
+
+        Logger.LogDebug($"Snapping Threshold: {_snappingThreshold}, Snapping Padding: {_snappingPadding}");
     }
 
     public void StartSnap()
     {
+        // TODO: exclude the window being moved from the list of windows
         _windows = _windowHelpers.GetOpenWindows();
-        foreach (var window in _windows)
-        {
-            Logger.LogDebug($"Window ({window.left}, {window.top}, {window.right}, {window.bottom})");
-        }
     }
 
     public (int Left, int Top, int Right, int Bottom) SnapMovingWindow(int left, int top, int right, int bottom)
@@ -43,9 +42,9 @@ public class SnappingWindows : ISnappingWindows
         var width = right - left;
         var height = bottom - top;
         var newLeft = left;
-        int newTop = top;
-        int newRight = right;
-        int newBottom = bottom;
+        var newTop = top;
+        var newRight = right;
+        var newBottom = bottom;
 
         var horizontalIntersectingWindows = _windows.FindAll(window =>
                 (window.top - _snappingThreshold < top && window.bottom + _snappingThreshold > top)
@@ -57,13 +56,35 @@ public class SnappingWindows : ISnappingWindows
         {
             newLeft = closestWindow.Value.right + _snappingPadding;
             newRight = newLeft + width;
+            if (Math.Abs(closestWindow.Value.top - top) < _snappingThreshold)
+            {
+                newTop = closestWindow.Value.top;
+                newBottom = newTop + height;
+            }
+            else if (Math.Abs(closestWindow.Value.bottom - bottom) < _snappingThreshold)
+            {
+                newBottom = closestWindow.Value.bottom;
+                newTop = newBottom - height;
+            }
         }
-
-        closestWindow = FindClosestWithinSnappingThreshold(right, rect => rect.left, horizontalIntersectingWindows, (source, target) => target - source);
-        if (closestWindow != null)
+        else
         {
-            newRight = closestWindow.Value.left - _snappingPadding;
-            newLeft = newRight - width;
+            closestWindow = FindClosestWithinSnappingThreshold(right, rect => rect.left, horizontalIntersectingWindows, (source, target) => target - source);
+            if (closestWindow != null)
+            {
+                newRight = closestWindow.Value.left - _snappingPadding;
+                newLeft = newRight - width;
+                if (Math.Abs(closestWindow.Value.top - top) < _snappingThreshold)
+                {
+                    newTop = closestWindow.Value.top;
+                    newBottom = newTop + height;
+                }
+                else if (Math.Abs(closestWindow.Value.bottom - bottom) < _snappingThreshold)
+                {
+                    newBottom = closestWindow.Value.bottom;
+                    newTop = newBottom - height;
+                }
+            }
         }
 
         var verticalIntersectingWindows = _windows.FindAll(window =>
@@ -76,15 +97,38 @@ public class SnappingWindows : ISnappingWindows
         {
             newTop = closestWindow.Value.bottom + _snappingPadding;
             newBottom = newTop + height;
+            if (Math.Abs(closestWindow.Value.left - left) < _snappingThreshold)
+            {
+                newLeft = closestWindow.Value.left;
+                newRight = newLeft + width;
+            }
+            else if (Math.Abs(closestWindow.Value.right - right) < _snappingThreshold)
+            {
+                newRight = closestWindow.Value.right;
+                newLeft = newRight - width;
+            }
         }
-
-        closestWindow = FindClosestWithinSnappingThreshold(bottom, rect => rect.top, verticalIntersectingWindows, (source, target) => target - source);
-
-        if (closestWindow != null)
+        else
         {
-            newBottom = closestWindow.Value.top - _snappingPadding;
-            newTop = newBottom - height;
+            closestWindow = FindClosestWithinSnappingThreshold(bottom, rect => rect.top, verticalIntersectingWindows, (source, target) => target - source);
+            if (closestWindow != null)
+            {
+                newBottom = closestWindow.Value.top - _snappingPadding;
+                newTop = newBottom - height;
+                if (Math.Abs(closestWindow.Value.left - left) < _snappingThreshold)
+                {
+                    newLeft = closestWindow.Value.left;
+                    newRight = newLeft + width;
+                }
+                else if (Math.Abs(closestWindow.Value.right - right) < _snappingThreshold)
+                {
+                    newRight = closestWindow.Value.right;
+                    newLeft = newRight - width;
+                }
+            }
         }
+
+        Logger.LogDebug($"Snapping window to: {newLeft}, {newTop}, {newRight}, {newBottom}");
 
         return (newLeft, newTop, newRight, newBottom);
     }

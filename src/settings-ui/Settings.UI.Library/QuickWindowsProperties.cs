@@ -37,9 +37,9 @@ public class QuickWindowsProperties
 
     public string ExcludedApplications { get; set; } = string.Join('\r', ExcludedApplicationsDefaults);
 
-    public int SnappingThreshold { get; set; } = 30;
+    public int SnappingThreshold { get; set; } = 50;
 
-    public int SnappingPadding { get; set; } = 5;
+    public int SnappingPadding { get; set; }
 
     public override string ToString() => JsonSerializer.Serialize(this);
 }

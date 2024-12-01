@@ -77,13 +77,74 @@ public static class NativeMethods
     internal static readonly IntPtr HWND_TOPMOST = new(-1);
     internal static readonly IntPtr HWND_NOTOPMOST = new(-2);
 
+    [Flags]
+    internal enum DwmWindowAttribute : uint
+    {
+        DWMWA_NCRENDERING_ENABLED = 1,
+        DWMWA_NCRENDERING_POLICY,
+        DWMWA_TRANSITIONS_FORCEDISABLED,
+        DWMWA_ALLOW_NCPAINT,
+        DWMWA_CAPTION_BUTTON_BOUNDS,
+        DWMWA_NONCLIENT_RTL_LAYOUT,
+        DWMWA_FORCE_ICONIC_REPRESENTATION,
+        DWMWA_FLIP3D_POLICY,
+        DWMWA_EXTENDED_FRAME_BOUNDS,
+        DWMWA_HAS_ICONIC_BITMAP,
+        DWMWA_DISALLOW_PEEK,
+        DWMWA_EXCLUDED_FROM_PEEK,
+        DWMWA_CLOAK,
+        DWMWA_CLOAKED,
+        DWMWA_FREEZE_REPRESENTATION,
+        DWMWA_LAST,
+    }
+
     internal delegate bool MonitorEnumProc(
         IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam);
 
     internal delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
     [DllImport("dwmapi.dll")]
-    internal static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
+    internal static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, IntPtr pvAttribute, int cbAttribute);
+
+    internal static int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out Rect rect)
+    {
+        rect = default;
+        IntPtr rectPtr = Marshal.AllocHGlobal(Marshal.SizeOf(rect));
+        try
+        {
+            int result = DwmGetWindowAttribute(hwnd, dwAttribute, rectPtr, Marshal.SizeOf(rect));
+            if (result == 0)
+            {
+                rect = Marshal.PtrToStructure<Rect>(rectPtr);
+            }
+
+            return result;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(rectPtr);
+        }
+    }
+
+    internal static int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int value)
+    {
+        value = 0;
+        IntPtr valuePtr = Marshal.AllocHGlobal(sizeof(int));
+        try
+        {
+            int result = DwmGetWindowAttribute(hwnd, dwAttribute, valuePtr, sizeof(int));
+            if (result == 0)
+            {
+                value = Marshal.ReadInt32(valuePtr);
+            }
+
+            return result;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(valuePtr);
+        }
+    }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     internal static extern IntPtr LoadLibrary(string lpFileName);

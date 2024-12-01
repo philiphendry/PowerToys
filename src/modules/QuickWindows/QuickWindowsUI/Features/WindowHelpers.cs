@@ -83,7 +83,7 @@ public class WindowHelpers : IWindowHelpers
         }
 
         // Check if window is cloaked (hidden by the system)
-        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out var isCloaked, sizeof(int)) == 0
+        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out int isCloaked) == 0
             && isCloaked != 0)
         {
             return false;
@@ -128,10 +128,20 @@ public class WindowHelpers : IWindowHelpers
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
-            if (IsWindowVisible(hWnd) && NativeMethods.GetWindowRect(hWnd, out var rect))
+            var size = Marshal.SizeOf(typeof(NativeMethods.Rect));
+            if (!IsWindowVisible(hWnd))
             {
-                windows.Add(rect);
+                return true;
             }
+
+            var result = NativeMethods.DwmGetWindowAttribute(hWnd, (int)NativeMethods.DwmWindowAttribute.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect);
+            if (result != 0)
+            {
+                Logger.LogDebug($"{nameof(NativeMethods.DwmGetWindowAttribute)} failed with error code {result}");
+                return true;
+            }
+
+            windows.Add(rect);
 
             return true;
         }
