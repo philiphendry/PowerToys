@@ -13,7 +13,7 @@ namespace QuickWindows;
 
 // https://learn.microsoft.com/visualstudio/code-quality/ca1060?view=vs-2019
 // will have to rename
-internal static class NativeMethods
+public static class NativeMethods
 {
     internal const uint GA_ROOT = 2;
     internal const int GWL_EX_STYLE = -20;
@@ -201,7 +201,7 @@ internal static class NativeMethods
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct Rect
+    public struct Rect
     {
         internal int left;
         internal int top;
@@ -339,7 +339,7 @@ internal static class NativeMethods
 
     [DllImport("KERNEL32.dll", ExactSpelling = true, SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    public static extern uint GetCurrentThreadId();
+    internal static extern uint GetCurrentThreadId();
 
     internal const uint IDC_ARROW = 32512;
     internal const uint IDC_SIZENWSE = 32642;
@@ -577,5 +577,5 @@ internal static class NativeMethods
     public const uint KEYEVENTF_KEYUP = 0x0002;
 
     [DllImport("user32.dll", SetLastError = true)]
-    public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+    internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 }

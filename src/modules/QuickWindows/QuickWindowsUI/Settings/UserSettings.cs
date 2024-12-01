@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCommon;
@@ -51,6 +50,10 @@ public class UserSettings : IUserSettings
 
     public SettingItem<string> ExcludedApplications { get; set; } = new(string.Empty);
 
+    public SettingItem<int> SnappingThreshold { get; } = new(30);
+
+    public SettingItem<int> SnappingPadding { get; } = new(5);
+
     public void AddExcludedApplication(string windowTitle, string windowClass)
     {
         try
@@ -90,6 +93,8 @@ public class UserSettings : IUserSettings
         settings.Properties.TransparentWindowOnMove = TransparentWindowOnMove.Value;
         settings.Properties.ExcludeAppDetection = ExcludeAppDetection.Value;
         settings.Properties.ExcludedApplications = ExcludedApplications.Value;
+        settings.Properties.SnappingThreshold = SnappingThreshold.Value;
+        settings.Properties.SnappingPadding = SnappingPadding.Value;
         settings.Save(_settingsUtils);
     }
 
@@ -125,6 +130,8 @@ public class UserSettings : IUserSettings
                             TransparentWindowOnMove.Value = settings.Properties.TransparentWindowOnMove;
                             ExcludeAppDetection.Value = settings.Properties.ExcludeAppDetection;
                             ExcludedApplications.Value = settings.Properties.ExcludedApplications ?? string.Empty;
+                            SnappingThreshold.Value = settings.Properties.SnappingThreshold;
+                            SnappingPadding.Value = settings.Properties.SnappingPadding;
 
                             Logger.LogDebug("Publishing changes to settings.");
                             Changed?.Invoke(this, EventArgs.Empty);
@@ -172,7 +179,15 @@ public class UserSettings : IUserSettings
 
         var telemetrySettings = new Telemetry.QuickWindowsSettings()
         {
+            ActivateOnAlt = properties.ActivateOnAlt,
+            ActivateOnShift = properties.ActivateOnShift,
+            ActivateOnCtrl = properties.ActivateOnCtrl,
+            DoNotActivateOnGameMode = properties.DoNotActivateOnGameMode,
             TransparentWindowOnMove = properties.TransparentWindowOnMove,
+            ExcludeAppDetection = properties.ExcludeAppDetection,
+            ExcludedApplications = properties.ExcludedApplications,
+            SnappingThreshold = properties.SnappingThreshold,
+            SnappingPadding = properties.SnappingPadding,
         };
 
         PowerToysTelemetry.Log.WriteEvent(telemetrySettings);
