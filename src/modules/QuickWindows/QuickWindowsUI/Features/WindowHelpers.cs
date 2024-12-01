@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using ManagedCommon;
@@ -72,5 +73,67 @@ public class WindowHelpers : IWindowHelpers
         }
 
         return (true, windowTitle.ToString(), className.ToString());
+    }
+
+    public bool IsWindowVisible(IntPtr hWnd)
+    {
+        if (!NativeMethods.IsWindowVisible(hWnd))
+        {
+            return false;
+        }
+
+        // Check if window is cloaked (hidden by the system)
+        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out var isCloaked, sizeof(int)) == 0
+            && isCloaked != 0)
+        {
+            return false;
+        }
+
+        // Get window info to check actual visibility state
+        var info = default(NativeMethods.WINDOWINFO);
+        info.cbSize = (uint)Marshal.SizeOf(info);
+        if (!NativeMethods.GetWindowInfo(hWnd, ref info))
+        {
+            return false;
+        }
+
+        // Check if window is really visible and not minimized
+        return (info.dwStyle & NativeMethods.WS_VISIBLE) != 0
+               && (info.dwStyle & NativeMethods.WS_MINIMIZE) == 0;
+    }
+
+    public bool IsSystemWindow(IntPtr hWnd)
+    {
+        var exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE);
+
+        // Check for tool windows and transparent windows
+        if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0 ||
+            (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public List<NativeMethods.Rect> GetOpenWindows()
+    {
+        var windows = new List<NativeMethods.Rect>();
+        if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        return windows;
+
+        bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
+        {
+            if (IsWindowVisible(hWnd) && NativeMethods.GetWindowRect(hWnd, out var rect))
+            {
+                windows.Add(rect);
+            }
+
+            return true;
+        }
     }
 }

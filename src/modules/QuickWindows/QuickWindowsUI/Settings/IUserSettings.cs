@@ -24,6 +24,10 @@ public interface IUserSettings
 
     SettingItem<string> ExcludedApplications { get; }
 
+    SettingItem<int> SnappingThreshold { get; }
+
+    SettingItem<int> SnappingPadding { get; }
+
     void AddExcludedApplication(string windowTitle, string windowClass);
 
     void SendSettingsTelemetry();

@@ -9,6 +9,14 @@ namespace Microsoft.PowerToys.Settings.UI.Library;
 
 public class QuickWindowsProperties
 {
+    private static readonly string[] ExcludedApplicationsDefaults = [
+        "Program Manager||Progman",
+        "||Shell_TrayWnd",
+        "||WindowsDashboard",
+        "Notification Centre||Windows.UI.Core.CoreWindow",
+        "Quick settings||ControlCenterWindow",
+        ];
+
     [JsonConverter(typeof(BoolPropertyJsonConverter))]
     public bool ActivateOnAlt { get; set; } = true;
 
@@ -27,7 +35,11 @@ public class QuickWindowsProperties
     [JsonConverter(typeof(BoolPropertyJsonConverter))]
     public bool ExcludeAppDetection { get; set; } = false;
 
-    public string ExcludedApplications { get; set; }
+    public string ExcludedApplications { get; set; } = string.Join('\r', ExcludedApplicationsDefaults);
+
+    public int SnappingThreshold { get; set; } = 30;
+
+    public int SnappingPadding { get; set; } = 5;
 
     public override string ToString() => JsonSerializer.Serialize(this);
 }

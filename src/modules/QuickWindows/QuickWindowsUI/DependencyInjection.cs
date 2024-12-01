@@ -19,6 +19,7 @@ public class DependencyInjection
         services.AddSingleton<ICursorForOperation, CursorForOperation>();
         services.AddSingleton<IMovingWindows, MovingWindows>();
         services.AddSingleton<IResizingWindows, ResizingWindows>();
+        services.AddSingleton<ISnappingWindows, SnappingWindows>();
         services.AddSingleton<IRolodexWindows, RolodexWindows>();
         services.AddSingleton<ITransparentWindows, TransparentWindows>();
         services.AddSingleton<IDisabledInGameMode, DisabledInGameMode>();

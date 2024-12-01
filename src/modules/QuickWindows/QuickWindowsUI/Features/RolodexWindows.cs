@@ -9,7 +9,7 @@ using QuickWindows.Interfaces;
 
 namespace QuickWindows.Features;
 
-public class RolodexWindows : IRolodexWindows
+public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
 {
     public void SendWindowToBottom(int x, int y)
     {
@@ -44,12 +44,12 @@ public class RolodexWindows : IRolodexWindows
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
-            if (IsSystemWindow(hWnd))
+            if (windowHelpers.IsSystemWindow(hWnd))
             {
                 return true;
             }
 
-            if (!IsWindowVisible(hWnd))
+            if (!windowHelpers.IsWindowVisible(hWnd))
             {
                 return true;
             }
@@ -92,46 +92,5 @@ public class RolodexWindows : IRolodexWindows
         {
             Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
-    }
-
-    private bool IsSystemWindow(IntPtr hWnd)
-    {
-        var exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE);
-
-        // Check for tool windows and transparent windows
-        if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0 ||
-            (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsWindowVisible(IntPtr hWnd)
-    {
-        if (!NativeMethods.IsWindowVisible(hWnd))
-        {
-            return false;
-        }
-
-        // Check if window is cloaked (hidden by the system)
-        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out var isCloaked, sizeof(int)) == 0
-            && isCloaked != 0)
-        {
-            return false;
-        }
-
-        // Get window info to check actual visibility state
-        var info = default(NativeMethods.WINDOWINFO);
-        info.cbSize = (uint)Marshal.SizeOf(info);
-        if (!NativeMethods.GetWindowInfo(hWnd, ref info))
-        {
-            return false;
-        }
-
-        // Check if window is really visible and not minimized
-        return (info.dwStyle & NativeMethods.WS_VISIBLE) != 0
-               && (info.dwStyle & NativeMethods.WS_MINIMIZE) == 0;
     }
 }
