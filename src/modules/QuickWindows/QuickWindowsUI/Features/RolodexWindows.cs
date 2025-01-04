@@ -46,7 +46,6 @@ public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
         {
             if (windowHelpers.IsSystemWindow(hWnd)
                 || !windowHelpers.IsWindowVisible(hWnd)
-                || !windowHelpers.IsWindowCloaked(hWnd)
                 || !NativeMethods.GetWindowRect(hWnd, out var rect))
             {
                 return true;

@@ -102,32 +102,16 @@ public class WindowHelpers : IWindowHelpers
                && (info.dwStyle & NativeMethods.WS_MINIMIZE) == 0;
     }
 
-    public bool IsWindowCloaked(IntPtr hWnd)
-    {
-        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out int isCloaked) == 0
-            && isCloaked != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     public bool IsSystemWindow(IntPtr hWnd)
     {
         var exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE);
 
         // Check for tool windows and transparent windows
-        if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0 ||
-            (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0)
-        {
-            return true;
-        }
-
-        return false;
+        return (exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0 ||
+               (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0;
     }
 
-    public List<NativeMethods.Rect> GetOpenWindows()
+    public List<NativeMethods.Rect> GetSnappableWindows(IntPtr excludeHWnd)
     {
         var windows = new List<NativeMethods.Rect>();
         if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
@@ -140,25 +124,21 @@ public class WindowHelpers : IWindowHelpers
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
             if (!IsWindowVisible(hWnd)
-                || !IsWindowCloaked(hWnd))
+                || NativeMethods.IsIconic(hWnd) // Skip minimized windows
+                || (NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE) & NativeMethods.WS_EX_NOACTIVATE) == NativeMethods.WS_EX_NOACTIVATE
+                || (NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_STYLE) & NativeMethods.WS_CAPTION) != NativeMethods.WS_CAPTION // No title bar
+                || (NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_STYLE) & NativeMethods.WS_THICKFRAME) != NativeMethods.WS_THICKFRAME // No sizing border
+                || hWnd == excludeHWnd)
             {
                 return true;
             }
 
-            var result = NativeMethods.DwmGetWindowAttribute(hWnd, (int)NativeMethods.DwmWindowAttribute.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect);
-            if (result != 0)
+            if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect) == 0
+                || NativeMethods.GetWindowRect(hWnd, out rect))
             {
-                // Fallback to GetWindowRect
-                if (!NativeMethods.GetWindowRect(hWnd, out rect))
-                {
-                    Logger.LogDebug($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
-                    return true;
-                }
-
+                windows.Add(rect);
                 return true;
             }
-
-            windows.Add(rect);
 
             return true;
         }

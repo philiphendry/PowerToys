@@ -171,12 +171,12 @@ public class QuickWindowsManager(
                         transparentWindows.StartTransparency(args.X, args.Y);
                         switch (resizeOperation)
                         {
-                            case ResizingWindows.ResizeOperation.ResizeTopLeft:
-                            case ResizingWindows.ResizeOperation.ResizeBottomRight:
+                            case ResizeOperation.ResizeTopLeft:
+                            case ResizeOperation.ResizeBottomRight:
                                 cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
                                 break;
-                            case ResizingWindows.ResizeOperation.ResizeTopRight:
-                            case ResizingWindows.ResizeOperation.ResizeBottomLeft:
+                            case ResizeOperation.ResizeTopRight:
+                            case ResizeOperation.ResizeBottomLeft:
                                 cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
                                 break;
                         }
