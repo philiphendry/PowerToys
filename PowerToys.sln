@@ -336,6 +336,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Community.PowerToys.Run.Plugin.UnitConverter.UnitTest", "src\modules\launcher\Plugins\Community.PowerToys.Run.Plugin.UnitConverter.UnitTest\Community.PowerToys.Run.Plugin.UnitConverter.UnitTest.csproj", "{3E424AD2-19E5-4AE6-B833-F53963EB5FC1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shortcutguide", "shortcutguide", "{106CBECA-0701-4FC3-838C-9DF816A19AE2}"
+	ProjectSection(SolutionItems) = preProject
+		src\codeAnalysis\StyleCop.json = src\codeAnalysis\StyleCop.json
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShortcutGuideModuleInterface", "src\modules\ShortcutGuide\ShortcutGuideModuleInterface\ShortcutGuideModuleInterface.vcxproj", "{2D604C07-51FC-46BB-9EB7-75AECC7F5E81}"
 EndProject
@@ -644,6 +647,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuickWindows", "src\modules\QuickWindows\QuickWindows\QuickWindows.vcxproj", "{290C2CFC-4151-4F05-BC80-8B536925854B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickWindowsUI", "src\modules\QuickWindows\QuickWindowsUI\QuickWindowsUI.csproj", "{9A35E4CB-C894-442A-BEF3-10DA6F35D795}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest-QuickWindowsUI", "src\modules\QuickWindows\UnitTest-QuickWindowsUI\UnitTest-QuickWindowsUI.csproj", "{40EE596E-F52F-4AEC-A1A3-BE427402A04E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -2865,6 +2870,18 @@ Global
 		{9A35E4CB-C894-442A-BEF3-10DA6F35D795}.Release|x64.Build.0 = Release|x64
 		{9A35E4CB-C894-442A-BEF3-10DA6F35D795}.Release|x86.ActiveCfg = Release|x64
 		{9A35E4CB-C894-442A-BEF3-10DA6F35D795}.Release|x86.Build.0 = Release|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|ARM64.Build.0 = Debug|ARM64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|x64.ActiveCfg = Debug|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|x64.Build.0 = Debug|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|x86.ActiveCfg = Debug|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Debug|x86.Build.0 = Debug|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|ARM64.ActiveCfg = Release|ARM64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|ARM64.Build.0 = Release|ARM64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|x64.ActiveCfg = Release|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|x64.Build.0 = Release|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|x86.ActiveCfg = Release|x64
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -3103,6 +3120,7 @@ Global
 		{F55F32E8-1A4B-47D8-8100-E454A8937523} = {4574FDD0-F61D-4376-98BF-E5A1262C11EC}
 		{290C2CFC-4151-4F05-BC80-8B536925854B} = {F55F32E8-1A4B-47D8-8100-E454A8937523}
 		{9A35E4CB-C894-442A-BEF3-10DA6F35D795} = {F55F32E8-1A4B-47D8-8100-E454A8937523}
+		{40EE596E-F52F-4AEC-A1A3-BE427402A04E} = {F55F32E8-1A4B-47D8-8100-E454A8937523}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C3A2F9D1-7930-4EF4-A6FC-7EE0A99821D0}
