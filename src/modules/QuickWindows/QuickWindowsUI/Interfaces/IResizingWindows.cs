@@ -8,7 +8,7 @@ namespace QuickWindows.Interfaces;
 
 public interface IResizingWindows
 {
-    ResizingWindows.ResizeOperation? StartResize(int x, int y);
+    ResizeOperation? StartResize(int x, int y);
 
     void ResizeWindow(int x, int y);
 

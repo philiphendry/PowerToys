@@ -16,6 +16,7 @@ namespace QuickWindows;
 public static class NativeMethods
 {
     internal const uint GA_ROOT = 2;
+    internal const int GWL_STYLE = -16;
     internal const int GWL_EX_STYLE = -20;
     internal const int VkSnapshot = 0x2c;
     internal const int KfAltdown = 0x2000;
@@ -40,8 +41,10 @@ public static class NativeMethods
     internal const int WS_EX_LAYERED = 0x80000;
     internal const int WS_EX_TOOLWINDOW = 0x00000080;
     internal const int WS_EX_TRANSPARENT = 0x00000020;
+    internal const int WS_EX_NOACTIVATE = 0x08000000;
     internal const int WS_VISIBLE = 0x10000000;
     internal const int WS_MINIMIZE = 0x20000000;
+    internal const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
     internal const int DWMWA_CLOAKED = 14;
 
     internal const int WH_MOUSE_LL = 14;
@@ -76,27 +79,6 @@ public static class NativeMethods
     internal static readonly IntPtr HWND_TOP = new(0);
     internal static readonly IntPtr HWND_TOPMOST = new(-1);
     internal static readonly IntPtr HWND_NOTOPMOST = new(-2);
-
-    [Flags]
-    internal enum DwmWindowAttribute : uint
-    {
-        DWMWA_NCRENDERING_ENABLED = 1,
-        DWMWA_NCRENDERING_POLICY,
-        DWMWA_TRANSITIONS_FORCEDISABLED,
-        DWMWA_ALLOW_NCPAINT,
-        DWMWA_CAPTION_BUTTON_BOUNDS,
-        DWMWA_NONCLIENT_RTL_LAYOUT,
-        DWMWA_FORCE_ICONIC_REPRESENTATION,
-        DWMWA_FLIP3D_POLICY,
-        DWMWA_EXTENDED_FRAME_BOUNDS,
-        DWMWA_HAS_ICONIC_BITMAP,
-        DWMWA_DISALLOW_PEEK,
-        DWMWA_EXCLUDED_FROM_PEEK,
-        DWMWA_CLOAK,
-        DWMWA_CLOAKED,
-        DWMWA_FREEZE_REPRESENTATION,
-        DWMWA_LAST,
-    }
 
     internal delegate bool MonitorEnumProc(
         IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam);
@@ -195,6 +177,15 @@ public static class NativeMethods
     internal static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
 
     [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool SetRectEmpty(out Rect lpRect);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool OffsetRect(out Rect lpRect, int x, int y);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool InflateRect(out Rect lpRect, int x, int y);
+
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -219,6 +210,12 @@ public static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool IsIconic(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool IsZoomed(IntPtr hWnd);
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
@@ -412,6 +409,7 @@ public static class NativeMethods
     internal const uint WS_POPUP = 0x80000000;
     internal const uint WS_EX_TOPMOST = 0x00000008;
     internal const uint WS_CAPTION = 0x00C00000;
+    internal const uint WS_THICKFRAME = 0x00040000;
     internal const uint SW_HIDE = 0;
     internal const uint SW_SHOWNOACTIVATE = 4;
 

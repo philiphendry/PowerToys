@@ -44,7 +44,7 @@ public class MovingWindows : IMovingWindows
             return;
         }
 
-        _snappingWindows.StartSnap();
+        _snappingWindows.StartSnap(_targetWindow);
         _initialMousePosition = new NativeMethods.POINT(x, y);
     }
 

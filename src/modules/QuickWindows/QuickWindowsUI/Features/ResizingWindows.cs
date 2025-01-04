@@ -16,6 +16,7 @@ public class ResizingWindows : IResizingWindows
 
     private readonly IRateLimiter _rateLimiter;
     private readonly IWindowHelpers _windowHelpers;
+    private readonly ISnappingWindows _snappingWindows;
     private IntPtr _targetWindow = IntPtr.Zero;
     private NativeMethods.POINT _initialMousePosition;
     private NativeMethods.Rect _initialWindowRect;
@@ -23,19 +24,13 @@ public class ResizingWindows : IResizingWindows
 
     public ResizingWindows(
         IRateLimiter rateLimiter,
-        IWindowHelpers windowHelpers)
+        IWindowHelpers windowHelpers,
+        ISnappingWindows snappingWindows)
     {
         _rateLimiter = rateLimiter;
         _rateLimiter.Interval = MinUpdateIntervalMs;
         _windowHelpers = windowHelpers;
-    }
-
-    public enum ResizeOperation
-    {
-        ResizeTopLeft,
-        ResizeTopRight,
-        ResizeBottomLeft,
-        ResizeBottomRight,
+        _snappingWindows = snappingWindows;
     }
 
     public ResizeOperation? StartResize(int x, int y)
@@ -114,6 +109,13 @@ public class ResizingWindows : IResizingWindows
                 newBottom += deltaY;
                 break;
         }
+
+        (newLeft, newRight, newTop, newBottom) = _snappingWindows.SnapResizingWindow(
+            newLeft,
+            newTop,
+            newRight,
+            newBottom,
+            _currentOperation);
 
         // Ensure minimum window size
         const int minSize = MinimumWindowSize;
