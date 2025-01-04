@@ -12,6 +12,7 @@ using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
 using Microsoft.PowerToys.Telemetry;
+using QuickWindows.Interfaces;
 
 namespace QuickWindows.Settings;
 
@@ -26,7 +27,7 @@ public class UserSettings : IUserSettings
 
     public event EventHandler? Changed;
 
-    public UserSettings(Helpers.IThrottledActionInvoker throttledActionInvoker)
+    public UserSettings(IThrottledActionInvoker throttledActionInvoker)
     {
         _settingsUtils = new SettingsUtils();
 

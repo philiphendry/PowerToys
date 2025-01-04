@@ -4,6 +4,7 @@
 
 using System;
 using System.Windows.Threading;
+using QuickWindows.Interfaces;
 
 namespace QuickWindows.Helpers;
 

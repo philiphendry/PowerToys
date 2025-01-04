@@ -2,11 +2,16 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+using System.Collections.Generic;
+using System.Windows;
 
 namespace QuickWindows.Helpers;
 
-public interface IThrottledActionInvoker
+public interface IMonitorInfos
 {
-    void ScheduleAction(Action action, int milliseconds);
+    DpiScale GetCurrentMonitorDpi();
+
+    bool HasMultipleMonitors();
+
+    List<MonitorInfo> GetAllMonitorInfos();
 }

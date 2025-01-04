@@ -31,6 +31,7 @@ public class DependencyInjection
         services.AddSingleton<IKeyboardMonitor, KeyboardMonitor>();
         services.AddSingleton<IMouseHook, MouseHook>();
         services.AddTransient<IRateLimiter, RateLimiter>();
+        services.AddTransient<IMonitorInfos, MonitorInfos>();
         services.AddHostedService<QuickWindowsManager>();
     }
 }
