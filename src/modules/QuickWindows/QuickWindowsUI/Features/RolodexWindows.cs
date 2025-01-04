@@ -44,17 +44,10 @@ public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
-            if (windowHelpers.IsSystemWindow(hWnd))
-            {
-                return true;
-            }
-
-            if (!windowHelpers.IsWindowVisible(hWnd))
-            {
-                return true;
-            }
-
-            if (!NativeMethods.GetWindowRect(hWnd, out var rect))
+            if (windowHelpers.IsSystemWindow(hWnd)
+                || !windowHelpers.IsWindowVisible(hWnd)
+                || !windowHelpers.IsWindowCloaked(hWnd)
+                || !NativeMethods.GetWindowRect(hWnd, out var rect))
             {
                 return true;
             }
