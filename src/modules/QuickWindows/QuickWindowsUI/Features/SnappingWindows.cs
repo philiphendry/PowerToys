@@ -87,10 +87,22 @@ public class SnappingWindows : ISnappingWindows
             }
         }
 
-        var verticalIntersectingWindows = _windows.FindAll(window =>
-           (window.left - _snappingThreshold < left && window.right + _snappingThreshold > left)
-            || (window.left - _snappingThreshold < right & window.right + _snappingThreshold > right))
-            .ToList();
+        // If the previous code already found the closest window we'll only snap to that one.
+        var verticalIntersectingWindows = closestWindow != null
+            ?
+            [
+                new()
+                {
+                    left = closestWindow.Value.left,
+                    top = closestWindow.Value.top,
+                    right = closestWindow.Value.right,
+                    bottom = closestWindow.Value.bottom,
+                }
+            ]
+            : _windows.FindAll(window =>
+                (window.left - _snappingThreshold < left && window.right + _snappingThreshold > left)
+                || (window.left - _snappingThreshold < right & window.right + _snappingThreshold > right))
+                .ToList();
 
         closestWindow = FindClosestWithinSnappingThreshold(top, rect => rect.bottom, verticalIntersectingWindows, (source, target) => source - target);
         if (closestWindow != null)

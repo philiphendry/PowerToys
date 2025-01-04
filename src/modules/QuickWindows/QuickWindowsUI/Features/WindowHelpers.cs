@@ -102,6 +102,17 @@ public class WindowHelpers : IWindowHelpers
                && (info.dwStyle & NativeMethods.WS_MINIMIZE) == 0;
     }
 
+    public bool IsWindowCloaked(IntPtr hWnd)
+    {
+        if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out int isCloaked) == 0
+            && isCloaked != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public bool IsSystemWindow(IntPtr hWnd)
     {
         var exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EX_STYLE);
@@ -128,8 +139,8 @@ public class WindowHelpers : IWindowHelpers
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
-            var size = Marshal.SizeOf(typeof(NativeMethods.Rect));
-            if (!IsWindowVisible(hWnd))
+            if (!IsWindowVisible(hWnd)
+                || !IsWindowCloaked(hWnd))
             {
                 return true;
             }
@@ -137,7 +148,13 @@ public class WindowHelpers : IWindowHelpers
             var result = NativeMethods.DwmGetWindowAttribute(hWnd, (int)NativeMethods.DwmWindowAttribute.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect);
             if (result != 0)
             {
-                Logger.LogDebug($"{nameof(NativeMethods.DwmGetWindowAttribute)} failed with error code {result}");
+                // Fallback to GetWindowRect
+                if (!NativeMethods.GetWindowRect(hWnd, out rect))
+                {
+                    Logger.LogDebug($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
+                    return true;
+                }
+
                 return true;
             }
 

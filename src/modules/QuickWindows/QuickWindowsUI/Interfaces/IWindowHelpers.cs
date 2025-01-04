@@ -15,6 +15,8 @@ public interface IWindowHelpers
 
     bool IsWindowVisible(IntPtr hWnd);
 
+    bool IsWindowCloaked(IntPtr hWnd);
+
     bool IsSystemWindow(IntPtr hWnd);
 
     List<NativeMethods.Rect> GetOpenWindows();
