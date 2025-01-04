@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ManagedCommon;
+using QuickWindows.Helpers;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
 
@@ -13,13 +14,19 @@ namespace QuickWindows.Features;
 
 public class SnappingWindows : ISnappingWindows
 {
+    private record Snappable(NativeMethods.Rect Rect, bool SnapInside);
+
     private readonly IWindowHelpers _windowHelpers;
+    private readonly List<Snappable> _monitorAreas;
     private int _snappingThreshold;
     private int _snappingPadding;
-    private List<NativeMethods.Rect> _snappableWindows = null!;
+    private List<Snappable> _snappableAreas = null!;
     private NativeMethods.Rect _windowBorderOffsets;
 
-    public SnappingWindows(IUserSettings userSettings, IWindowHelpers windowHelpers)
+    public SnappingWindows(
+        IUserSettings userSettings,
+        IWindowHelpers windowHelpers,
+        IMonitorInfos monitorInfos)
     {
         _windowHelpers = windowHelpers;
 
@@ -29,20 +36,29 @@ public class SnappingWindows : ISnappingWindows
         userSettings.SnappingThreshold.PropertyChanged += (_, _) => _snappingThreshold = userSettings.SnappingThreshold.Value;
         userSettings.SnappingPadding.PropertyChanged += (_, _) => _snappingPadding = userSettings.SnappingPadding.Value;
 
+        _monitorAreas = monitorInfos
+            .GetAllMonitorInfos()
+            .Select(mi => new Snappable(mi.WorkingArea, SnapInside: true))
+            .ToList();
+
         Logger.LogDebug($"Snapping Threshold: {_snappingThreshold}, Snapping Padding: {_snappingPadding}");
     }
 
     public void StartSnap(IntPtr targetWindow)
     {
-        _snappableWindows = _windowHelpers.GetSnappableWindows(targetWindow);
-        if (_snappingPadding > 0)
-        {
-            _snappableWindows = _snappableWindows.Select(w =>
+        var windows = _windowHelpers.GetSnappableWindows(targetWindow);
+        _snappableAreas = windows
+            .Select(w =>
             {
-                NativeMethods.InflateRect(out w, _snappingPadding, _snappingPadding);
-                return w;
-            }).ToList();
-        }
+                if (_snappingPadding > 0)
+                {
+                    NativeMethods.InflateRect(out w, _snappingPadding, _snappingPadding);
+                }
+
+                return new Snappable(w, SnapInside: false);
+            })
+            .ToList();
+        _snappableAreas.AddRange(_monitorAreas);
 
         _windowBorderOffsets = CalculateBorderOffsets(targetWindow, _snappingPadding);
     }
@@ -117,89 +133,90 @@ public class SnappingWindows : ISnappingWindows
         bool IsTop(ResizeOperation op) => op is ResizeOperation.ResizeTopLeft or ResizeOperation.ResizeTopRight;
         bool IsBottom(ResizeOperation op) => op is ResizeOperation.ResizeBottomLeft or ResizeOperation.ResizeBottomRight;
 
-        foreach (var window in _snappableWindows)
+        foreach (var snappable in _snappableAreas)
         {
-            var snapInside = false;
+            var rect = snappable.Rect;
+            var snapInside = snappable.SnapInside;
 
             // Check if positionX snaps
-            if (IsInRange(positionY, window.top, window.bottom, thresholdX)
-                || IsInRange(window.top, positionY, positionY + height, thresholdX))
+            if (IsInRange(positionY, rect.top, rect.bottom, thresholdX)
+                || IsInRange(rect.top, positionY, positionY + height, thresholdX))
             {
                 var shouldSnapInside = snapInside
-                                      || (positionY + height - thresholdX < window.top)
-                                      || (window.bottom < positionY + thresholdX);
+                                      || (positionY + height - thresholdX < rect.top)
+                                      || (rect.bottom < positionY + thresholdX);
                 if (IsLeft(operation)
-                    && IsEqual(window.right, positionX, thresholdX))
+                    && IsEqual(rect.right, positionX, thresholdX))
                 {
                     // The left edge of the dragged window will snap to this window's right edge
                     stuckLeft = true;
-                    stickLeft = window.right;
-                    thresholdX = window.right - positionX;
+                    stickLeft = rect.right;
+                    thresholdX = rect.right - positionX;
                 }
                 else if (shouldSnapInside && IsRight(operation)
-                                         && IsEqual(window.right, positionX + width, thresholdX))
+                                         && IsEqual(rect.right, positionX + width, thresholdX))
                 {
                     // The right edge of the dragged window will snap to this window's right edge
                     stuckRight = true;
-                    stickRight = window.right;
-                    thresholdX = window.right - (positionX + width);
+                    stickRight = rect.right;
+                    thresholdX = rect.right - (positionX + width);
                 }
                 else if (shouldSnapInside && IsLeft(operation)
-                                         && IsEqual(window.left, positionX, thresholdX))
+                                         && IsEqual(rect.left, positionX, thresholdX))
                 {
                     // The left edge of the dragged window will snap to this window's left edge
                     stuckLeft = true;
-                    stickLeft = window.left;
-                    thresholdX = window.left - positionX;
+                    stickLeft = rect.left;
+                    thresholdX = rect.left - positionX;
                 }
                 else if (IsRight(operation)
-                         && IsEqual(window.left, positionX + width, thresholdX))
+                         && IsEqual(rect.left, positionX + width, thresholdX))
                 {
                     // The right edge of the dragged window will snap to this window's left edge
                     stuckRight = true;
-                    stickRight = window.left;
-                    thresholdX = window.left - (positionX + width);
+                    stickRight = rect.left;
+                    thresholdX = rect.left - (positionX + width);
                 }
             }
 
             // Check if positionY snaps
-            if (IsInRange(positionX, window.left, window.right, thresholdY)
-                || IsInRange(window.left, positionX, positionX + width, thresholdY))
+            if (IsInRange(positionX, rect.left, rect.right, thresholdY)
+                || IsInRange(rect.left, positionX, positionX + width, thresholdY))
             {
                 var shouldSnapInside = snapInside
-                                      || (positionX + width - thresholdY < window.left)
-                                      || (window.right < positionX + thresholdY);
+                                      || (positionX + width - thresholdY < rect.left)
+                                      || (rect.right < positionX + thresholdY);
                 if (IsTop(operation)
-                    && IsEqual(window.bottom, positionY, thresholdY))
+                    && IsEqual(rect.bottom, positionY, thresholdY))
                 {
                     // The top edge of the dragged window will snap to this window's bottom edge
                     stuckTop = true;
-                    stickTop = window.bottom;
-                    thresholdY = window.bottom - positionY;
+                    stickTop = rect.bottom;
+                    thresholdY = rect.bottom - positionY;
                 }
                 else if (shouldSnapInside && IsBottom(operation)
-                                         && IsEqual(window.bottom, positionY + height, thresholdY))
+                                         && IsEqual(rect.bottom, positionY + height, thresholdY))
                 {
                     // The bottom edge of the dragged window will snap to this window's bottom edge
                     stuckBottom = true;
-                    stickBottom = window.bottom;
-                    thresholdY = window.bottom - (positionY + height);
+                    stickBottom = rect.bottom;
+                    thresholdY = rect.bottom - (positionY + height);
                 }
                 else if (shouldSnapInside && IsTop(operation)
-                                         && IsEqual(window.top, positionY, thresholdY))
+                                         && IsEqual(rect.top, positionY, thresholdY))
                 {
                     // The top edge of the dragged window will snap to this window's top edge
                     stuckTop = true;
-                    stickTop = window.top;
-                    thresholdY = window.top - positionY;
+                    stickTop = rect.top;
+                    thresholdY = rect.top - positionY;
                 }
                 else if (IsBottom(operation)
-                         && IsEqual(window.top, positionY + height, thresholdY))
+                         && IsEqual(rect.top, positionY + height, thresholdY))
                 {
                     // The bottom edge of the dragged window will snap to this window's top edge
                     stuckBottom = true;
-                    stickBottom = window.top;
-                    thresholdY = window.top - (positionY + height);
+                    stickBottom = rect.top;
+                    thresholdY = rect.top - (positionY + height);
                 }
             }
         }
@@ -244,80 +261,81 @@ public class SnappingWindows : ISnappingWindows
         var stickX = 0;
         var stickY = 0;
 
-        var snapInside = false;
-
-        foreach (var window in _snappableWindows)
+        foreach (var snappable in _snappableAreas)
         {
+            var rect = snappable.Rect;
+            var snapInside = snappable.SnapInside;
+
             // Check if positionX snaps
-            if (IsInRange(positionY, window.top, window.bottom, thresholdX)
-                || IsInRange(window.top, positionY, positionY + height, thresholdX))
+            if (IsInRange(positionY, rect.top, rect.bottom, thresholdX)
+                || IsInRange(rect.top, positionY, positionY + height, thresholdX))
             {
                 var shouldSnapInside = snapInside
-                                      || positionY + height - thresholdX < window.top
-                                      || window.bottom < positionY + thresholdX;
-                if (IsEqual(window.right, positionX, thresholdX))
+                                      || positionY + height - thresholdX < rect.top
+                                      || rect.bottom < positionY + thresholdX;
+                if (IsEqual(rect.right, positionX, thresholdX))
                 {
                     // The left edge of the dragged window will snap to this window's right edge
                     stuckX = true;
-                    stickX = window.right;
-                    thresholdX = window.right - positionX;
+                    stickX = rect.right;
+                    thresholdX = rect.right - positionX;
                 }
-                else if (shouldSnapInside && IsEqual(window.right, positionX + width, thresholdX))
+                else if (shouldSnapInside && IsEqual(rect.right, positionX + width, thresholdX))
                 {
                     // The right edge of the dragged window will snap to this window's right edge
                     stuckX = true;
-                    stickX = window.right - width;
-                    thresholdX = window.right - (positionX + width);
+                    stickX = rect.right - width;
+                    thresholdX = rect.right - (positionX + width);
                 }
-                else if (shouldSnapInside && IsEqual(window.left, positionX, thresholdX))
+                else if (shouldSnapInside && IsEqual(rect.left, positionX, thresholdX))
                 {
                     // The left edge of the dragged window will snap to this window's left edge
                     stuckX = true;
-                    stickX = window.left;
-                    thresholdX = window.left - positionX;
+                    stickX = rect.left;
+                    thresholdX = rect.left - positionX;
                 }
-                else if (IsEqual(window.left, positionX + width, thresholdX))
+                else if (IsEqual(rect.left, positionX + width, thresholdX))
                 {
                     // The right edge of the dragged window will snap to this window's left edge
                     stuckX = true;
-                    stickX = window.left - width;
-                    thresholdX = window.left - (positionX + width);
+                    stickX = rect.left - width;
+                    thresholdX = rect.left - (positionX + width);
                 }
             }
 
             // Check if positionY snaps
-            if (IsInRange(positionX, window.left, window.right, thresholdY)
-                || IsInRange(window.left, positionX, positionX + width, thresholdY))
+            if (IsInRange(positionX, rect.left, rect.right, thresholdY)
+                || IsInRange(rect.left, positionX, positionX + width, thresholdY))
             {
-                var shouldSnapInside = snapInside || positionX + width - thresholdY < window.left
-                                                 || window.right < positionX + thresholdY;
-                if (IsEqual(window.bottom, positionY, thresholdY))
+                var shouldSnapInside = snapInside || positionX + width - thresholdY < rect.left
+                                                 || rect.right < positionX + thresholdY;
+                if (IsEqual(rect.bottom, positionY, thresholdY))
                 {
                     // The top edge of the dragged window will snap to this window's bottom edge
                     stuckY = true;
-                    stickY = window.bottom;
-                    thresholdY = window.bottom - positionY;
+                    stickY = rect.bottom;
+                    thresholdY = rect.bottom - positionY;
                 }
-                else if (shouldSnapInside && IsEqual(window.bottom, positionY + height, thresholdY))
+                else if (shouldSnapInside && IsEqual(rect.bottom, positionY + height, thresholdY))
                 {
                     // The bottom edge of the dragged window will snap to this window's bottom edge
                     stuckY = true;
-                    stickY = window.bottom - height;
-                    thresholdY = window.bottom - (positionY + height);
+                    stickY = rect.bottom - height;
+                    thresholdY = rect.bottom - (positionY + height);
                 }
-                else if (shouldSnapInside && IsEqual(window.top, positionY, thresholdY))
+                else if (shouldSnapInside && IsEqual(rect.top, positionY, thresholdY))
                 {
                     // The top edge of the dragged window will snap to this window's top edge
                     stuckY = true;
-                    stickY = window.top;
-                    thresholdY = window.top - positionY;
+                    stickY = rect.top;
+                    thresholdY = rect.top - positionY;
                 }
-                else if (IsEqual(window.top, positionY + height, thresholdY))
+                else if (IsEqual(rect.top, positionY + height, thresholdY))
                 {
                     // The bottom edge of the dragged window will snap to this window's top edge
                     stuckY = true;
-                    stickY = window.top - height;
-                    thresholdY = window.top - (positionY + height);
+                    stickY = rect.top - height;
+                    thresholdY = rect.top - (positionY + height);
                 }
             }
         }
