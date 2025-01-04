@@ -47,6 +47,8 @@ public class ResizingWindows : IResizingWindows
             return null;
         }
 
+        _snappingWindows.StartSnap(_targetWindow);
+
         _initialMousePosition = new NativeMethods.POINT(x, y);
 
         var relativeX = (x - _initialWindowRect.left) /
