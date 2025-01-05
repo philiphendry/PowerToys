@@ -2753,6 +2753,21 @@ From there, simply click on one of the supported files in the File Explorer and 
   <data name="QuickWindows_Transparency.Header" xml:space="preserve">
     <value>Transparent windows when moving or resizing</value>
   </data>
+  <data name="QuickWindows_SnappingEnabled.Header" xml:space="preserve">
+    <value>Snap windows</value>
+  </data>
+  <data name="QuickWindows_SnappingEnabled.Description" xml:space="preserve">
+    <value>When moving or resizing a window snap the window edges to others or the desktop border.</value>
+  </data>
+  <data name="QuickWindows_SnappingGap.Header" xml:space="preserve">
+    <value>The pixel gap size between snapped window borders</value>
+  </data>
+  <data name="QuickWindows_Rolodex.Header" xml:space="preserve">
+    <value>Rolodex</value>
+  </data>
+  <data name="QuickWindows_Rolodex.Description" xml:space="preserve">
+    <value>With the hotkey pressed use the mouse wheel to the send the window under the cursor behind all others and bring the bottom most one to the front.</value>
+  </data>
   <data name="QuickWindows.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>
     <comment>giving credit to the projects this utility was based on</comment>
@@ -4057,7 +4072,7 @@ Activate by holding the key for the character you want to add an accent to, then
   </data>
   <data name="AdvancedPaste_EnableAdvancedAI.Description" xml:space="preserve">
     <value>Add advanced capabilities when using 'Paste with AI' including the power to 'chain' multiple transformations together and work with images and files. This feature may consume more API credits when used.</value>
-  </data>  
+  </data>
   <data name="Oobe_AdvancedPaste.Description" xml:space="preserve">
     <value>Advanced Paste is a tool to put your clipboard content into any format you need, focused towards developer workflows. It can paste as plain text, markdown, or json directly with the UX or with a direct keystroke invoke. These are fully locally executed. In addition, it has an AI powered option that is 100% opt-in and requires an Open AI key. Note: this will replace the formatted text in your clipboard with the selected format.</value>
   </data>

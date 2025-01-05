@@ -212,6 +212,51 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             }
         }
 
+        public bool RolodexEnabled
+        {
+            get => _quickWindowsSettings.Properties.RolodexEnabled;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.RolodexEnabled != value)
+                {
+                    _quickWindowsSettings.Properties.RolodexEnabled = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public bool SnappingEnabled
+        {
+            get => _quickWindowsSettings.Properties.SnappingEnabled;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.SnappingEnabled != value)
+                {
+                    _quickWindowsSettings.Properties.SnappingEnabled = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
+        public int SnapGap
+        {
+            get => _quickWindowsSettings.Properties.SnappingPadding;
+
+            set
+            {
+                if (_quickWindowsSettings.Properties.SnappingPadding != value)
+                {
+                    _quickWindowsSettings.Properties.SnappingPadding = value;
+                    OnPropertyChanged();
+                    ScheduleSavingOfSettings();
+                }
+            }
+        }
+
         public bool ExcludeAppDetection
         {
             get => _quickWindowsSettings.Properties.ExcludeAppDetection;

@@ -37,6 +37,10 @@ public class QuickWindowsProperties
 
     public string ExcludedApplications { get; set; } = string.Join('\r', ExcludedApplicationsDefaults);
 
+    public bool RolodexEnabled { get; set; } = true;
+
+    public bool SnappingEnabled { get; set; } = true;
+
     public int SnappingThreshold { get; set; } = 30;
 
     public int SnappingPadding { get; set; } = 5;

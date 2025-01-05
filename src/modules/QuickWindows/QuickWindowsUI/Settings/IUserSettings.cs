@@ -24,6 +24,10 @@ public interface IUserSettings
 
     SettingItem<string> ExcludedApplications { get; }
 
+    SettingItem<bool> RolodexEnabled { get; }
+
+    SettingItem<bool> SnappingEnabled { get; }
+
     SettingItem<int> SnappingThreshold { get; }
 
     SettingItem<int> SnappingPadding { get; }

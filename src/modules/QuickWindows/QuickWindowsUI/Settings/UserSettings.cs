@@ -51,6 +51,10 @@ public class UserSettings : IUserSettings
 
     public SettingItem<string> ExcludedApplications { get; set; } = new(string.Empty);
 
+    public SettingItem<bool> RolodexEnabled { get; } = new(true);
+
+    public SettingItem<bool> SnappingEnabled { get; } = new(true);
+
     public SettingItem<int> SnappingThreshold { get; } = new(30);
 
     public SettingItem<int> SnappingPadding { get; } = new(5);
@@ -131,6 +135,8 @@ public class UserSettings : IUserSettings
                             TransparentWindowOnMove.Value = settings.Properties.TransparentWindowOnMove;
                             ExcludeAppDetection.Value = settings.Properties.ExcludeAppDetection;
                             ExcludedApplications.Value = settings.Properties.ExcludedApplications ?? string.Empty;
+                            RolodexEnabled.Value = settings.Properties.RolodexEnabled;
+                            SnappingEnabled.Value = settings.Properties.SnappingEnabled;
                             SnappingThreshold.Value = settings.Properties.SnappingThreshold;
                             SnappingPadding.Value = settings.Properties.SnappingPadding;
 
