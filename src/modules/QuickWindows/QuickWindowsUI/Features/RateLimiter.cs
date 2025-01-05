@@ -11,7 +11,7 @@ public class RateLimiter : IRateLimiter
 {
     private long _lastUpdateTime = Environment.TickCount64;
 
-    public int Interval { get; set; } = 32;
+    public int Interval { get; set; } = 32; // Approx. 30fps
 
     public bool IsLimited()
     {

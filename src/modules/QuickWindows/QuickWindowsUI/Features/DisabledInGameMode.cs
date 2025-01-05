@@ -13,15 +13,16 @@ namespace QuickWindows.Features;
 public class DisabledInGameMode : IDisabledInGameMode
 {
     private readonly IRateLimiter _rateLimiter;
+    private readonly IWindowHelpers _windowHelpers;
     private bool _doNotActiveInGameMode;
     private bool _lastComputedState;
 
     public DisabledInGameMode(
         IUserSettings userSettings,
-        IRateLimiter rateLimiter)
+        IWindowHelpers windowHelpers)
     {
-        _rateLimiter = rateLimiter;
-        _rateLimiter.Interval = 1000;
+        _rateLimiter = new RateLimiter { Interval = 5000 };
+        _windowHelpers = windowHelpers;
 
         userSettings.DoNotActivateOnGameMode.PropertyChanged += (_, _) => _doNotActiveInGameMode = userSettings.DoNotActivateOnGameMode.Value;
         _doNotActiveInGameMode = userSettings.DoNotActivateOnGameMode.Value;
@@ -70,17 +71,9 @@ public class DisabledInGameMode : IDisabledInGameMode
             return false;
         }
 
-        var hMonitor = NativeMethods.MonitorFromWindow(hWindow, NativeMethods.MONITOR_DEFAULTTONEAREST);
-        if (hMonitor == IntPtr.Zero)
+        var monitorInfo = _windowHelpers.GetMonitorInfoForWindow(hWindow);
+        if (monitorInfo is null)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.MonitorFromWindow)} failed with error code {Marshal.GetLastWin32Error()}");
-            return false;
-        }
-
-        var monitorInfo = new NativeMethods.MonitorInfoEx();
-        if (!NativeMethods.GetMonitorInfo(new HandleRef(null, hMonitor), monitorInfo))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.GetMonitorInfo)} failed with error code {Marshal.GetLastWin32Error()}");
             return false;
         }
 

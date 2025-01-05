@@ -11,6 +11,4 @@ public interface IResizingWindows
     ResizeOperation? StartResize(int x, int y);
 
     void ResizeWindow(int x, int y);
-
-    void StopResize();
 }

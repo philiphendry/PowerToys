@@ -17,5 +17,11 @@ public interface IWindowHelpers
 
     bool IsSystemWindow(IntPtr hWnd);
 
+    bool IsMaximised(IntPtr targetWindow);
+
+    void RestoreWindow(IntPtr targetWindow);
+
+    NativeMethods.MonitorInfoEx? GetMonitorInfoForWindow(IntPtr targetWindow);
+
     List<NativeMethods.Rect> GetSnappableWindows(IntPtr excludeHWnd);
 }

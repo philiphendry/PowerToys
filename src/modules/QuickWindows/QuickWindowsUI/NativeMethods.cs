@@ -32,6 +32,7 @@ public static class NativeMethods
     internal const uint SWP_ASYNCWINDOWPOS = 0x4000;
     internal const uint SWP_NOMOVE = 0x0002;
     internal const uint SWP_NOSIZE = 0x0001;
+    internal const uint SWP_NOOWNERZORDER = 0x0200;
     internal const uint SWP_DEFERERASE = 0x2000;
     internal const uint SWP_NOSENDCHANGING = 0x0400;
     internal const uint SWP_NOCOPYBITS = 0x0100;
@@ -183,6 +184,9 @@ public static class NativeMethods
     internal static extern bool OffsetRect(out Rect lpRect, int x, int y);
 
     [DllImport("user32.dll", SetLastError = true)]
+    internal static extern bool CopyRect(out Rect lprcDst, Rect lprcSrc);
+
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool InflateRect(out Rect lpRect, int x, int y);
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -269,7 +273,7 @@ public static class NativeMethods
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "false positive, used in MonitorResolutionHelper")]
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
-    internal sealed class MonitorInfoEx
+    public sealed class MonitorInfoEx
     {
         internal int cbSize = Marshal.SizeOf(typeof(MonitorInfoEx));
         internal Rect rcMonitor;
@@ -410,8 +414,11 @@ public static class NativeMethods
     internal const uint WS_EX_TOPMOST = 0x00000008;
     internal const uint WS_CAPTION = 0x00C00000;
     internal const uint WS_THICKFRAME = 0x00040000;
-    internal const uint SW_HIDE = 0;
-    internal const uint SW_SHOWNOACTIVATE = 4;
+
+    internal const int SW_HIDE = 0;
+    internal const int SW_SHOWNORMAL = 1;
+    internal const int SW_SHOWNOACTIVATE = 4;
+    internal const int SW_RESTORE = 9;
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct WNDCLASSEX
@@ -637,4 +644,33 @@ public static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WINDOWPLACEMENT
+    {
+        public int length;
+        public int flags;
+        public int showCmd;
+        public POINT ptMinPosition;
+        public POINT ptMaxPosition;
+        public Rect rcNormalPosition;
+
+        public static WINDOWPLACEMENT Default
+        {
+            get
+            {
+                WINDOWPLACEMENT result = default;
+                result.length = Marshal.SizeOf(result);
+                return result;
+            }
+        }
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetWindowPlacement(IntPtr hWnd, WINDOWPLACEMENT lpwndpl);
 }

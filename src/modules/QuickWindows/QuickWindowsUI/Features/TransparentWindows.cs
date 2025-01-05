@@ -14,19 +14,18 @@ public class TransparentWindows : ITransparentWindows
 {
     // TODO: Make this configurable and fetched form IUserSettings
     private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
-    private readonly IWindowHelpers _windowHelpers;
+    private readonly ITargetWindow _targetWindow;
     private readonly IUserSettings _userSettings;
 
-    private bool _enabled = true;
-    private IntPtr _targetWindow = IntPtr.Zero;
+    private bool _enabled;
     private int? _originalExStyle;
     private byte? _originalOpacityLevel;
 
     public TransparentWindows(
-        IWindowHelpers windowHelpers,
+        ITargetWindow targetWindow,
         IUserSettings userSettings)
     {
-        _windowHelpers = windowHelpers;
+        _targetWindow = targetWindow;
         _userSettings = userSettings;
 
         _userSettings.Changed += UserSettings_Changed;
@@ -40,13 +39,7 @@ public class TransparentWindows : ITransparentWindows
             return;
         }
 
-        _targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
-        if (_targetWindow == IntPtr.Zero)
-        {
-            return;
-        }
-
-        var originalExStyle = NativeMethods.GetWindowLong(_targetWindow, NativeMethods.GWL_EX_STYLE);
+        var originalExStyle = NativeMethods.GetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE);
         if (originalExStyle == 0)
         {
             return;
@@ -55,32 +48,27 @@ public class TransparentWindows : ITransparentWindows
         // Store the original opacity if the window is already layered
         if ((originalExStyle & NativeMethods.WS_EX_LAYERED) != 0)
         {
-            if (NativeMethods.GetLayeredWindowAttributes(_targetWindow, out _, out var alpha, out var flags))
+            if (NativeMethods.GetLayeredWindowAttributes(_targetWindow.HWnd, out _, out var alpha, out var flags))
             {
                 _originalOpacityLevel = (flags & NativeMethods.LWA_ALPHA) != 0 ? alpha : (byte)255;
                 Logger.LogDebug($"Saving _originalOpacityLevel {_originalOpacityLevel}");
             }
         }
 
-        var setWindowLongSuccess = NativeMethods.SetWindowLong(_targetWindow, NativeMethods.GWL_EX_STYLE, originalExStyle | NativeMethods.WS_EX_LAYERED);
+        var setWindowLongSuccess = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle | NativeMethods.WS_EX_LAYERED);
         if (setWindowLongSuccess == 0)
         {
             return;
         }
 
-        NativeMethods.SetLayeredWindowAttributes(_targetWindow, 0, _resizeOpacityLevel, NativeMethods.LWA_ALPHA);
+        NativeMethods.SetLayeredWindowAttributes(_targetWindow.HWnd, 0, _resizeOpacityLevel, NativeMethods.LWA_ALPHA);
 
         _originalExStyle = originalExStyle;
     }
 
     public void EndTransparency()
     {
-        if (!_enabled)
-        {
-            return;
-        }
-
-        if (_targetWindow == IntPtr.Zero || _originalExStyle == null)
+        if (!_enabled || _originalExStyle == null)
         {
             return;
         }
@@ -90,10 +78,10 @@ public class TransparentWindows : ITransparentWindows
         // Restore the original opacity level or default to fully opaque
         var opacity = _originalOpacityLevel ?? 255;
         Logger.LogDebug($"Restoring opacity {opacity}, {_targetWindow}, {originalExStyle}");
-        NativeMethods.SetLayeredWindowAttributes(_targetWindow, 0, opacity, NativeMethods.LWA_ALPHA);
+        NativeMethods.SetLayeredWindowAttributes(_targetWindow.HWnd, 0, opacity, NativeMethods.LWA_ALPHA);
 
         // Then restore the original window style
-        var result = NativeMethods.SetWindowLong(_targetWindow, NativeMethods.GWL_EX_STYLE, originalExStyle);
+        var result = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle);
         if (result == 0)
         {
             Logger.LogDebug($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastWin32Error()}");
@@ -103,7 +91,7 @@ public class TransparentWindows : ITransparentWindows
         if ((originalExStyle & NativeMethods.WS_EX_LAYERED) == 0)
         {
             NativeMethods.RedrawWindow(
-                _targetWindow,
+                _targetWindow.HWnd,
                 IntPtr.Zero,
                 IntPtr.Zero,
                 NativeMethods.RDW_ERASE | NativeMethods.RDW_INVALIDATE | NativeMethods.RDW_FRAME | NativeMethods.RDW_ALLCHILDREN);
@@ -111,7 +99,6 @@ public class TransparentWindows : ITransparentWindows
 
         _originalExStyle = null;
         _originalOpacityLevel = null;
-        _targetWindow = IntPtr.Zero;
     }
 
     private void UserSettings_Changed(object? sender, EventArgs e)
