@@ -31,9 +31,7 @@ public class QuickWindowsManager(
     private readonly Lock _lock = new();
     private WindowOperation _currentOperation;
 
-    internal bool IsActivated { get; private set; }
-
-    internal bool IsHotKeyPressed { get; private set; }
+    internal bool IsHotKeyActivated { get; private set; }
 
     internal bool OperationInProgress { get; private set; }
 
@@ -84,8 +82,7 @@ public class QuickWindowsManager(
 
             mouseHook.Install();
 
-            IsActivated = true;
-            IsHotKeyPressed = true;
+            IsHotKeyActivated = true;
             _currentOperation = WindowOperation.None;
         }
     }
@@ -94,7 +91,7 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            IsHotKeyPressed = false;
+            IsHotKeyActivated = false;
 
             if (OperationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
             {
@@ -112,7 +109,6 @@ public class QuickWindowsManager(
 
             EndOperation();
             mouseHook.Uninstall();
-            IsActivated = false;
         }
     }
 
@@ -130,7 +126,13 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (!IsActivated)
+            if (OperationInProgress)
+            {
+                EndOperation();
+                return;
+            }
+
+            if (!IsHotKeyActivated)
             {
                 return;
             }
@@ -201,10 +203,9 @@ public class QuickWindowsManager(
         {
             EndOperation();
 
-            if (!IsHotKeyPressed)
+            if (!IsHotKeyActivated)
             {
                 mouseHook.Uninstall();
-                IsActivated = false;
             }
         }
     }
@@ -253,7 +254,7 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (!IsActivated)
+            if (!IsHotKeyActivated || OperationInProgress)
             {
                 return;
             }
