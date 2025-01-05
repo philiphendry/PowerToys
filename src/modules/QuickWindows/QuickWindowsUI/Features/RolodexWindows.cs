@@ -6,35 +6,46 @@ using System;
 using System.Runtime.InteropServices;
 using ManagedCommon;
 using QuickWindows.Interfaces;
+using QuickWindows.Settings;
 
 namespace QuickWindows.Features;
 
-public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
+public class RolodexWindows : IRolodexWindows
 {
+    private readonly IWindowHelpers _windowHelpers;
+    private bool _rolodexEnabled;
+
+    public RolodexWindows(IUserSettings userSettings, IWindowHelpers windowHelpers)
+    {
+        _windowHelpers = windowHelpers;
+
+        _rolodexEnabled = userSettings.RolodexEnabled.Value;
+        userSettings.RolodexEnabled.PropertyChanged += (_, _) => _rolodexEnabled = userSettings.RolodexEnabled.Value;
+    }
+
     public void SendWindowToBottom(int x, int y)
     {
-        var hwndUnderCursor = NativeMethods.WindowFromPoint(new NativeMethods.POINT(x, y));
-        if (hwndUnderCursor == IntPtr.Zero)
+        if (!_rolodexEnabled)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
-        var rootHwnd = NativeMethods.GetAncestor(hwndUnderCursor, NativeMethods.GA_ROOT);
-        if (rootHwnd == IntPtr.Zero || !NativeMethods.IsWindow(rootHwnd))
+        var targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
+        if (targetWindow == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetAncestor)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
-        if (!NativeMethods.SetWindowPos(rootHwnd, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
+        _windowHelpers.SendToBack(targetWindow);
     }
 
     public void BringBottomWindowToTop(int x, int y)
     {
+        if (!_rolodexEnabled)
+        {
+            return;
+        }
+
         var bottomWindow = IntPtr.Zero;
 
         if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
@@ -44,8 +55,8 @@ public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)
         {
-            if (windowHelpers.IsSystemWindow(hWnd)
-                || !windowHelpers.IsWindowVisible(hWnd)
+            if (_windowHelpers.IsSystemWindow(hWnd)
+                || !_windowHelpers.IsWindowVisible(hWnd)
                 || !NativeMethods.GetWindowRect(hWnd, out var rect))
             {
                 return true;
@@ -68,21 +79,6 @@ public class RolodexWindows(IWindowHelpers windowHelpers) : IRolodexWindows
             return;
         }
 
-        // First, bring the window above all non-topmost windows
-        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_TOP, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
-
-        // Then force it to the absolute top by bringing it to topmost and back
-        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
-
-        if (!NativeMethods.SetWindowPos(bottomWindow, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
-        }
+        _windowHelpers.BringToFront(bottomWindow);
     }
 }
