@@ -87,7 +87,7 @@ public class ResizingWindows(
                 break;
         }
 
-        (newLeft, newRight, newTop, newBottom) = snappingWindows.SnapResizingWindow(
+        (newLeft, newTop, newRight, newBottom) = snappingWindows.SnapResizingWindow(
             newLeft,
             newTop,
             newRight,
