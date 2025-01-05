@@ -772,6 +772,9 @@
   <data name="QuickWindows_ModuleDescription" xml:space="preserve">
     <value>A faster way to move and resize windows.</value>
   </data>
+  <data name="QuickWindows.ModuleDescription" xml:space="preserve">
+    <value>A faster way to move and resize windows.</value>
+  </data>
   <data name="QuickWindows_EnableQuickWindows.Header" xml:space="preserve">
     <value>Enable Quick Windows</value>
     <comment>do not loc the Product name.  Do you want this feature on / off</comment>
