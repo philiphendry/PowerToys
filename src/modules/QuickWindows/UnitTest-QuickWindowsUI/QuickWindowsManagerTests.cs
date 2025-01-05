@@ -100,6 +100,11 @@ public class QuickWindowsManagerTests
         _mockMouseHook.Raise(m => m.MouseMove += null!, new MouseHook.MouseMoveEventArgs(100, 100));
     }
 
+    private void MouseWheelUp()
+    {
+        _mockMouseHook.Raise(m => m.MouseWheel += null!, new MouseHook.MouseMoveWheelEventArgs(100, 100, 1));
+    }
+
     [TestMethod]
     public void WhenTheManagerIsStartedTheKeyboardHookIsInstalled()
     {
@@ -124,7 +129,7 @@ public class QuickWindowsManagerTests
     public void WhenTheHotKeyIsPressedTheManagerIsActivatedAndMouseHookInstalled()
     {
         HotKeyPress();
-        Assert.IsTrue(_quickWindowsManager.IsActivated);
+        Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Install(false), Times.Once);
     }
 
@@ -133,7 +138,7 @@ public class QuickWindowsManagerTests
     {
         HotKeyPress();
         HotKeyRelease();
-        Assert.IsFalse(_quickWindowsManager.IsActivated);
+        Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
     }
 
@@ -144,7 +149,7 @@ public class QuickWindowsManagerTests
         MouseLeftButtonDown();
         var hotKeyEventArgs = HotKeyRelease();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
-        Assert.IsTrue(_quickWindowsManager.IsActivated);
+        Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
     }
 
@@ -187,7 +192,7 @@ public class QuickWindowsManagerTests
         MouseMove();
         MouseLeftButtonUp();
         HotKeyRelease();
-        Assert.IsFalse(_quickWindowsManager.IsActivated);
+        Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
     }
 
@@ -199,18 +204,18 @@ public class QuickWindowsManagerTests
         HotKeyRelease();
         MouseMove();
         MouseLeftButtonUp();
-        Assert.IsFalse(_quickWindowsManager.IsActivated);
+        Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
     }
 
     [TestMethod]
-    public void WhenAnOperationEndsAndTheHotKeyIsStillReleasedTheManagerRemainsActive()
+    public void WhenAnOperationEndsAndTheHotKeyIsStillPressedTheManagerRemainsActive()
     {
         HotKeyPress();
         MouseLeftButtonDown();
         MouseMove();
         MouseLeftButtonUp();
-        Assert.IsTrue(_quickWindowsManager.IsActivated);
+        Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
     }
 
@@ -269,5 +274,44 @@ public class QuickWindowsManagerTests
         MouseMove();
         _mockResizingWindows.Verify(m => m.ResizeWindow(It.IsAny<int>(), It.IsAny<int>()), Times.Once);
         _mockCursorForOperation.Verify(c => c.MoveToCursor(It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+    }
+
+    [TestMethod]
+    public void IfARightMouseButtonIsPressedDuringAMoveOperationThenTheMoveIsEndedButHotKeyIsStillActive()
+    {
+        HotKeyPress();
+        MouseLeftButtonDown();
+        MouseMove();
+        MouseRightButtonDown();
+        _mockCursorForOperation.Verify(m => m.HideCursor(), Times.Once);
+        _mockTransparentWindows.Verify(m => m.EndTransparency(), Times.Once);
+        _mockTargetWindow.Verify(m => m.ClearTargetWindow(), Times.Once);
+        Assert.IsFalse(_quickWindowsManager.OperationInProgress);
+        Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
+    }
+
+    [TestMethod]
+    public void IfALeftMouseButtonIsPressedDuringAResizeOperationThenTheResizeIsEndedButHotKeyIsStillActive()
+    {
+        HotKeyPress();
+        MouseRightButtonDown();
+        MouseMove();
+        MouseLeftButtonDown();
+        _mockCursorForOperation.Verify(m => m.HideCursor(), Times.Once);
+        _mockTransparentWindows.Verify(m => m.EndTransparency(), Times.Once);
+        _mockTargetWindow.Verify(m => m.ClearTargetWindow(), Times.Once);
+        Assert.IsFalse(_quickWindowsManager.OperationInProgress);
+        Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
+    }
+
+    [TestMethod]
+    public void IfTheMouseWheelIsUsedDuringAMoveOperationThenTheRolodexIsSuppressed()
+    {
+        HotKeyPress();
+        MouseLeftButtonDown();
+        MouseMove();
+        MouseWheelUp();
+        _mockRolodexWindows.Verify(m => m.SendWindowToBottom(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        _mockRolodexWindows.Verify(m => m.BringBottomWindowToTop(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
 }
