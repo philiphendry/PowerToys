@@ -14,6 +14,7 @@ public class QuickWindowsProperties
         "||Shell_TrayWnd",
         "||WindowsDashboard",
         "Notification Centre||Windows.UI.Core.CoreWindow",
+        "Start||Windows.UI.Core.CoreWindow",
         "Quick settings||ControlCenterWindow",
         ];
 
