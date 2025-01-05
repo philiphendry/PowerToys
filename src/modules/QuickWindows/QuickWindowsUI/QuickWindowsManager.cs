@@ -126,6 +126,14 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
+            if (IsHotKeyActivated && exclusionDetector.IsEnabled)
+            {
+                // Hide the cursor since otherwise we'll just detect the cursor window
+                cursorForOperation.HideCursor();
+                exclusionDetector.ExcludeWindowAtCursor();
+                return;
+            }
+
             if (OperationInProgress)
             {
                 EndOperation();
@@ -134,14 +142,6 @@ public class QuickWindowsManager(
 
             if (!IsHotKeyActivated)
             {
-                return;
-            }
-
-            if (exclusionDetector.IsEnabled)
-            {
-                // Hide the cursor since otherwise we'll just detect the cursor window
-                cursorForOperation.HideCursor();
-                exclusionDetector.ExcludeWindowAtCursor();
                 return;
             }
 

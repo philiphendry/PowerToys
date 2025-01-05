@@ -35,7 +35,7 @@ public class ExclusionDetector : IExclusionDetector
     {
         var (success, windowTitle, windowClass) = _windowHelpers.GetWindowInfoAtCursor();
 
-        Logger.LogDebug($"Detected window: {windowTitle} - {windowClass} with succes: {success}");
+        Logger.LogDebug($"Detected window: {windowTitle} - {windowClass} with success: {success}");
         if (!success)
         {
             return;
