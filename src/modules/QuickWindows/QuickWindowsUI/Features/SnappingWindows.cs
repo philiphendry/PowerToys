@@ -18,6 +18,7 @@ public class SnappingWindows : ISnappingWindows
 
     private readonly IWindowHelpers _windowHelpers;
     private readonly List<Snappable> _monitorAreas;
+    private bool _snappingEnabled;
     private int _snappingThreshold;
     private int _snappingPadding;
     private List<Snappable> _snappableAreas = null!;
@@ -30,22 +31,30 @@ public class SnappingWindows : ISnappingWindows
     {
         _windowHelpers = windowHelpers;
 
-        _snappingThreshold = userSettings.SnappingThreshold.Value;
+        _snappingEnabled = userSettings.SnappingEnabled.Value;
         _snappingPadding = userSettings.SnappingPadding.Value;
+        _snappingThreshold = userSettings.SnappingPadding.Value + 30;
 
-        userSettings.SnappingThreshold.PropertyChanged += (_, _) => _snappingThreshold = userSettings.SnappingThreshold.Value;
-        userSettings.SnappingPadding.PropertyChanged += (_, _) => _snappingPadding = userSettings.SnappingPadding.Value;
+        userSettings.SnappingEnabled.PropertyChanged += (_, _) => _snappingEnabled = userSettings.SnappingEnabled.Value;
+        userSettings.SnappingPadding.PropertyChanged += (_, _) =>
+        {
+            _snappingPadding = userSettings.SnappingPadding.Value;
+            _snappingThreshold = userSettings.SnappingPadding.Value + 30;
+        };
 
         _monitorAreas = monitorInfos
             .GetAllMonitorInfos()
             .Select(mi => new Snappable(mi.WorkingArea, SnapInside: true))
             .ToList();
-
-        Logger.LogDebug($"Snapping Threshold: {_snappingThreshold}, Snapping Padding: {_snappingPadding}");
     }
 
     public void StartSnap(IntPtr targetWindow)
     {
+        if (!_snappingEnabled)
+        {
+            return;
+        }
+
         var windows = _windowHelpers.GetSnappableWindows(targetWindow);
         _snappableAreas = windows
             .Select(w =>
@@ -110,10 +119,15 @@ public class SnappingWindows : ISnappingWindows
         int bottom,
         ResizeOperation operation)
     {
+        if (!_snappingEnabled)
+        {
+            return (left, top, right, bottom);
+        }
+
         var positionX = left + _windowBorderOffsets.left;
         var positionY = top + _windowBorderOffsets.top;
-        var width = right - left - _windowBorderOffsets.left + _windowBorderOffsets.right;
-        var height = bottom - top - _windowBorderOffsets.top + _windowBorderOffsets.bottom;
+        var width = right - left - _windowBorderOffsets.left - _windowBorderOffsets.right;
+        var height = bottom - top - _windowBorderOffsets.top - _windowBorderOffsets.bottom;
 
         // thresholdX and thresholdY will shrink to make sure the dragged window will snap to the closest windows
         var thresholdX = _snappingThreshold;
@@ -243,15 +257,20 @@ public class SnappingWindows : ISnappingWindows
             height = stickBottom - positionY + _windowBorderOffsets.bottom;
         }
 
-        return (positionX, positionX + width, positionY, positionY + height);
+        return (positionX, positionY, positionX + width, positionY + height);
     }
 
     public (int Left, int Top, int Right, int Bottom) SnapMovingWindow(int left, int top, int right, int bottom)
     {
+        if (!_snappingEnabled)
+        {
+            return (left, top, right, bottom);
+        }
+
         var positionX = left + _windowBorderOffsets.left;
         var positionY = top + _windowBorderOffsets.top;
-        var width = right - left - _windowBorderOffsets.left + _windowBorderOffsets.right;
-        var height = bottom - top - _windowBorderOffsets.top + _windowBorderOffsets.bottom;
+        var width = right - left - _windowBorderOffsets.left - _windowBorderOffsets.right;
+        var height = bottom - top - _windowBorderOffsets.top - _windowBorderOffsets.bottom;
 
         var thresholdX = _snappingThreshold;
         var thresholdY = _snappingThreshold;

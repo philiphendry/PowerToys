@@ -58,8 +58,29 @@
 
                 <controls:SettingsGroup x:Uid="QuickWindows_Behavior" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
                     <tkcontrols:SettingsCard x:Uid="QuickWindows_Transparency" HeaderIcon="{ui:FontIcon Glyph=&#xE727;}">
-                        <ToggleSwitch x:Uid="QuickWindows_UnicodeDescription_ToggleSwitch" IsOn="{x:Bind ViewModel.TransparentWindowOnMove, Mode=TwoWay}" />
+                        <ToggleSwitch x:Uid="QuickWindows_Transparency_ToggleSwitch" IsOn="{x:Bind ViewModel.TransparentWindowOnMove, Mode=TwoWay}" />
                     </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="QuickWindows_Rolodex" HeaderIcon="{ui:FontIcon Glyph=&#xE81E;}">
+                        <ToggleSwitch x:Uid="QuickWindows_Rolodex_ToggleSwitch" IsOn="{x:Bind ViewModel.RolodexEnabled, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsExpander
+                        x:Uid="QuickWindows_SnappingEnabled"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE9A6;}"
+                        IsExpanded="True">
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.SnappingEnabled, Mode=TwoWay}" />
+                        <tkcontrols:SettingsExpander.Items>
+                            <tkcontrols:SettingsCard x:Uid="QuickWindows_SnappingGap" IsEnabled="{x:Bind ViewModel.SnappingEnabled, Mode=OneWay}">
+                                <NumberBox
+                                    MinWidth="{StaticResource SettingActionControlMinWidth}"
+                                    LargeChange="10"
+                                    Maximum="100"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    SpinButtonPlacementMode="Compact"
+                                    Value="{x:Bind ViewModel.SnapGap, Mode=TwoWay}" />
+                            </tkcontrols:SettingsCard>
+                        </tkcontrols:SettingsExpander.Items>
+                    </tkcontrols:SettingsExpander>
                 </controls:SettingsGroup>
 
                 <controls:SettingsGroup x:Uid="ExcludedApps" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
