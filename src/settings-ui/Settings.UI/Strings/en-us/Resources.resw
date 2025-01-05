@@ -2763,10 +2763,10 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>The pixel gap size between snapped window borders</value>
   </data>
   <data name="QuickWindows_Rolodex.Header" xml:space="preserve">
-    <value>Rolodex</value>
+    <value>Send window from/to back with mousewheel</value>
   </data>
   <data name="QuickWindows_Rolodex.Description" xml:space="preserve">
-    <value>With the hotkey pressed use the mouse wheel to the send the window under the cursor behind all others and bring the bottom most one to the front.</value>
+    <value>With the hotkey pressed use the mouse wheel to the send window under the cursor behind all others and bring the bottom most one to the front.</value>
   </data>
   <data name="QuickWindows.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>
@@ -2776,13 +2776,13 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>Exclude apps from quick windows</value>
   </data>
   <data name="QuickWindows_ExcludeApps_Enabled.Description" xml:space="preserve">
-    <value>Enable this option then when you activate quick windows and click on a window it will be added to the exclusion list.</value>
+    <value>Enable this option then when you activate quick windows and click on a window it will be added to the exclusion list below.</value>
   </data>
   <data name="QuickWindows_ExcludeApps.Header" xml:space="preserve">
     <value>Excluded apps</value>
   </data>
   <data name="QuickWindows_ExcludeApps.Description" xml:space="preserve">
-    <value>Excludes an application from quick window operations - add one application name per line</value>
+    <value>Excludes an application from quick window operations. Each line contains the window title, two vertical bars, then the window class.</value>
   </data>
   <data name="General.SecondaryLinksHeader" xml:space="preserve">
     <value>Related information</value>
