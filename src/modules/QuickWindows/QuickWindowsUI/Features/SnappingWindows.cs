@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ManagedCommon;
 using QuickWindows.Helpers;
 using QuickWindows.Interfaces;
 using QuickWindows.Settings;
@@ -17,10 +16,11 @@ public class SnappingWindows : ISnappingWindows
     private record Snappable(NativeMethods.Rect Rect, bool SnapInside);
 
     private readonly IWindowHelpers _windowHelpers;
-    private readonly List<Snappable> _monitorAreas;
+    private readonly IMonitorInfos _monitorInfos;
     private bool _snappingEnabled;
     private int _snappingThreshold;
     private int _snappingPadding;
+    private List<Snappable> _monitorAreas = null!;
     private List<Snappable> _snappableAreas = null!;
     private NativeMethods.Rect _windowBorderOffsets;
 
@@ -30,6 +30,7 @@ public class SnappingWindows : ISnappingWindows
         IMonitorInfos monitorInfos)
     {
         _windowHelpers = windowHelpers;
+        _monitorInfos = monitorInfos;
 
         _snappingEnabled = userSettings.SnappingEnabled.Value;
         _snappingPadding = userSettings.SnappingPadding.Value;
@@ -41,11 +42,6 @@ public class SnappingWindows : ISnappingWindows
             _snappingPadding = userSettings.SnappingPadding.Value;
             _snappingThreshold = userSettings.SnappingPadding.Value + 30;
         };
-
-        _monitorAreas = monitorInfos
-            .GetAllMonitorInfos()
-            .Select(mi => new Snappable(mi.WorkingArea, SnapInside: true))
-            .ToList();
     }
 
     public void StartSnap(IntPtr targetWindow)
@@ -54,6 +50,11 @@ public class SnappingWindows : ISnappingWindows
         {
             return;
         }
+
+        _monitorAreas = _monitorInfos
+            .GetAllMonitorInfos()
+            .Select(mi => new Snappable(mi.WorkingArea, SnapInside: true))
+            .ToList();
 
         var windows = _windowHelpers.GetSnappableWindows(targetWindow);
         _snappableAreas = windows
