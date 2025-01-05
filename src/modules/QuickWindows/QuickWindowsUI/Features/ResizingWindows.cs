@@ -9,52 +9,27 @@ using QuickWindows.Interfaces;
 
 namespace QuickWindows.Features;
 
-public class ResizingWindows : IResizingWindows
+public class ResizingWindows(
+    ITargetWindow targetWindow,
+    IRateLimiter rateLimiter,
+    ISnappingWindows snappingWindows)
+    : IResizingWindows
 {
-    private const int MinUpdateIntervalMs = 32; // Approx. 30fps
     private const int MinimumWindowSize = 200;
 
-    private readonly IRateLimiter _rateLimiter;
-    private readonly IWindowHelpers _windowHelpers;
-    private readonly ISnappingWindows _snappingWindows;
-    private IntPtr _targetWindow = IntPtr.Zero;
     private NativeMethods.POINT _initialMousePosition;
-    private NativeMethods.Rect _initialWindowRect;
     private ResizeOperation _currentOperation;
-
-    public ResizingWindows(
-        IRateLimiter rateLimiter,
-        IWindowHelpers windowHelpers,
-        ISnappingWindows snappingWindows)
-    {
-        _rateLimiter = rateLimiter;
-        _rateLimiter.Interval = MinUpdateIntervalMs;
-        _windowHelpers = windowHelpers;
-        _snappingWindows = snappingWindows;
-    }
 
     public ResizeOperation? StartResize(int x, int y)
     {
-        _targetWindow = _windowHelpers.GetWindowAtCursor(x, y);
-        if (_targetWindow == IntPtr.Zero)
-        {
-            return null;
-        }
-
-        if (!NativeMethods.GetWindowRect(_targetWindow, out _initialWindowRect))
-        {
-            Logger.LogDebug($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
-            return null;
-        }
-
-        _snappingWindows.StartSnap(_targetWindow);
+        snappingWindows.StartSnap(targetWindow.HWnd);
 
         _initialMousePosition = new NativeMethods.POINT(x, y);
 
-        var relativeX = (x - _initialWindowRect.left) /
-                        (double)(_initialWindowRect.right - _initialWindowRect.left);
-        var relativeY = (y - _initialWindowRect.top) /
-                        (double)(_initialWindowRect.bottom - _initialWindowRect.top);
+        var relativeX = (x - targetWindow.InitialPlacement.left) /
+                        (double)(targetWindow.InitialPlacement.right - targetWindow.InitialPlacement.left);
+        var relativeY = (y - targetWindow.InitialPlacement.top) /
+                        (double)(targetWindow.InitialPlacement.bottom - targetWindow.InitialPlacement.top);
 
         _currentOperation = (relativeX < 0.5, relativeY < 0.5) switch
         {
@@ -69,7 +44,7 @@ public class ResizingWindows : IResizingWindows
 
     public void ResizeWindow(int x, int y)
     {
-        if (_targetWindow == IntPtr.Zero || _rateLimiter.IsLimited())
+        if (rateLimiter.IsLimited())
         {
             return;
         }
@@ -87,10 +62,10 @@ public class ResizingWindows : IResizingWindows
         var deltaY = y - _initialMousePosition.y;
 
         // Resize operation
-        var newLeft = _initialWindowRect.left;
-        var newTop = _initialWindowRect.top;
-        var newRight = _initialWindowRect.right;
-        var newBottom = _initialWindowRect.bottom;
+        var newLeft = targetWindow.InitialPlacement.left;
+        var newTop = targetWindow.InitialPlacement.top;
+        var newRight = targetWindow.InitialPlacement.right;
+        var newBottom = targetWindow.InitialPlacement.bottom;
 
         switch (_currentOperation)
         {
@@ -112,7 +87,7 @@ public class ResizingWindows : IResizingWindows
                 break;
         }
 
-        (newLeft, newRight, newTop, newBottom) = _snappingWindows.SnapResizingWindow(
+        (newLeft, newRight, newTop, newBottom) = snappingWindows.SnapResizingWindow(
             newLeft,
             newTop,
             newRight,
@@ -137,7 +112,7 @@ public class ResizingWindows : IResizingWindows
                           NativeMethods.SWP_NOSENDCHANGING; // Don't send WM_WINDOWPOSCHANGING
 
         if (!NativeMethods.SetWindowPos(
-            _targetWindow,
+            targetWindow.HWnd,
             IntPtr.Zero,
             newLeft,
             newTop,
@@ -147,10 +122,5 @@ public class ResizingWindows : IResizingWindows
         {
             Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
-    }
-
-    public void StopResize()
-    {
-        _targetWindow = IntPtr.Zero;
     }
 }

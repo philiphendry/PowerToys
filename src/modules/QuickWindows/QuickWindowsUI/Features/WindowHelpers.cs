@@ -111,6 +111,36 @@ public class WindowHelpers : IWindowHelpers
                (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0;
     }
 
+    public bool IsMaximised(IntPtr targetWindow)
+    {
+        return NativeMethods.IsZoomed(targetWindow);
+    }
+
+    public void RestoreWindow(IntPtr targetWindow)
+    {
+        Logger.LogDebug($"Restoring window {targetWindow}");
+        NativeMethods.ShowWindow(targetWindow, NativeMethods.SW_SHOWNORMAL);
+    }
+
+    public NativeMethods.MonitorInfoEx? GetMonitorInfoForWindow(IntPtr targetWindow)
+    {
+        var hMonitor = NativeMethods.MonitorFromWindow(targetWindow, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        if (hMonitor == IntPtr.Zero)
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.MonitorFromWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            return null;
+        }
+
+        var monitorInfo = new NativeMethods.MonitorInfoEx();
+        if (!NativeMethods.GetMonitorInfo(new HandleRef(null, hMonitor), monitorInfo))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.GetMonitorInfo)} failed with error code {Marshal.GetLastWin32Error()}");
+            return null;
+        }
+
+        return monitorInfo;
+    }
+
     public List<NativeMethods.Rect> GetSnappableWindows(IntPtr excludeHWnd)
     {
         var windows = new List<NativeMethods.Rect>();

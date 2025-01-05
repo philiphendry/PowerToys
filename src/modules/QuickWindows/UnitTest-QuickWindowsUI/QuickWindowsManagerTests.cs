@@ -2,7 +2,6 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -18,6 +17,7 @@ public class QuickWindowsManagerTests
 {
     private Mock<IKeyboardMonitor> _mockKeyboardMonitor = null!;
     private Mock<IMouseHook> _mockMouseHook = null!;
+    private Mock<ITargetWindow> _mockTargetWindow = null!;
     private Mock<IMovingWindows> _mockMovingWindows = null!;
     private Mock<IResizingWindows> _mockResizingWindows = null!;
     private Mock<ITransparentWindows> _mockTransparentWindows = null!;
@@ -25,6 +25,7 @@ public class QuickWindowsManagerTests
     private Mock<ICursorForOperation> _mockCursorForOperation = null!;
     private Mock<IExclusionDetector> _mockExclusionDetector = null!;
     private Mock<IExclusionFilter> _mockExclusionFilter = null!;
+    private Mock<IRestoreMaximised> _mockRestoreMaximised = null!;
 
     private QuickWindowsManager _quickWindowsManager = null!;
 
@@ -33,6 +34,7 @@ public class QuickWindowsManagerTests
     {
         _mockKeyboardMonitor = new Mock<IKeyboardMonitor>();
         _mockMouseHook = new Mock<IMouseHook>();
+        _mockTargetWindow = new Mock<ITargetWindow>();
         _mockMovingWindows = new Mock<IMovingWindows>();
         _mockResizingWindows = new Mock<IResizingWindows>();
         _mockTransparentWindows = new Mock<ITransparentWindows>();
@@ -40,18 +42,23 @@ public class QuickWindowsManagerTests
         _mockCursorForOperation = new Mock<ICursorForOperation>();
         _mockExclusionDetector = new Mock<IExclusionDetector>();
         _mockExclusionFilter = new Mock<IExclusionFilter>();
+        _mockRestoreMaximised = new Mock<IRestoreMaximised>();
 
         _quickWindowsManager = new QuickWindowsManager(
             _mockKeyboardMonitor.Object,
             _mockMouseHook.Object,
+            _mockTargetWindow.Object,
             _mockMovingWindows.Object,
             _mockResizingWindows.Object,
             _mockTransparentWindows.Object,
             _mockRolodexWindows.Object,
             _mockCursorForOperation.Object,
             _mockExclusionDetector.Object,
-            _mockExclusionFilter.Object);
+            _mockExclusionFilter.Object,
+            _mockRestoreMaximised.Object);
         await _quickWindowsManager.StartAsync(default);
+
+        _mockTargetWindow.Setup(t => t.HaveTargetWindow).Returns(true);
     }
 
     private HotKeyEventArgs HotKeyPress()

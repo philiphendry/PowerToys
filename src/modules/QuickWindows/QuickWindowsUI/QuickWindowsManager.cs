@@ -17,16 +17,18 @@ namespace QuickWindows;
 public class QuickWindowsManager(
     IKeyboardMonitor keyboardMonitor,
     IMouseHook mouseHook,
+    ITargetWindow targetWindow,
     IMovingWindows movingWindows,
     IResizingWindows resizingWindows,
     ITransparentWindows transparentWindows,
     IRolodexWindows rolodexWindows,
     ICursorForOperation cursorForOperation,
     IExclusionDetector exclusionDetector,
-    IExclusionFilter exclusionFilter)
+    IExclusionFilter exclusionFilter,
+    IRestoreMaximised restoreMaximised)
     : IQuickWindowsManager, IHostedService
 {
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private WindowOperation _currentOperation;
 
     internal bool IsActivated { get; private set; }
@@ -116,21 +118,12 @@ public class QuickWindowsManager(
 
     private void EndOperation()
     {
-        switch (_currentOperation)
-        {
-            case WindowOperation.Move:
-                movingWindows.StopMove();
-                break;
-            case WindowOperation.Resize:
-                resizingWindows.StopResize();
-                break;
-        }
-
         _currentOperation = WindowOperation.None;
         OperationInProgress = false;
 
         cursorForOperation.HideCursor();
         transparentWindows.EndTransparency();
+        targetWindow.ClearTargetWindow();
     }
 
     private void OnMouseDown(object? target, MouseHook.MouseButtonEventArgs args)
@@ -158,6 +151,13 @@ public class QuickWindowsManager(
             switch (args.Button)
             {
                 case MouseButton.Left:
+                    targetWindow.SetTargetWindow(args.X, args.Y);
+                    if (!targetWindow.HaveTargetWindow)
+                    {
+                        return;
+                    }
+
+                    restoreMaximised.Start();
                     movingWindows.StartMove(args.X, args.Y);
                     transparentWindows.StartTransparency(args.X, args.Y);
                     cursorForOperation.StartMove(args.X, args.Y);
@@ -165,26 +165,32 @@ public class QuickWindowsManager(
                     _currentOperation = WindowOperation.Move;
                     OperationInProgress = true;
                     break;
-                case MouseButton.Right:
-                    {
-                        var resizeOperation = resizingWindows.StartResize(args.X, args.Y);
-                        transparentWindows.StartTransparency(args.X, args.Y);
-                        switch (resizeOperation)
-                        {
-                            case ResizeOperation.ResizeTopLeft:
-                            case ResizeOperation.ResizeBottomRight:
-                                cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
-                                break;
-                            case ResizeOperation.ResizeTopRight:
-                            case ResizeOperation.ResizeBottomLeft:
-                                cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
-                                break;
-                        }
 
-                        _currentOperation = WindowOperation.Resize;
-                        OperationInProgress = true;
-                        break;
+                case MouseButton.Right:
+                    targetWindow.SetTargetWindow(args.X, args.Y);
+                    if (!targetWindow.HaveTargetWindow)
+                    {
+                        return;
                     }
+
+                    restoreMaximised.Start();
+                    var resizeOperation = resizingWindows.StartResize(args.X, args.Y);
+                    transparentWindows.StartTransparency(args.X, args.Y);
+                    switch (resizeOperation)
+                    {
+                        case ResizeOperation.ResizeTopLeft:
+                        case ResizeOperation.ResizeBottomRight:
+                            cursorForOperation.StartResizeNorthWestSouthEast(args.X, args.Y);
+                            break;
+                        case ResizeOperation.ResizeTopRight:
+                        case ResizeOperation.ResizeBottomLeft:
+                            cursorForOperation.StartResizeNorthEastSouthWest(args.X, args.Y);
+                            break;
+                    }
+
+                    _currentOperation = WindowOperation.Resize;
+                    OperationInProgress = true;
+                    break;
             }
         }
     }
@@ -222,15 +228,19 @@ public class QuickWindowsManager(
             switch (_currentOperation)
             {
                 case WindowOperation.Move:
+                    restoreMaximised.Move();
                     movingWindows.MoveWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
                     OperationHasOccurred = true;
                     break;
+
                 case WindowOperation.Resize:
+                    restoreMaximised.Resize();
                     resizingWindows.ResizeWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
                     OperationHasOccurred = true;
                     break;
+
                 case WindowOperation.ExclusionDetection:
                     cursorForOperation.MoveToCursor(args.X, args.Y);
                     OperationHasOccurred = true;

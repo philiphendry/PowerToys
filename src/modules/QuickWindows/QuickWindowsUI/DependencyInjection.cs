@@ -17,6 +17,7 @@ public class DependencyInjection
     public static void Configure(IServiceCollection services)
     {
         services.AddSingleton<ICursorForOperation, CursorForOperation>();
+        services.AddSingleton<ITargetWindow, TargetWindow>();
         services.AddSingleton<IMovingWindows, MovingWindows>();
         services.AddSingleton<IResizingWindows, ResizingWindows>();
         services.AddSingleton<ISnappingWindows, SnappingWindows>();
@@ -30,8 +31,9 @@ public class DependencyInjection
         services.AddSingleton<IUserSettings, UserSettings>();
         services.AddSingleton<IKeyboardMonitor, KeyboardMonitor>();
         services.AddSingleton<IMouseHook, MouseHook>();
-        services.AddTransient<IRateLimiter, RateLimiter>();
-        services.AddTransient<IMonitorInfos, MonitorInfos>();
+        services.AddSingleton<IRateLimiter, RateLimiter>();
+        services.AddSingleton<IMonitorInfos, MonitorInfos>();
+        services.AddSingleton<IRestoreMaximised, RestoreMaximised>();
         services.AddHostedService<QuickWindowsManager>();
     }
 }
