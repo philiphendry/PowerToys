@@ -24,4 +24,8 @@ public interface IWindowHelpers
     NativeMethods.MonitorInfoEx? GetMonitorInfoForWindow(IntPtr targetWindow);
 
     List<NativeMethods.Rect> GetSnappableWindows(IntPtr excludeHWnd);
+
+    void SendToBack(IntPtr targetWindow);
+
+    void BringToFront(IntPtr targetWindow);
 }

@@ -173,4 +173,32 @@ public class WindowHelpers : IWindowHelpers
             return true;
         }
     }
+
+    public void SendToBack(IntPtr targetWindow)
+    {
+        if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+    }
+
+    public void BringToFront(IntPtr targetWindow)
+    {
+        // First, bring the window above all non-topmost windows
+        if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_TOP, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        // Then force it to the absolute top by bringing it to topmost and back
+        if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+
+        if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
+        {
+            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+        }
+    }
 }
