@@ -10,10 +10,10 @@ namespace QuickWindows.Keyboard
     {
         internal GlobalKeyboardHook.KeyboardState KeyboardState { get; private set; }
 
-        internal NativeMethods.LowLevelKeyboardInputEvent KeyboardData { get; private set; }
+        internal GlobalKeyboardHook.LowLevelKeyboardInputEvent KeyboardData { get; private set; }
 
         internal GlobalKeyboardHookEventArgs(
-            NativeMethods.LowLevelKeyboardInputEvent keyboardData,
+            GlobalKeyboardHook.LowLevelKeyboardInputEvent keyboardData,
             GlobalKeyboardHook.KeyboardState keyboardState)
         {
             KeyboardData = keyboardData;
