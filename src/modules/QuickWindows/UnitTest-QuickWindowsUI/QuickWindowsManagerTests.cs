@@ -2,6 +2,7 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -62,18 +63,14 @@ public class QuickWindowsManagerTests
         _mockKeyboardMonitor.Setup(k => k.CheckHotKeyActive()).Returns(true);
     }
 
-    private HotKeyEventArgs HotKeyPress()
+    private void HotKeyPress()
     {
-        var hotKeyEventArgs = new HotKeyEventArgs();
-        _mockKeyboardMonitor.Raise(k => k.HotKeyPressed += null!, hotKeyEventArgs);
-        return hotKeyEventArgs;
+        _mockKeyboardMonitor.Raise(k => k.HotKeyPressed += null!, EventArgs.Empty);
     }
 
-    private HotKeyEventArgs HotKeyRelease()
+    private void HotKeyRelease()
     {
-        var hotKeyEventArgs = new HotKeyEventArgs();
-        _mockKeyboardMonitor.Raise(k => k.HotKeyReleased += null!, hotKeyEventArgs);
-        return hotKeyEventArgs;
+        _mockKeyboardMonitor.Raise(k => k.HotKeyReleased += null!, EventArgs.Empty);
     }
 
     private void MouseLeftButtonDown()
@@ -148,7 +145,7 @@ public class QuickWindowsManagerTests
     {
         HotKeyPress();
         MouseLeftButtonDown();
-        var hotKeyEventArgs = HotKeyRelease();
+        HotKeyRelease();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
         Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
@@ -161,7 +158,7 @@ public class QuickWindowsManagerTests
         MouseLeftButtonDown();
         HotKeyRelease();
         _mockMouseHook.Reset();
-        var eventArgs = HotKeyPress();
+        HotKeyPress();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
         _mockMouseHook.Verify(m => m.Install(), Times.Never);
     }

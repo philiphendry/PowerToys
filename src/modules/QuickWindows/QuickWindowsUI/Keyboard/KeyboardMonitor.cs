@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library.Utilities;
 using QuickWindows.Interfaces;
@@ -17,14 +16,14 @@ public class KeyboardMonitor(
     IGlobalKeyboardHook globalKeyboardHook,
     IUserSettings userSettings,
     IDisabledInGameMode disabledInGameMode)
-    : IKeyboardMonitor, IDisposable
+    : IKeyboardMonitor
 {
     private readonly List<string> _activationKeys = new();
     private bool _isHotKeyPressed;
 
-    public event EventHandler<HotKeyEventArgs>? HotKeyPressed;
+    public event EventHandler? HotKeyPressed;
 
-    public event EventHandler<HotKeyEventArgs>? HotKeyReleased;
+    public event EventHandler? HotKeyReleased;
 
     public void Install()
     {
@@ -87,7 +86,6 @@ public class KeyboardMonitor(
     {
         if (disabledInGameMode.IsDisabledInGameMode())
         {
-            e.Handled = DeactivateHotKey();
             return;
         }
 
@@ -114,31 +112,25 @@ public class KeyboardMonitor(
             // avoid triggering this action multiple times as this will be called nonstop while keys are pressed
             if (!_isHotKeyPressed)
             {
-                var eventArgs = new HotKeyEventArgs();
-                HotKeyPressed?.Invoke(this, eventArgs);
-                if (!eventArgs.SuppressHotKey)
-                {
-                    _isHotKeyPressed = true;
-                }
+                HotKeyPressed?.Invoke(this, EventArgs.Empty);
+                _isHotKeyPressed = true;
             }
         }
         else
         {
-            e.Handled = DeactivateHotKey();
+            DeactivateHotKey();
         }
     }
 
-    private bool DeactivateHotKey()
+    private void DeactivateHotKey()
     {
         if (!_isHotKeyPressed)
         {
-            return false;
+            return;
         }
 
         _isHotKeyPressed = false;
-        var eventArgs = new HotKeyEventArgs();
-        HotKeyReleased?.Invoke(this, eventArgs);
-        return eventArgs.SuppressHotKey;
+        HotKeyReleased?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

@@ -6,11 +6,11 @@ using System;
 
 namespace QuickWindows.Keyboard;
 
-public interface IKeyboardMonitor
+public interface IKeyboardMonitor : IDisposable
 {
-    event EventHandler<HotKeyEventArgs> HotKeyPressed;
+    event EventHandler HotKeyPressed;
 
-    event EventHandler<HotKeyEventArgs> HotKeyReleased;
+    event EventHandler HotKeyReleased;
 
     void Install();
 
