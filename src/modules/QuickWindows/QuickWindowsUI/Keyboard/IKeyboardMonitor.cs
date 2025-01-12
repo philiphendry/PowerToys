@@ -17,4 +17,6 @@ public interface IKeyboardMonitor
     void Uninstall();
 
     void SendControlKey();
+
+    bool CheckHotKeyActive();
 }

@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using ManagedCommon;
 using Microsoft.Extensions.Hosting;
 using QuickWindows.Features;
 using QuickWindows.Interfaces;
@@ -80,8 +81,8 @@ public class QuickWindowsManager(
                 return;
             }
 
+            Logger.LogDebug("Hot key pressed, starting operation.");
             mouseHook.Install();
-
             IsHotKeyActivated = true;
             _currentOperation = WindowOperation.None;
         }
@@ -107,6 +108,7 @@ public class QuickWindowsManager(
                 OperationHasOccurred = false;
             }
 
+            Logger.LogDebug("Hot key released, ending operation.");
             EndOperation();
             mouseHook.Uninstall();
         }
@@ -126,6 +128,14 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
+            if (!keyboardMonitor.CheckHotKeyActive())
+            {
+                Logger.LogDebug("Hot key released without event raised, ending operation.");
+                EndOperation();
+                mouseHook.Uninstall();
+                return;
+            }
+
             if (IsHotKeyActivated && exclusionDetector.IsEnabled)
             {
                 // Hide the cursor since otherwise we'll just detect the cursor window
