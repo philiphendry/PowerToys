@@ -72,7 +72,7 @@ public class QuickWindowsManager(
         RemoveMouseListeners();
     }
 
-    private void OnHotKeyPressed(object? sender, HotKeyEventArgs e)
+    private void OnHotKeyPressed(object? sender, EventArgs e)
     {
         lock (_lock)
         {
@@ -88,7 +88,7 @@ public class QuickWindowsManager(
         }
     }
 
-    private void OnHotKeyReleased(object? sender, HotKeyEventArgs e)
+    private void OnHotKeyReleased(object? sender, EventArgs e)
     {
         lock (_lock)
         {
