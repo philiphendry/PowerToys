@@ -11,8 +11,9 @@ namespace QuickWindows.Keyboard
 {
     public class GlobalKeyboardHook : IGlobalKeyboardHook
     {
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly NativeMethods.HookProc _hookProc;
         private IntPtr _windowsHookHandle;
-        private NativeMethods.HookProc? _hookProc;
 
         public GlobalKeyboardHook()
         {
@@ -49,8 +50,6 @@ namespace QuickWindows.Keyboard
             }
 
             _windowsHookHandle = IntPtr.Zero;
-
-            _hookProc -= LowLevelKeyboardProc;
         }
 
         ~GlobalKeyboardHook()
