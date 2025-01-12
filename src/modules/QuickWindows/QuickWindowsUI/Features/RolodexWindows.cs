@@ -50,7 +50,7 @@ public class RolodexWindows : IRolodexWindows
 
         if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         bool EnumerateWindowFunc(IntPtr hWnd, IntPtr lParam)

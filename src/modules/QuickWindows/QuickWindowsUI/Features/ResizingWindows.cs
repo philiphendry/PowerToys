@@ -120,7 +120,7 @@ public class ResizingWindows(
             newBottom - newTop,
             flags))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 }

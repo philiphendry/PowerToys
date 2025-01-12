@@ -84,7 +84,7 @@ public class TransparentWindows : ITransparentWindows
         var result = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle);
         if (result == 0)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         // If the original style didn't include WS_EX_LAYERED, we need to update the window

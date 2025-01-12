@@ -106,7 +106,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
         if (atom == 0)
         {
             var error = Marshal.GetLastWin32Error();
-            Logger.LogDebug($"Failed to register window class. Error: {error}");
+            Logger.LogError($"Failed to register window class. Error: {error}");
             return;
         }
 
@@ -127,7 +127,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
 
         if (_cursorWindow == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.CreateWindowEx)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.CreateWindowEx)} failed with error code {Marshal.GetLastWin32Error()}");
             return;
         }
 
@@ -148,14 +148,14 @@ public class CursorForOperation : ICursorForOperation, IDisposable
 
         if (!NativeMethods.DestroyWindow(_cursorWindow))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         _cursorWindow = IntPtr.Zero;
 
         if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 
