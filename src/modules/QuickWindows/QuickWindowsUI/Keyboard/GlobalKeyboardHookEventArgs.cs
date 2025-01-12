@@ -4,20 +4,14 @@
 
 using System.ComponentModel;
 
-namespace QuickWindows.Keyboard
+namespace QuickWindows.Keyboard;
+
+public sealed class GlobalKeyboardHookEventArgs(
+    GlobalKeyboardHook.LowLevelKeyboardInputEvent keyboardData,
+    GlobalKeyboardHook.KeyboardState keyboardState)
+    : HandledEventArgs
 {
-    internal sealed class GlobalKeyboardHookEventArgs : HandledEventArgs
-    {
-        internal GlobalKeyboardHook.KeyboardState KeyboardState { get; private set; }
+    public GlobalKeyboardHook.KeyboardState KeyboardState { get; private set; } = keyboardState;
 
-        internal GlobalKeyboardHook.LowLevelKeyboardInputEvent KeyboardData { get; private set; }
-
-        internal GlobalKeyboardHookEventArgs(
-            GlobalKeyboardHook.LowLevelKeyboardInputEvent keyboardData,
-            GlobalKeyboardHook.KeyboardState keyboardState)
-        {
-            KeyboardData = keyboardData;
-            KeyboardState = keyboardState;
-        }
-    }
+    public GlobalKeyboardHook.LowLevelKeyboardInputEvent KeyboardData { get; private set; } = keyboardData;
 }

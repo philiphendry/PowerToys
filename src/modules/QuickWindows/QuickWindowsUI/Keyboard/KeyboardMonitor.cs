@@ -14,12 +14,12 @@ using QuickWindows.Settings;
 namespace QuickWindows.Keyboard;
 
 public class KeyboardMonitor(
+    IGlobalKeyboardHook globalKeyboardHook,
     IUserSettings userSettings,
     IDisabledInGameMode disabledInGameMode)
     : IKeyboardMonitor, IDisposable
 {
     private readonly List<string> _activationKeys = new();
-    private GlobalKeyboardHook? _keyboardHook;
     private bool _isHotKeyPressed;
 
     public event EventHandler<HotKeyEventArgs>? HotKeyPressed;
@@ -28,8 +28,7 @@ public class KeyboardMonitor(
 
     public void Install()
     {
-        _keyboardHook = new GlobalKeyboardHook();
-        _keyboardHook.KeyboardPressed += Hook_KeyboardPressed;
+        globalKeyboardHook.KeyboardPressed += Hook_KeyboardPressed;
 
         userSettings.ActivateOnAlt.PropertyChanged += (_, _) => SetActivationKeys();
         userSettings.ActivateOnCtrl.PropertyChanged += (_, _) => SetActivationKeys();
@@ -40,8 +39,7 @@ public class KeyboardMonitor(
 
     public void Uninstall()
     {
-        _keyboardHook?.Dispose();
-        _keyboardHook = null;
+        globalKeyboardHook.KeyboardPressed -= Hook_KeyboardPressed;
     }
 
     public void SendControlKey()

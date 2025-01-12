@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace QuickWindows.Keyboard
 {
-    public class GlobalKeyboardHook : IDisposable
+    public class GlobalKeyboardHook : IGlobalKeyboardHook
     {
         private IntPtr _windowsHookHandle;
         private NativeMethods.HookProc? _hookProc;
@@ -27,7 +27,7 @@ namespace QuickWindows.Keyboard
             }
         }
 
-        internal event EventHandler<GlobalKeyboardHookEventArgs>? KeyboardPressed;
+        public event EventHandler<GlobalKeyboardHookEventArgs>? KeyboardPressed;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -89,7 +89,7 @@ namespace QuickWindows.Keyboard
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct LowLevelKeyboardInputEvent
+        public struct LowLevelKeyboardInputEvent
         {
             /// <summary>
             /// A virtual-key code. The code must be a value in the range 1 to 254.
