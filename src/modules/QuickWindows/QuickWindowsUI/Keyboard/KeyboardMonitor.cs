@@ -96,14 +96,6 @@ public class KeyboardMonitor(
         var currentlyPressedKeys = new List<string>();
         var virtualCode = e.KeyboardData.VirtualCode;
 
-        // ESC pressed
-        if (virtualCode == KeyInterop.VirtualKeyFromKey(Key.Escape) && e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown)
-        {
-            Logger.LogDebug("ESC key pressed, deactivating hot key");
-            e.Handled = DeactivateHotKey();
-            return;
-        }
-
         if (e.KeyboardState is GlobalKeyboardHook.KeyboardState.KeyDown or GlobalKeyboardHook.KeyboardState.SysKeyDown)
         {
             // Check pressed modifier keys.
