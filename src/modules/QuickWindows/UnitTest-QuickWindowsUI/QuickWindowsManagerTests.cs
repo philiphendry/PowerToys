@@ -178,8 +178,18 @@ public class QuickWindowsManagerTests
         HotKeyPress();
         MouseLeftButtonDown();
         MouseMove();
-        MouseLeftButtonUp();
         Assert.IsTrue(_quickWindowsManager.OperationHasOccurred);
+    }
+
+    [TestMethod]
+    public void WhenTheHotKeyIsPressedAndThenAnOperationIsPerformedThenWhenTheHotKeyIsReleasedAControlKeyIsPressedToPreventMenuActivation()
+    {
+        HotKeyPress();
+        MouseLeftButtonDown();
+        MouseMove();
+        MouseLeftButtonUp();
+        HotKeyRelease();
+        _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
     }
 
     [TestMethod]
