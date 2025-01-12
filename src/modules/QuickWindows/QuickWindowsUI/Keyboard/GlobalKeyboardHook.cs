@@ -78,14 +78,11 @@ namespace QuickWindows.Keyboard
             var wparamTyped = wParam.ToInt32();
             if (Enum.IsDefined(typeof(KeyboardState), wparamTyped))
             {
-                var o = Marshal.PtrToStructure(lParam, typeof(LowLevelKeyboardInputEvent));
-                if (o is not null)
-                {
-                    var eventArguments = new GlobalKeyboardHookEventArgs((LowLevelKeyboardInputEvent)o, (KeyboardState)wparamTyped);
-                    KeyboardPressed?.Invoke(this, eventArguments);
+                var o = Marshal.PtrToStructure<LowLevelKeyboardInputEvent>(lParam);
+                var eventArguments = new GlobalKeyboardHookEventArgs(o, (KeyboardState)wparamTyped);
+                KeyboardPressed?.Invoke(this, eventArguments);
 
-                    fEatKeyStroke = eventArguments.Handled;
-                }
+                fEatKeyStroke = eventArguments.Handled;
             }
 
             return fEatKeyStroke ? 1 : NativeMethods.CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
