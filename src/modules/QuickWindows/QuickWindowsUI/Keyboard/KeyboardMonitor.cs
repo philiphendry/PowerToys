@@ -99,17 +99,17 @@ public class KeyboardMonitor(
         // ESC pressed
         if (virtualCode == KeyInterop.VirtualKeyFromKey(Key.Escape) && e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown)
         {
+            Logger.LogDebug("ESC key pressed, deactivating hot key");
             e.Handled = DeactivateHotKey();
             return;
         }
 
-        var name = Helper.GetKeyName((uint)virtualCode)
-            .Replace(" (Left)", string.Empty)
-            .Replace(" (Right)", string.Empty);
-
-        if (e.KeyboardState == GlobalKeyboardHook.KeyboardState.KeyDown || e.KeyboardState == GlobalKeyboardHook.KeyboardState.SysKeyDown)
+        if (e.KeyboardState is GlobalKeyboardHook.KeyboardState.KeyDown or GlobalKeyboardHook.KeyboardState.SysKeyDown)
         {
             // Check pressed modifier keys.
+            var name = Helper.GetKeyName((uint)virtualCode)
+                .Replace(" (Left)", string.Empty)
+                .Replace(" (Right)", string.Empty);
             AddModifierKeys(currentlyPressedKeys);
             if (!currentlyPressedKeys.Contains(name))
             {
@@ -149,6 +149,44 @@ public class KeyboardMonitor(
         var eventArgs = new HotKeyEventArgs();
         HotKeyReleased?.Invoke(this, eventArgs);
         return eventArgs.SuppressHotKey;
+    }
+
+    /// <summary>
+    /// If the hot key is pressed, an elevated window activate, and then the
+    /// hot key is released then the keyboard hook doesn't receive the key up
+    /// event and we're left in a state where the operation is still in progress.
+    /// This check captures that scenario and ends the operation.
+    /// </summary>
+    /// <returns>True if the hot key is still active.</returns>
+    public bool CheckHotKeyActive()
+    {
+        var currentlyPressedKeys = new List<string>();
+        AddModifierKeys(currentlyPressedKeys);
+
+        // Fetch the state of all keys
+        for (int i = 1; i < 256; i++)
+        {
+            if ((NativeMethods.GetAsyncKeyState(i) & 0x8000) != 0)
+            {
+                var keyName = Helper.GetKeyName((uint)i)
+                    .Replace(" (Left)", string.Empty)
+                    .Replace(" (Right)", string.Empty);
+                if (!currentlyPressedKeys.Contains(keyName))
+                {
+                    currentlyPressedKeys.Add(keyName);
+                }
+            }
+        }
+
+        currentlyPressedKeys.Sort();
+        var isHotKeyActive = ArraysAreSame(currentlyPressedKeys, _activationKeys);
+        if (_isHotKeyPressed && !isHotKeyActive)
+        {
+            _isHotKeyPressed = false;
+            return false;
+        }
+
+        return true;
     }
 
     private static bool ArraysAreSame(List<string> first, List<string> second)
