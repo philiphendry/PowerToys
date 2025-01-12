@@ -29,6 +29,7 @@ public class DependencyInjection
         services.AddSingleton<IThrottledActionInvoker, ThrottledActionInvoker>();
         services.AddSingleton<IWindowHelpers, WindowHelpers>();
         services.AddSingleton<IUserSettings, UserSettings>();
+        services.AddSingleton<IGlobalKeyboardHook, GlobalKeyboardHook>();
         services.AddSingleton<IKeyboardMonitor, KeyboardMonitor>();
         services.AddSingleton<IMouseHook, MouseHook>();
         services.AddSingleton<IRateLimiter, RateLimiter>();
