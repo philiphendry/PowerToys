@@ -16,7 +16,7 @@ public interface IMouseHook
 
     event EventHandler<MouseHook.MouseMoveWheelEventArgs>? MouseWheel;
 
-    void Install(bool eventPropagation = false);
+    void Install();
 
     void Uninstall();
 }

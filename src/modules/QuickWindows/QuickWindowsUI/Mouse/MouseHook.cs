@@ -9,9 +9,13 @@ namespace QuickWindows.Mouse;
 
 public class MouseHook : IMouseHook
 {
+    private readonly NativeMethods.HookProc _hookProc;
     private IntPtr _hookHandle = IntPtr.Zero;
-    private NativeMethods.HookProc? _hookProc;
-    private bool _eventPropagation;
+
+    public MouseHook()
+    {
+        _hookProc = MouseHookCallback;
+    }
 
     public event EventHandler<MouseMoveEventArgs>? MouseMove;
 
@@ -38,15 +42,13 @@ public class MouseHook : IMouseHook
         public int Delta { get; } = delta;
     }
 
-    public void Install(bool eventPropagation = false)
+    public void Install()
     {
         if (_hookHandle != IntPtr.Zero)
         {
             return; // Already installed
         }
 
-        _eventPropagation = eventPropagation;
-        _hookProc = MouseHookCallback;
         _hookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_MOUSE_LL, _hookProc, Marshal.GetHINSTANCE(typeof(MouseHook).Module), 0);
         if (_hookHandle == IntPtr.Zero)
         {
@@ -79,12 +81,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_MOUSEWHEEL:
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
                 MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
+                return new IntPtr(1);
 
             case NativeMethods.WM_MOUSEMOVE:
                 MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
@@ -94,23 +91,13 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_RBUTTONDOWN:
                 var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
                 MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
+                return new IntPtr(1);
 
             case NativeMethods.WM_LBUTTONUP:
             case NativeMethods.WM_RBUTTONUP:
                 var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
                 MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
-                if (!_eventPropagation)
-                {
-                    return new IntPtr(1);
-                }
-
-                break;
+                return new IntPtr(1);
         }
 
         return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
