@@ -131,7 +131,7 @@ public class QuickWindowsManagerTests
     {
         HotKeyPress();
         Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Install(false), Times.Once);
+        _mockMouseHook.Verify(m => m.Install(), Times.Once);
     }
 
     [TestMethod]
@@ -163,7 +163,7 @@ public class QuickWindowsManagerTests
         _mockMouseHook.Reset();
         var eventArgs = HotKeyPress();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
-        _mockMouseHook.Verify(m => m.Install(false), Times.Never);
+        _mockMouseHook.Verify(m => m.Install(), Times.Never);
     }
 
     [TestMethod]
