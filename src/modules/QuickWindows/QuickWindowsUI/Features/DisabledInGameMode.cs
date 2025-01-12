@@ -61,13 +61,13 @@ public class DisabledInGameMode : IDisabledInGameMode
         var hWindow = NativeMethods.GetForegroundWindow();
         if (hWindow == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetForegroundWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.GetForegroundWindow)} failed with error code {Marshal.GetLastWin32Error()}");
             return false;
         }
 
         if (!NativeMethods.GetWindowRect(hWindow, out var windowSize))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.GetWindowRect)} failed with error code {Marshal.GetLastWin32Error()}");
             return false;
         }
 

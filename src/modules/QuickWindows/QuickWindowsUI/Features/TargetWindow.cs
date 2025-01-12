@@ -24,7 +24,7 @@ public class TargetWindow(IWindowHelpers windowHelpers) : ITargetWindow
 
         if (!NativeMethods.GetWindowPlacement(_targetWindow, out var placement))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetWindowPlacement)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.GetWindowPlacement)} failed with error code {Marshal.GetLastWin32Error()}");
             _targetWindow = IntPtr.Zero;
         }
 

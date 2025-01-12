@@ -19,14 +19,14 @@ public class WindowHelpers : IWindowHelpers
         var hwnd = NativeMethods.WindowFromPoint(point);
         if (hwnd == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
             return IntPtr.Zero;
         }
 
         var rootHwnd = NativeMethods.GetAncestor(hwnd, NativeMethods.GA_ROOT);
         if (rootHwnd == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetAncestor)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.GetAncestor)} failed with error code {Marshal.GetLastWin32Error()}");
             return IntPtr.Zero;
         }
 
@@ -127,14 +127,14 @@ public class WindowHelpers : IWindowHelpers
         var hMonitor = NativeMethods.MonitorFromWindow(targetWindow, NativeMethods.MONITOR_DEFAULTTONEAREST);
         if (hMonitor == IntPtr.Zero)
         {
-            Logger.LogDebug($"{nameof(NativeMethods.MonitorFromWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.MonitorFromWindow)} failed with error code {Marshal.GetLastWin32Error()}");
             return null;
         }
 
         var monitorInfo = new NativeMethods.MonitorInfoEx();
         if (!NativeMethods.GetMonitorInfo(new HandleRef(null, hMonitor), monitorInfo))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.GetMonitorInfo)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.GetMonitorInfo)} failed with error code {Marshal.GetLastWin32Error()}");
             return null;
         }
 
@@ -146,7 +146,7 @@ public class WindowHelpers : IWindowHelpers
         var windows = new List<NativeMethods.Rect>();
         if (!NativeMethods.EnumWindows(EnumerateWindowFunc, IntPtr.Zero))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.EnumWindows)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         return windows;
@@ -178,7 +178,7 @@ public class WindowHelpers : IWindowHelpers
     {
         if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 
@@ -187,18 +187,18 @@ public class WindowHelpers : IWindowHelpers
         // First, bring the window above all non-topmost windows
         if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_TOP, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         // Then force it to the absolute top by bringing it to topmost and back
         if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
 
         if (!NativeMethods.SetWindowPos(targetWindow, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
         {
-            Logger.LogDebug($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowPos)} failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 }
