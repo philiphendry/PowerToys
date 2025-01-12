@@ -59,6 +59,7 @@ public class QuickWindowsManagerTests
         await _quickWindowsManager.StartAsync(default);
 
         _mockTargetWindow.Setup(t => t.HaveTargetWindow).Returns(true);
+        _mockKeyboardMonitor.Setup(k => k.CheckHotKeyActive()).Returns(true);
     }
 
     private HotKeyEventArgs HotKeyPress()
