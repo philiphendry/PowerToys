@@ -32,8 +32,6 @@ public class KeyboardMonitor(
 
     public event EventHandler? HotKeyReleased;
 
-    private static readonly string[] KeyNames = Enumerable.Range(0, 256).Select(i => ((Keys)i).ToString()).ToArray();
-
     public void Install()
     {
         globalKeyboardHook.KeyboardPressed += Hook_KeyboardPressed;
@@ -137,29 +135,28 @@ public class KeyboardMonitor(
         var isShiftPressed = false;
         var isOtherPressed = false;
 
-        for (var i = 0; i < 256; i++)
+        for (var keyCode = 0; keyCode < 256; keyCode++)
         {
             // Check if the high-order bit isn't set and ignore keys that aren't pressed.
-            if ((keyStates[i] & 0x80) == 0)
+            if ((keyStates[keyCode] & 0x80) == 0)
             {
                 continue;
             }
 
-            var keyName = KeyNames[i];
-            if (keyName is "LButton" or "MButton" or "RButton")
+            if (keyCode is (int)Keys.LButton or (int)Keys.MButton or (int)Keys.RButton)
             {
                 continue;
             }
 
-            if (isAltActive && keyName is "Menu" or "LMenu")
+            if (isAltActive && keyCode is (int)Keys.Menu or (int)Keys.LMenu)
             {
                 isAltPressed = true;
             }
-            else if (isCtrlActive && keyName is "ControlKey" or "LControlKey" or "RControlKey")
+            else if (isCtrlActive && keyCode is (int)Keys.ControlKey or (int)Keys.LControlKey or (int)Keys.RControlKey)
             {
                 isCtrlPressed = true;
             }
-            else if (isShiftActive && keyName is "ShiftKey" or "LShiftKey" or "RShiftKey")
+            else if (isShiftActive && keyCode is (int)Keys.ShiftKey or (int)Keys.LShiftKey or (int)Keys.RShiftKey)
             {
                 isShiftPressed = true;
             }
@@ -194,28 +191,23 @@ public class KeyboardMonitor(
         var newKeyState = keyState.GetValueOrDefault() is GlobalKeyboardHook.KeyboardState.SysKeyDown or GlobalKeyboardHook.KeyboardState.KeyDown
             ? (byte)0x80
             : (byte)0x00;
-        var newKeyName = KeyNames[virtualKeyCode.Value];
-        if (newKeyName is "Menu" or "LMenu")
+        var newKeyCode = virtualKeyCode.Value;
+        if (newKeyCode is (int)Keys.Menu or (int)Keys.LMenu)
         {
             keyStates[(int)Keys.Menu] = newKeyState;
             keyStates[(int)Keys.LMenu] = newKeyState;
         }
-        else if (newKeyName == "LControlKey")
+        else if (newKeyCode == (int)Keys.LControlKey)
         {
             keyStates[(int)Keys.ControlKey] = newKeyState;
             keyStates[(int)Keys.LControlKey] = newKeyState;
         }
-        else if (newKeyName is "RControlKey" or "Control")
+        else if (newKeyCode is (int)Keys.RControlKey or (int)Keys.Control)
         {
             keyStates[(int)Keys.ControlKey] = newKeyState;
             keyStates[(int)Keys.LControlKey] = newKeyState;
         }
-        else if (newKeyName is "RShiftKey" or "Shift")
-        {
-            keyStates[(int)Keys.ShiftKey] = newKeyState;
-            keyStates[(int)Keys.LShiftKey] = newKeyState;
-        }
-        else if (newKeyName is "RShiftKey" or "Shift")
+        else if (newKeyCode is (int)Keys.RShiftKey or (int)Keys.Shift)
         {
             keyStates[(int)Keys.ShiftKey] = newKeyState;
             keyStates[(int)Keys.LShiftKey] = newKeyState;
