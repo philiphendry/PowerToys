@@ -204,6 +204,9 @@ public static class NativeMethods
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall, SetLastError = true)]
     internal static extern short GetAsyncKeyState(int vKey);
 
+    [DllImport("user32.dll")]
+    internal static extern ushort GetKeyState(int nVirtKey);
+
     [DllImport("user32.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
     internal static extern bool GetKeyboardState(byte[] keyState);
 

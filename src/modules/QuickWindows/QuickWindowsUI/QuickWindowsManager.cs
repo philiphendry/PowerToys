@@ -96,6 +96,8 @@ public class QuickWindowsManager(
 
             if (OperationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
             {
+                Logger.LogDebug("Operation in progress - sending control key");
+
                 // Send control key when releasing Alt hot key prevents the window menus being activated.
                 keyboardMonitor.SendControlKey();
                 return;
@@ -103,6 +105,8 @@ public class QuickWindowsManager(
 
             if (OperationHasOccurred)
             {
+                Logger.LogDebug("Operation has occurred - sending control key");
+
                 // Send control key when releasing Alt hot key prevents the window menus being activated.
                 keyboardMonitor.SendControlKey();
                 OperationHasOccurred = false;
@@ -146,17 +150,20 @@ public class QuickWindowsManager(
 
             if (OperationInProgress)
             {
+                Logger.LogDebug("Another mouse down whilst operation in progress so ending operation.");
                 EndOperation();
                 return;
             }
 
             if (!IsHotKeyActivated)
             {
+                Logger.LogDebug("Hot key not activated, ignoring mouse down event.");
                 return;
             }
 
             if (exclusionFilter.IsWindowAtCursorExcluded())
             {
+                Logger.LogDebug("Window at cursor is excluded, ignoring mouse down event.");
                 return;
             }
 
