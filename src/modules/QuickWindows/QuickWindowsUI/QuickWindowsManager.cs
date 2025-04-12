@@ -27,10 +27,10 @@ public class QuickWindowsManager(
     IExclusionDetector exclusionDetector,
     IExclusionFilter exclusionFilter,
     IRestoreMaximised restoreMaximised)
-    : IQuickWindowsManager, IHostedService
+    : IQuickWindowsManager, IHostedService, IDisposable
 {
     private readonly Lock _lock = new();
-    private WindowOperation _currentOperation;
+    private Timer? _stateLoggerTimer;
 
     internal bool IsHotKeyActivated { get; private set; }
 
@@ -40,6 +40,9 @@ public class QuickWindowsManager(
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+#if DEBUG
+        StartStateLogger();
+#endif
         ActivateHotKey();
         return Task.CompletedTask;
     }
@@ -47,6 +50,9 @@ public class QuickWindowsManager(
     public Task StopAsync(CancellationToken cancellationToken)
     {
         DeactivateHotKey();
+#if DEBUG
+        StopStateLogger();
+#endif
         return Task.CompletedTask;
     }
 
@@ -314,5 +320,28 @@ public class QuickWindowsManager(
         mouseHook.MouseMove -= OnMouseMove;
         mouseHook.MouseUp -= OnMouseUp;
         mouseHook.MouseWheel -= OnMouseWheel;
+    }
+
+    public void StartStateLogger()
+    {
+        _stateLoggerTimer = new Timer(LogCurrentState, null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+    }
+
+    public void StopStateLogger()
+    {
+        _stateLoggerTimer?.Dispose();
+        _stateLoggerTimer = null;
+    }
+
+    private void LogCurrentState(object? state)
+    {
+        Logger.LogDebug($"IsHotKeyActivated: {IsHotKeyActivated}, OperationInProgress: {OperationInProgress}, OperationHasOccurred: {OperationHasOccurred}, CurrentOperation: {CurrentOperation}");
+    }
+
+    public void Dispose()
+    {
+        _stateLoggerTimer?.Dispose();
+        keyboardMonitor.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

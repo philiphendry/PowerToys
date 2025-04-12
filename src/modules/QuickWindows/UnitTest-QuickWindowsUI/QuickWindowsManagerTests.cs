@@ -14,7 +14,9 @@ using QuickWindows.Mouse;
 namespace Microsoft.QuickWindows.UnitTests;
 
 [TestClass]
+#pragma warning disable CA1001
 public class QuickWindowsManagerTests
+#pragma warning restore CA1001
 {
     private Mock<IKeyboardMonitor> _mockKeyboardMonitor = null!;
     private Mock<IMouseHook> _mockMouseHook = null!;
@@ -61,6 +63,12 @@ public class QuickWindowsManagerTests
 
         _mockTargetWindow.Setup(t => t.HaveTargetWindow).Returns(true);
         _mockKeyboardMonitor.Setup(k => k.CheckHotKeyActive()).Returns(true);
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        _quickWindowsManager.Dispose();
     }
 
     private void HotKeyPress()
