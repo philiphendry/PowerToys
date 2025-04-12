@@ -38,6 +38,8 @@ public class QuickWindowsManager(
 
     internal bool OperationHasOccurred { get; private set; }
 
+    internal WindowOperation CurrentOperation { get; private set; }
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
 #if DEBUG
@@ -90,7 +92,8 @@ public class QuickWindowsManager(
             Logger.LogDebug("Hot key pressed, starting operation.");
             mouseHook.Install();
             IsHotKeyActivated = true;
-            _currentOperation = WindowOperation.None;
+            OperationHasOccurred = false;
+            CurrentOperation = WindowOperation.None;
         }
     }
 
@@ -100,7 +103,7 @@ public class QuickWindowsManager(
         {
             IsHotKeyActivated = false;
 
-            if (OperationInProgress && _currentOperation != WindowOperation.ExclusionDetection)
+            if (OperationInProgress && CurrentOperation != WindowOperation.ExclusionDetection)
             {
                 Logger.LogDebug("Operation in progress - sending control key");
 
@@ -126,7 +129,7 @@ public class QuickWindowsManager(
 
     private void EndOperation()
     {
-        _currentOperation = WindowOperation.None;
+        CurrentOperation = WindowOperation.None;
         OperationInProgress = false;
 
         cursorForOperation.HideCursor();
@@ -187,7 +190,7 @@ public class QuickWindowsManager(
                     transparentWindows.StartTransparency(args.X, args.Y);
                     cursorForOperation.StartMove(args.X, args.Y);
 
-                    _currentOperation = WindowOperation.Move;
+                    CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
                     break;
 
@@ -213,7 +216,7 @@ public class QuickWindowsManager(
                             break;
                     }
 
-                    _currentOperation = WindowOperation.Resize;
+                    CurrentOperation = WindowOperation.Resize;
                     OperationInProgress = true;
                     break;
             }
@@ -237,10 +240,10 @@ public class QuickWindowsManager(
     {
         lock (_lock)
         {
-            if (exclusionDetector.IsEnabled && _currentOperation == WindowOperation.None)
+            if (exclusionDetector.IsEnabled && CurrentOperation == WindowOperation.None)
             {
                 cursorForOperation.StartExclusionDetection(args.X, args.Y);
-                _currentOperation = WindowOperation.ExclusionDetection;
+                CurrentOperation = WindowOperation.ExclusionDetection;
                 OperationInProgress = true;
             }
 
@@ -249,7 +252,7 @@ public class QuickWindowsManager(
                 return;
             }
 
-            switch (_currentOperation)
+            switch (CurrentOperation)
             {
                 case WindowOperation.Move:
                     restoreMaximised.Move();
