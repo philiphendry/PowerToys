@@ -6,6 +6,10 @@ namespace QuickWindows.Interfaces;
 
 public interface ICursorForOperation
 {
+    void Install();
+
+    void Uninstall();
+
     void StartMove(int x, int y);
 
     void StartResizeNorthWestSouthEast(int x, int y);

@@ -616,6 +616,8 @@ public static class NativeMethods
     public const uint INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_KEYUP = 0x0002;
 
+    internal const int GRAY_BRUSH = 2;
+
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
@@ -647,4 +649,7 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool SetWindowPlacement(IntPtr hWnd, WINDOWPLACEMENT lpwndpl);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    internal static extern IntPtr GetStockObject(int fnObject);
 }

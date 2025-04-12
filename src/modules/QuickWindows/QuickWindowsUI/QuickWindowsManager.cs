@@ -58,6 +58,7 @@ public class QuickWindowsManager(
         {
             keyboardMonitor.Install();
             mouseHook.Install();
+            cursorForOperation.Install();
             AddKeyboardListeners();
             AddMouseListeners();
 #if DEBUG
@@ -74,6 +75,7 @@ public class QuickWindowsManager(
     {
         RemoveMouseListeners();
         RemoveKeyboardListeners();
+        cursorForOperation.Uninstall();
         mouseHook.Uninstall();
         keyboardMonitor.Uninstall();
 #if DEBUG
@@ -344,6 +346,7 @@ public class QuickWindowsManager(
 
     public void Dispose()
     {
+        DeactivateHotKey();
         _stateLoggerTimer?.Dispose();
         keyboardMonitor.Dispose();
         GC.SuppressFinalize(this);
