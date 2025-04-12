@@ -19,4 +19,8 @@ public interface IMouseHook
     void Install();
 
     void Uninstall();
+
+    void EnableEvents();
+
+    void DisableEvents();
 }

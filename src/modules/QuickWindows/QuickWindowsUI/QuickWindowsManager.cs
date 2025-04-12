@@ -42,9 +42,6 @@ public class QuickWindowsManager(
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-#if DEBUG
-        StartStateLogger();
-#endif
         ActivateHotKey();
         return Task.CompletedTask;
     }
@@ -52,9 +49,6 @@ public class QuickWindowsManager(
     public Task StopAsync(CancellationToken cancellationToken)
     {
         DeactivateHotKey();
-#if DEBUG
-        StopStateLogger();
-#endif
         return Task.CompletedTask;
     }
 
@@ -62,9 +56,13 @@ public class QuickWindowsManager(
     {
         try
         {
+            keyboardMonitor.Install();
+            mouseHook.Install();
             AddKeyboardListeners();
             AddMouseListeners();
-            keyboardMonitor.Install();
+#if DEBUG
+            StartStateLogger();
+#endif
         }
         catch (Exception ex)
         {
@@ -74,10 +72,13 @@ public class QuickWindowsManager(
 
     public void DeactivateHotKey()
     {
+        RemoveMouseListeners();
+        RemoveKeyboardListeners();
         mouseHook.Uninstall();
         keyboardMonitor.Uninstall();
-        RemoveKeyboardListeners();
-        RemoveMouseListeners();
+#if DEBUG
+        StopStateLogger();
+#endif
     }
 
     private void OnHotKeyPressed(object? sender, EventArgs e)
@@ -90,7 +91,7 @@ public class QuickWindowsManager(
             }
 
             Logger.LogDebug("Hot key pressed, starting operation.");
-            mouseHook.Install();
+            mouseHook.EnableEvents();
             IsHotKeyActivated = true;
             OperationHasOccurred = false;
             CurrentOperation = WindowOperation.None;
@@ -123,7 +124,7 @@ public class QuickWindowsManager(
 
             Logger.LogDebug("Hot key released, ending operation.");
             EndOperation();
-            mouseHook.Uninstall();
+            mouseHook.DisableEvents();
         }
     }
 
@@ -145,7 +146,7 @@ public class QuickWindowsManager(
             {
                 Logger.LogDebug("Hot key released without event raised, ending operation.");
                 EndOperation();
-                mouseHook.Uninstall();
+                mouseHook.DisableEvents();
                 return;
             }
 
@@ -231,7 +232,7 @@ public class QuickWindowsManager(
 
             if (!IsHotKeyActivated)
             {
-                mouseHook.Uninstall();
+                mouseHook.DisableEvents();
             }
         }
     }

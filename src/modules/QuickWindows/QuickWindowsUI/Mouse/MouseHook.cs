@@ -11,6 +11,7 @@ public class MouseHook : IMouseHook
 {
     private readonly NativeMethods.HookProc _hookProc;
     private IntPtr _hookHandle = IntPtr.Zero;
+    private bool _eventsEnabled;
 
     public MouseHook()
     {
@@ -67,9 +68,13 @@ public class MouseHook : IMouseHook
         _hookHandle = IntPtr.Zero;
     }
 
+    public void EnableEvents() => _eventsEnabled = true;
+
+    public void DisableEvents() => _eventsEnabled = false;
+
     private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode < 0)
+        if (nCode < 0 || !_eventsEnabled)
         {
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
