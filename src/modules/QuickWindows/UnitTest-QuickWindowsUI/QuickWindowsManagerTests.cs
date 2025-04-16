@@ -118,6 +118,12 @@ public class QuickWindowsManagerTests
     }
 
     [TestMethod]
+    public void WhenTheManagerIsStartedTheMouseHookIsInstalled()
+    {
+        _mockMouseHook.Verify(k => k.Install(), Times.Once);
+    }
+
+    [TestMethod]
     public async Task WhenTheManagerIsStoppedTheKeyboardHookIsUninstalled()
     {
         await _quickWindowsManager.StopAsync(default);
@@ -140,12 +146,12 @@ public class QuickWindowsManagerTests
     }
 
     [TestMethod]
-    public void WhenTheHotKeyIsReleasedTheManagerIsDeactivatedAndMouseHookUninstalled()
+    public void WhenTheHotKeyIsReleasedTheManagerIsDeactivatedAndMouseEventsDisabled()
     {
         HotKeyPress();
         HotKeyRelease();
         Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
+        _mockMouseHook.Verify(m => m.DisableEvents(), Times.Once);
     }
 
     [TestMethod]
@@ -156,7 +162,7 @@ public class QuickWindowsManagerTests
         HotKeyRelease();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
         Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
+        _mockMouseHook.Verify(m => m.DisableEvents(), Times.Never);
     }
 
     [TestMethod]
@@ -168,7 +174,7 @@ public class QuickWindowsManagerTests
         _mockMouseHook.Reset();
         HotKeyPress();
         _mockKeyboardMonitor.Verify(k => k.SendControlKey(), Times.Once);
-        _mockMouseHook.Verify(m => m.Install(), Times.Never);
+        _mockMouseHook.Verify(m => m.EnableEvents(), Times.Never);
     }
 
     [TestMethod]
@@ -209,7 +215,7 @@ public class QuickWindowsManagerTests
         MouseLeftButtonUp();
         HotKeyRelease();
         Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
+        _mockMouseHook.Verify(m => m.DisableEvents(), Times.Once);
     }
 
     [TestMethod]
@@ -221,7 +227,7 @@ public class QuickWindowsManagerTests
         MouseMove();
         MouseLeftButtonUp();
         Assert.IsFalse(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
+        _mockMouseHook.Verify(m => m.DisableEvents(), Times.Once);
     }
 
     [TestMethod]
@@ -232,7 +238,7 @@ public class QuickWindowsManagerTests
         MouseMove();
         MouseLeftButtonUp();
         Assert.IsTrue(_quickWindowsManager.IsHotKeyActivated);
-        _mockMouseHook.Verify(m => m.Uninstall(), Times.Never);
+        _mockMouseHook.Verify(m => m.DisableEvents(), Times.Never);
     }
 
     [TestMethod]
