@@ -61,7 +61,6 @@ public class ResizingWindows(
         var deltaX = x - _initialMousePosition.x;
         var deltaY = y - _initialMousePosition.y;
 
-        // Resize operation
         var newLeft = targetWindow.InitialPlacement.left;
         var newTop = targetWindow.InitialPlacement.top;
         var newRight = targetWindow.InitialPlacement.right;
@@ -94,7 +93,7 @@ public class ResizingWindows(
             newBottom,
             _currentOperation);
 
-        // Ensure minimum window size
+        // Ensure minimum window size accounting for the edge being resized
         const int minSize = MinimumWindowSize;
         if (newRight - newLeft < minSize)
         {
