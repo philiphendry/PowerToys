@@ -75,7 +75,7 @@ public class SnappingWindows : ISnappingWindows
 
     private static bool IsInRange(int x, int a, int b, int tolerance) => (a - tolerance <= x) && (x <= b + tolerance);
 
-    private static bool IsEqual(int a, int b, int tolerance) => (b - tolerance <= a) & (a <= b + tolerance);
+    private static bool IsEqual(int a, int b, int tolerance) => (b - tolerance <= a) && (a <= b + tolerance);
 
     private static void SubRect(ref NativeMethods.Rect frame, NativeMethods.Rect rect)
     {
@@ -154,84 +154,89 @@ public class SnappingWindows : ISnappingWindows
             var snapInside = snappable.SnapInside;
 
             // Check if positionX snaps
-            if (IsInRange(positionY, rect.top, rect.bottom, thresholdX)
-                || IsInRange(rect.top, positionY, positionY + height, thresholdX))
+            if (IsInRange(positionX, rect.left, rect.right, thresholdX)
+                || IsInRange(rect.left, positionX, positionX + width, thresholdX))
             {
                 var shouldSnapInside = snapInside
                                       || (positionY + height - thresholdX < rect.top)
                                       || (rect.bottom < positionY + thresholdX);
-                if (IsLeft(operation)
-                    && IsEqual(rect.right, positionX, thresholdX))
+                if (IsLeft(operation))
                 {
-                    // The left edge of the dragged window will snap to this window's right edge
-                    stuckLeft = true;
-                    stickLeft = rect.right;
-                    thresholdX = rect.right - positionX;
+                    if (IsEqual(rect.right, positionX, thresholdX))
+                    {
+                        // The left edge of the dragged window will snap to this window's right edge
+                        stuckLeft = true;
+                        stickLeft = rect.right;
+                        thresholdX = rect.right - positionX;
+                    }
+                    else if (shouldSnapInside && IsEqual(rect.left, positionX, thresholdX))
+                    {
+                        // The left edge of the dragged window will snap to this window's left edge
+                        stuckLeft = true;
+                        stickLeft = rect.left;
+                        thresholdX = rect.left - positionX;
+                    }
                 }
-                else if (shouldSnapInside && IsRight(operation)
-                                         && IsEqual(rect.right, positionX + width, thresholdX))
+                else if (IsRight(operation))
                 {
-                    // The right edge of the dragged window will snap to this window's right edge
-                    stuckRight = true;
-                    stickRight = rect.right;
-                    thresholdX = rect.right - (positionX + width);
-                }
-                else if (shouldSnapInside && IsLeft(operation)
-                                         && IsEqual(rect.left, positionX, thresholdX))
-                {
-                    // The left edge of the dragged window will snap to this window's left edge
-                    stuckLeft = true;
-                    stickLeft = rect.left;
-                    thresholdX = rect.left - positionX;
-                }
-                else if (IsRight(operation)
-                         && IsEqual(rect.left, positionX + width, thresholdX))
-                {
-                    // The right edge of the dragged window will snap to this window's left edge
-                    stuckRight = true;
-                    stickRight = rect.left;
-                    thresholdX = rect.left - (positionX + width);
+                    if (IsEqual(rect.left, positionX + width, thresholdX))
+                    {
+                        // The right edge of the dragged window will snap to this window's left edge
+                        stuckRight = true;
+                        stickRight = rect.left;
+                        thresholdX = rect.left - (positionX + width);
+                    }
+                    else if (shouldSnapInside && IsEqual(rect.right, positionX + width, thresholdX))
+                    {
+                        // The right edge of the dragged window will snap to this window's right edge
+                        stuckRight = true;
+                        stickRight = rect.right;
+                        thresholdX = rect.right - (positionX + width);
+                    }
                 }
             }
 
             // Check if positionY snaps
-            if (IsInRange(positionX, rect.left, rect.right, thresholdY)
-                || IsInRange(rect.left, positionX, positionX + width, thresholdY))
+            if (IsInRange(positionY, rect.top, rect.bottom, thresholdY)
+                || IsInRange(rect.top, positionY, positionY + height, thresholdY))
             {
                 var shouldSnapInside = snapInside
                                       || (positionX + width - thresholdY < rect.left)
                                       || (rect.right < positionX + thresholdY);
-                if (IsTop(operation)
-                    && IsEqual(rect.bottom, positionY, thresholdY))
+                if (IsTop(operation))
                 {
-                    // The top edge of the dragged window will snap to this window's bottom edge
-                    stuckTop = true;
-                    stickTop = rect.bottom;
-                    thresholdY = rect.bottom - positionY;
+                    if (IsEqual(rect.bottom, positionY, thresholdY))
+                    {
+                        // The top edge of the dragged window will snap to this window's bottom edge
+                        stuckTop = true;
+                        stickTop = rect.bottom;
+                        thresholdY = rect.bottom - positionY;
+                    }
+                    else if (shouldSnapInside && IsTop(operation)
+                                              && IsEqual(rect.top, positionY, thresholdY))
+                    {
+                        // The top edge of the dragged window will snap to this window's top edge
+                        stuckTop = true;
+                        stickTop = rect.top;
+                        thresholdY = rect.top - positionY;
+                    }
                 }
-                else if (shouldSnapInside && IsBottom(operation)
-                                         && IsEqual(rect.bottom, positionY + height, thresholdY))
+                else if (IsBottom(operation))
                 {
-                    // The bottom edge of the dragged window will snap to this window's bottom edge
-                    stuckBottom = true;
-                    stickBottom = rect.bottom;
-                    thresholdY = rect.bottom - (positionY + height);
-                }
-                else if (shouldSnapInside && IsTop(operation)
-                                         && IsEqual(rect.top, positionY, thresholdY))
-                {
-                    // The top edge of the dragged window will snap to this window's top edge
-                    stuckTop = true;
-                    stickTop = rect.top;
-                    thresholdY = rect.top - positionY;
-                }
-                else if (IsBottom(operation)
-                         && IsEqual(rect.top, positionY + height, thresholdY))
-                {
-                    // The bottom edge of the dragged window will snap to this window's top edge
-                    stuckBottom = true;
-                    stickBottom = rect.top;
-                    thresholdY = rect.top - (positionY + height);
+                    if (IsEqual(rect.top, positionY + height, thresholdY))
+                    {
+                        // The bottom edge of the dragged window will snap to this window's top edge
+                        stuckBottom = true;
+                        stickBottom = rect.top;
+                        thresholdY = rect.top - (positionY + height);
+                    }
+                    else if (shouldSnapInside && IsEqual(rect.bottom, positionY + height, thresholdY))
+                    {
+                        // The bottom edge of the dragged window will snap to this window's bottom edge
+                        stuckBottom = true;
+                        stickBottom = rect.bottom;
+                        thresholdY = rect.bottom - (positionY + height);
+                    }
                 }
             }
         }
