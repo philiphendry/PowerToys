@@ -116,7 +116,7 @@
             <controls:PageLink x:Uid="LearnMore_QuickWindows" Link="https://aka.ms/PowerToysOverview_QuickWindows" />
         </controls:SettingsPageControl.PrimaryLinks>
         <controls:SettingsPageControl.SecondaryLinks>
-            <controls:PageLink Link="https://github.com/philiphendry/QuickWindows/" Text="Philip Hendry's Quick Windows" />
+            <controls:PageLink Link="https://github.com/philiphendry" Text="Philip Hendry's Quick Windows" />
         </controls:SettingsPageControl.SecondaryLinks>
     </controls:SettingsPageControl>
 </Page>
