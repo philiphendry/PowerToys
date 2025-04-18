@@ -2685,7 +2685,7 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>Send window from/to back with mousewheel</value>
   </data>
   <data name="QuickWindows_Rolodex.Description" xml:space="preserve">
-    <value>With the hotkey pressed use the mouse wheel to the send window under the cursor behind all others and bring the bottom most one to the front.</value>
+    <value>With the hotkey pressed use the mouse wheel to send window under the cursor behind all others and bring the bottom most one to the front.</value>
   </data>
   <data name="QuickWindows.SecondaryLinksHeader" xml:space="preserve">
     <value>Attribution</value>
@@ -2695,7 +2695,7 @@ From there, simply click on one of the supported files in the File Explorer and 
     <value>Exclude apps from quick windows</value>
   </data>
   <data name="QuickWindows_ExcludeApps_Enabled.Description" xml:space="preserve">
-    <value>Enable this option then when you activate quick windows and click on a window it will be added to the exclusion list below.</value>
+    <value>Enable this option then when you hold the activation key and click on a window it will be added to the exclusion list below.</value>
   </data>
   <data name="QuickWindows_ExcludeApps.Header" xml:space="preserve">
     <value>Excluded apps</value>
