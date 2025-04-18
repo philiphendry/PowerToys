@@ -125,10 +125,10 @@ public class SnappingWindows : ISnappingWindows
             return (left, top, right, bottom);
         }
 
-        var positionX = left + _windowBorderOffsets.left;
-        var positionY = top + _windowBorderOffsets.top;
-        var width = right - left - _windowBorderOffsets.left - _windowBorderOffsets.right;
-        var height = bottom - top - _windowBorderOffsets.top - _windowBorderOffsets.bottom;
+        var positionX = left;
+        var positionY = top;
+        var width = right - left;
+        var height = bottom - top;
 
         // thresholdX and thresholdY will shrink to make sure the dragged window will snap to the closest windows
         var thresholdX = _snappingThreshold;
