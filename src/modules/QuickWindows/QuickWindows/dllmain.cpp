@@ -62,47 +62,10 @@ private:
 
     HANDLE send_telemetry_event;
 
-    Hotkey m_hotkey;
-
     // Handle to event used to invoke QuickWindows
     HANDLE m_hInvokeEvent;
 
     HANDLE m_hAppTerminateEvent;
-
-    void parse_hotkey(PowerToysSettings::PowerToyValues& settings)
-    {
-        auto settingsObject = settings.get_raw_json();
-        if (settingsObject.GetView().Size())
-        {
-            try
-            {
-                auto jsonHotkeyObject = settingsObject.GetNamedObject(JSON_KEY_PROPERTIES).GetNamedObject(JSON_KEY_ACTIVATION_SHORTCUT);
-                m_hotkey.win = jsonHotkeyObject.GetNamedBoolean(JSON_KEY_WIN);
-                m_hotkey.alt = jsonHotkeyObject.GetNamedBoolean(JSON_KEY_ALT);
-                m_hotkey.shift = jsonHotkeyObject.GetNamedBoolean(JSON_KEY_SHIFT);
-                m_hotkey.ctrl = jsonHotkeyObject.GetNamedBoolean(JSON_KEY_CTRL);
-                m_hotkey.key = static_cast<unsigned char>(jsonHotkeyObject.GetNamedNumber(JSON_KEY_CODE));
-            }
-            catch (...)
-            {
-                Logger::error("Failed to initialize QuickWindows start shortcut");
-            }
-        }
-        else
-        {
-            Logger::info("QuickWindows settings are empty");
-        }
-
-        if (!m_hotkey.key)
-        {
-            Logger::info("QuickWindows is going to use default shortcut");
-            m_hotkey.win = true;
-            m_hotkey.alt = false;
-            m_hotkey.shift = true;
-            m_hotkey.ctrl = false;
-            m_hotkey.key = 'C';
-        }
-    }
 
     bool is_process_running()
     {
@@ -142,8 +105,6 @@ private:
             // Load and parse the settings file for this PowerToy.
             PowerToysSettings::PowerToyValues settings =
                 PowerToysSettings::PowerToyValues::load_from_settings_file(get_key());
-
-            parse_hotkey(settings);
         }
         catch (std::exception&)
         {
@@ -222,7 +183,6 @@ public:
             PowerToysSettings::PowerToyValues values =
                 PowerToysSettings::PowerToyValues::from_json_string(config, get_key());
 
-            parse_hotkey(values);
             // If you don't need to do any custom processing of the settings, proceed
             // to persists the values calling:
             values.save_to_settings_file();
@@ -261,40 +221,6 @@ public:
 
         m_enabled = false;
         Trace::EnableQuickWindows(false);
-    }
-
-    virtual bool on_hotkey(size_t /*hotkeyId*/) override
-    {
-        if (m_enabled)
-        {
-            Logger::trace(L"QuickWindows hotkey pressed");
-            if (!is_process_running())
-            {
-                launch_process();
-            }
-
-            SetEvent(m_hInvokeEvent);
-            return true;
-        }
-
-        return false;
-    }
-
-    virtual size_t get_hotkeys(Hotkey* hotkeys, size_t buffer_size) override
-    {
-        if (m_hotkey.key)
-        {
-            if (hotkeys && buffer_size >= 1)
-            {
-                hotkeys[0] = m_hotkey;
-            }
-
-            return 1;
-        }
-        else
-        {
-            return 0;
-        }
     }
 
     virtual bool is_enabled() override
