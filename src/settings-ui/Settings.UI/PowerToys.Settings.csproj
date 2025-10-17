@@ -32,8 +32,8 @@
 		<None Remove="SettingsXAML\Controls\Dashboard\CheckUpdateControl.xaml" />
 		<None Remove="SettingsXAML\Controls\Dashboard\ShortcutConflictControl.xaml" />
 		<None Remove="SettingsXAML\Controls\TitleBar\TitleBar.xaml" />
-    <None Remove="Assets\Settings\Icons\QuickWIndows.png" />
-    <None Remove="SettingsXAML\Views\QuickWindowsPage.xaml" />
+        <None Remove="Assets\Settings\Icons\QuickWIndows.png" />
+        <None Remove="SettingsXAML\Views\QuickWindowsPage.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<Page Remove="SettingsXAML\App.xaml" />
