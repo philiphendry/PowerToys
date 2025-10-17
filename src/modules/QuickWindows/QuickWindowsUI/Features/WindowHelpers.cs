@@ -52,12 +52,7 @@ public class WindowHelpers : IWindowHelpers
         var textLength = NativeMethods.GetWindowText(windowAtCursorHandle, windowTitle, 200);
         if (textLength == 0)
         {
-            var lastWin32Error = Marshal.GetLastWin32Error();
-            if (lastWin32Error != 0)
-            {
-                Logger.LogError($"GetWindowText failed with error: {lastWin32Error}");
-                return (false, string.Empty, string.Empty);
-            }
+            return (false, string.Empty, string.Empty);
         }
 
         var className = new StringBuilder(200);
