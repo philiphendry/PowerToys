@@ -741,4 +741,11 @@ public static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern uint GetRawInputData(IntPtr hRawInput, uint uiCommand, IntPtr pData, ref uint pcbSize, uint cbSizeHeader);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern IntPtr GetCapture();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool ReleaseCapture();
 }

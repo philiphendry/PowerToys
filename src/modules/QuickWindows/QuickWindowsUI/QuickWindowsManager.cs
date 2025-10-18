@@ -109,8 +109,6 @@ public class QuickWindowsManager(
             if (OperationInProgress && CurrentOperation != WindowOperation.ExclusionDetection)
             {
                 Logger.LogDebug("Operation in progress - sending control key");
-
-                // Send control key when releasing Alt hot key prevents the window menus being activated.
                 keyboardMonitor.SendControlKey();
                 return;
             }
@@ -118,8 +116,6 @@ public class QuickWindowsManager(
             if (OperationHasOccurred)
             {
                 Logger.LogDebug("Operation has occurred - sending control key");
-
-                // Send control key when releasing Alt hot key prevents the window menus being activated.
                 keyboardMonitor.SendControlKey();
                 OperationHasOccurred = false;
             }
@@ -138,6 +134,7 @@ public class QuickWindowsManager(
         cursorForOperation.HideCursor();
         transparentWindows.EndTransparency();
         targetWindow.ClearTargetWindow();
+        mouseHook.Intercepting = false;
     }
 
     private void OnMouseDown(object? target, MouseHook.MouseButtonEventArgs args)
@@ -154,7 +151,6 @@ public class QuickWindowsManager(
 
             if (IsHotKeyActivated && exclusionDetector.IsEnabled)
             {
-                // Hide the cursor since otherwise we'll just detect the cursor window
                 cursorForOperation.HideCursor();
                 exclusionDetector.ExcludeWindowAtCursor();
                 return;
@@ -164,6 +160,12 @@ public class QuickWindowsManager(
             {
                 Logger.LogDebug("Another mouse down whilst operation in progress so ending operation.");
                 EndOperation();
+
+                if (!IsHotKeyActivated)
+                {
+                    mouseHook.DisableEvents();
+                }
+
                 return;
             }
 
@@ -195,6 +197,7 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
+                    mouseHook.Intercepting = true; // enable swallowing of down events
                     break;
 
                 case MouseButton.Right:
@@ -221,6 +224,7 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Resize;
                     OperationInProgress = true;
+                    mouseHook.Intercepting = true;
                     break;
             }
         }
@@ -248,6 +252,7 @@ public class QuickWindowsManager(
                 cursorForOperation.StartExclusionDetection(args.X, args.Y);
                 CurrentOperation = WindowOperation.ExclusionDetection;
                 OperationInProgress = true;
+                mouseHook.Intercepting = true;
             }
 
             if (!OperationInProgress)

@@ -13,6 +13,8 @@ public class MouseHook : IMouseHook
     private IntPtr _hookHandle = IntPtr.Zero;
     private bool _eventsEnabled;
 
+    public bool Intercepting { get; set; }
+
     public MouseHook()
     {
         _hookProc = MouseHookCallback;
@@ -47,7 +49,7 @@ public class MouseHook : IMouseHook
     {
         if (_hookHandle != IntPtr.Zero)
         {
-            return; // Already installed
+            return;
         }
 
         _hookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_MOUSE_LL, _hookProc, Marshal.GetHINSTANCE(typeof(MouseHook).Module), 0);
@@ -79,14 +81,17 @@ public class MouseHook : IMouseHook
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
+        var msg = wParam.ToInt32();
         var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
 
-        switch (wParam.ToInt32())
+        switch (msg)
         {
             case NativeMethods.WM_MOUSEWHEEL:
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
                 MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
-                return new IntPtr(1);
+
+                // Swallow only if actively intercepting.
+                return Intercepting ? new IntPtr(1) : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
             case NativeMethods.WM_MOUSEMOVE:
                 MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
@@ -94,15 +99,19 @@ public class MouseHook : IMouseHook
 
             case NativeMethods.WM_LBUTTONDOWN:
             case NativeMethods.WM_RBUTTONDOWN:
-                var buttonDown = wParam.ToInt32() == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
+                var buttonDown = msg == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
                 MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-                return new IntPtr(1);
+
+                // Swallow only if actively intercepting.
+                return Intercepting ? new IntPtr(1) : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
             case NativeMethods.WM_LBUTTONUP:
             case NativeMethods.WM_RBUTTONUP:
-                var buttonUp = wParam.ToInt32() == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
+                var buttonUp = msg == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
                 MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
-                return new IntPtr(1);
+
+                // Always pass UP through – allows target window to release capture.
+                return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
         return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);

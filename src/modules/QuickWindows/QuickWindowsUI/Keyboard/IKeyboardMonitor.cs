@@ -16,6 +16,9 @@ public interface IKeyboardMonitor : IDisposable
 
     void Uninstall();
 
+    /// <summary>
+    /// Sending control key when releasing Alt hot key prevents the window menus being activated.
+    /// </summary>
     void SendControlKey();
 
     bool CheckHotKeyActive();

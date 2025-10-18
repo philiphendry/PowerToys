@@ -23,4 +23,6 @@ public interface IMouseHook
     void EnableEvents();
 
     void DisableEvents();
+
+    bool Intercepting { get; set; }
 }
