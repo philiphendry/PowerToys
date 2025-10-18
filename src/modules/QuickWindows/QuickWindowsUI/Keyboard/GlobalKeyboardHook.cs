@@ -4,52 +4,140 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 namespace QuickWindows.Keyboard
 {
     public class GlobalKeyboardHook : IGlobalKeyboardHook
     {
-        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private readonly NativeMethods.HookProc _hookProc;
-        private IntPtr _windowsHookHandle;
-
-        public GlobalKeyboardHook()
-        {
-            _windowsHookHandle = IntPtr.Zero;
-            _hookProc = LowLevelKeyboardProc; // we must keep alive _hookProc, because GC is not aware about SetWindowsHookEx behaviour.
-
-            _windowsHookHandle = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _hookProc, Marshal.GetHINSTANCE(typeof(GlobalKeyboardHook).Module), 0);
-            if (_windowsHookHandle == IntPtr.Zero)
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                throw new Win32Exception(errorCode, $"Failed to adjust keyboard hooks for '{Process.GetCurrentProcess().ProcessName}'. Error {errorCode}: {new Win32Exception(Marshal.GetLastWin32Error()).Message}.");
-            }
-        }
+        private readonly HwndSource _source;
+        private bool _disposed;
 
         public event EventHandler<GlobalKeyboardHookEventArgs>? KeyboardPressed;
 
+        public GlobalKeyboardHook()
+        {
+            // Create an invisible message-only window (HwndSource) to receive WM_INPUT.
+            var parameters = new HwndSourceParameters("QuickWindowsRawInput")
+            {
+                Width = 0,
+                Height = 0,
+                PositionX = 0,
+                PositionY = 0,
+                WindowStyle = 0,
+                UsesPerPixelOpacity = false,
+            };
+
+            _source = new HwndSource(parameters);
+            _source.AddHook(WndProc);
+
+            RegisterForRawKeyboard(_source.Handle);
+        }
+
+        private static void RegisterForRawKeyboard(IntPtr hwnd)
+        {
+            var devices = new NativeMethods.RAWINPUTDEVICE[1]
+            {
+                new()
+                {
+                    usUsagePage = NativeMethods.HID_USAGE_PAGE_GENERIC,
+                    usUsage = NativeMethods.HID_USAGE_GENERIC_KEYBOARD,
+                    dwFlags = NativeMethods.RIDEV_INPUTSINK, // receive even when not focused
+                    hwndTarget = hwnd,
+                },
+            };
+
+            if (!NativeMethods.RegisterRawInputDevices(devices, devices.Length, Marshal.SizeOf<NativeMethods.RAWINPUTDEVICE>()))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to register raw input keyboard device.");
+            }
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == NativeMethods.WM_INPUT)
+            {
+                ProcessRawInput(lParam);
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private void ProcessRawInput(IntPtr lParam)
+        {
+            uint dwSize = 0;
+            var resultSizeQuery = NativeMethods.GetRawInputData(lParam, NativeMethods.RID_INPUT, IntPtr.Zero, ref dwSize, (uint)Marshal.SizeOf<NativeMethods.RAWINPUTHEADER>());
+            if (resultSizeQuery == 0 && dwSize == 0)
+            {
+                // Failed to query size
+                return;
+            }
+
+            if (dwSize == 0)
+            {
+                return;
+            }
+
+            var buffer = Marshal.AllocHGlobal((int)dwSize);
+            try
+            {
+                var result = NativeMethods.GetRawInputData(lParam, NativeMethods.RID_INPUT, buffer, ref dwSize, (uint)Marshal.SizeOf<NativeMethods.RAWINPUTHEADER>());
+                if (result != dwSize)
+                {
+                    return;
+                }
+
+                var raw = Marshal.PtrToStructure<NativeMethods.RAWINPUT>(buffer);
+                if (raw.header.dwType != NativeMethods.RIM_TYPEKEYBOARD)
+                {
+                    return;
+                }
+
+                var kb = raw.data.keyboard;
+                var state = kb.Message switch
+                {
+                    NativeMethods.WM_KEYDOWN => KeyboardState.KeyDown,
+                    NativeMethods.WM_SYSKEYDOWN => KeyboardState.SysKeyDown,
+                    NativeMethods.WM_KEYUP => KeyboardState.KeyUp,
+                    NativeMethods.WM_SYSKEYUP => KeyboardState.SysKeyUp,
+                    _ => (KeyboardState?)null,
+                };
+
+                if (state is null)
+                {
+                    return;
+                }
+
+                var eventArgs = new GlobalKeyboardHookEventArgs(
+                    new LowLevelKeyboardInputEvent
+                    {
+                        VirtualCode = kb.VKey,
+                        HardwareScanCode = kb.MakeCode,
+                        Flags = kb.Flags,
+                        TimeStamp = 0,
+                        AdditionalInformation = IntPtr.Zero,
+                    },
+                    state.Value);
+
+                KeyboardPressed?.Invoke(this, eventArgs);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposing)
+            if (!disposing || _disposed)
             {
                 return;
             }
 
-            // because we can unhook only in the same thread, not in garbage collector thread
-            if (_windowsHookHandle == IntPtr.Zero)
-            {
-                return;
-            }
-
-            if (!NativeMethods.UnhookWindowsHookEx(_windowsHookHandle))
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                throw new Win32Exception(errorCode, $"Failed to remove keyboard hooks for '{Process.GetCurrentProcess().ProcessName}'. Error {errorCode}: {new Win32Exception(Marshal.GetLastWin32Error()).Message}.");
-            }
-
-            _windowsHookHandle = IntPtr.Zero;
+            _source.RemoveHook(WndProc);
+            _source.Dispose();
+            _disposed = true;
         }
 
         ~GlobalKeyboardHook()
@@ -71,48 +159,12 @@ namespace QuickWindows.Keyboard
             SysKeyUp = 0x0105,
         }
 
-        private IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            var fEatKeyStroke = false;
-            var wparamTyped = wParam.ToInt32();
-            if (Enum.IsDefined(typeof(KeyboardState), wparamTyped))
-            {
-                var o = Marshal.PtrToStructure<LowLevelKeyboardInputEvent>(lParam);
-                var eventArguments = new GlobalKeyboardHookEventArgs(o, (KeyboardState)wparamTyped);
-                KeyboardPressed?.Invoke(this, eventArguments);
-
-                fEatKeyStroke = eventArguments.Handled;
-            }
-
-            return fEatKeyStroke ? 1 : NativeMethods.CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
         public struct LowLevelKeyboardInputEvent
         {
-            /// <summary>
-            /// A virtual-key code. The code must be a value in the range 1 to 254.
-            /// </summary>
             public int VirtualCode;
-
-            /// <summary>
-            /// A hardware scan code for the key.
-            /// </summary>
             public int HardwareScanCode;
-
-            /// <summary>
-            /// The extended-key flag, event-injected Flags, context code, and transition-state flag. This member is specified as follows. An application can use the following values to test the keystroke Flags. Testing LLKHF_INJECTED (bit 4) will tell you whether the event was injected. If it was, then testing LLKHF_LOWER_IL_INJECTED (bit 1) will tell you whether or not the event was injected from a process running at lower integrity level.
-            /// </summary>
             public int Flags;
-
-            /// <summary>
-            /// The time stamp for this message, equivalent to what GetMessageTime would return for this message.
-            /// </summary>
             public int TimeStamp;
-
-            /// <summary>
-            /// Additional information associated with the message.
-            /// </summary>
             public IntPtr AdditionalInformation;
         }
     }
