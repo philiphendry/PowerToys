@@ -61,7 +61,6 @@ public class DisabledInGameMode : IDisabledInGameMode
         var hWindow = NativeMethods.GetForegroundWindow();
         if (hWindow == IntPtr.Zero)
         {
-            Logger.LogError($"{nameof(NativeMethods.GetForegroundWindow)} failed with error code {Marshal.GetLastWin32Error()}");
             return false;
         }
 

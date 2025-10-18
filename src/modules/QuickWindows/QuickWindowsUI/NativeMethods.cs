@@ -48,6 +48,7 @@ public static class NativeMethods
     internal const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
     internal const int DWMWA_CLOAKED = 14;
 
+    internal const uint WM_CLOSE = 0x0010;
     internal const int WH_MOUSE_LL = 14;
     internal const int WM_LBUTTONDOWN = 0x0201;
     internal const int WM_LBUTTONUP = 0x0202;
@@ -226,6 +227,9 @@ public static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
 
     [DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
     internal static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);

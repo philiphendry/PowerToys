@@ -157,16 +157,51 @@ public class CursorForOperation : ICursorForOperation, IDisposable
             return;
         }
 
-        if (!NativeMethods.DestroyWindow(_cursorWindow))
+        try
         {
-            Logger.LogError($"{nameof(NativeMethods.DestroyWindow)} failed with error code {Marshal.GetLastWin32Error()}");
+            // Check if window is valid before trying to destroy it
+            if (NativeMethods.IsWindow(_cursorWindow))
+            {
+                // Ensure we're on the thread that created the window
+                if (NativeMethods.GetCurrentThreadId() == NativeMethods.GetWindowThreadProcessId(_cursorWindow, IntPtr.Zero))
+                {
+                    if (!NativeMethods.DestroyWindow(_cursorWindow))
+                    {
+                        var error = Marshal.GetLastWin32Error();
+                        Logger.LogError($"{nameof(NativeMethods.DestroyWindow)} failed with error code {error}");
+                    }
+                }
+                else
+                {
+                    // If on wrong thread, try to post a message to the owning thread
+                    Logger.LogDebug("Window belongs to different thread, attempting alternative cleanup");
+                    NativeMethods.PostMessage(_cursorWindow, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Exception during window destruction: {ex.Message}");
         }
 
         _cursorWindow = IntPtr.Zero;
 
-        if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
+        try
         {
-            Logger.LogError($"{nameof(NativeMethods.UnregisterClass)} failed with error code {Marshal.GetLastWin32Error()}");
+            if (!NativeMethods.UnregisterClass(CursorWindowClassName, NativeMethods.GetModuleHandle(null)))
+            {
+                var error = Marshal.GetLastWin32Error();
+
+                // Only log as error if there's actually an error code
+                if (error != 0)
+                {
+                    Logger.LogError($"{nameof(NativeMethods.UnregisterClass)} failed with error code {error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Exception during class unregistration: {ex.Message}");
         }
     }
 
