@@ -35,6 +35,7 @@ public class DependencyInjection
         services.AddSingleton<IRateLimiter, RateLimiter>();
         services.AddSingleton<IMonitorInfos, MonitorInfos>();
         services.AddSingleton<IRestoreMaximised, RestoreMaximised>();
+        services.AddSingleton<IFancyZonesBridge, FancyZonesBridge>();
         services.AddHostedService<QuickWindowsManager>();
     }
 }

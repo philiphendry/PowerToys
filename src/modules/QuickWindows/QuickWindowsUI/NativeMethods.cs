@@ -243,6 +243,9 @@ public static class NativeMethods
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
     internal static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    internal static extern uint RegisterWindowMessage(string lpString);
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct POINT(int x, int y)
     {
@@ -748,4 +751,10 @@ public static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool ReleaseCapture();
+
+    // Virtual key code for SHIFT (VK_SHIFT = 0x10)
+    internal const int NativeVkShift = 0x10;
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string? lpszClass, string? lpszWindow);
 }

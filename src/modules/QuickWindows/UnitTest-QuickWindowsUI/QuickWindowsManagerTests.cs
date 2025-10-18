@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -22,6 +23,7 @@ public class QuickWindowsManagerTests
     private Mock<IMouseHook> _mockMouseHook = null!;
     private Mock<ITargetWindow> _mockTargetWindow = null!;
     private Mock<IMovingWindows> _mockMovingWindows = null!;
+    private Mock<IFancyZonesBridge> _mockFancyZonesBridge = null!;
     private Mock<IResizingWindows> _mockResizingWindows = null!;
     private Mock<ITransparentWindows> _mockTransparentWindows = null!;
     private Mock<IRolodexWindows> _mockRolodexWindows = null!;
@@ -39,6 +41,7 @@ public class QuickWindowsManagerTests
         _mockMouseHook = new Mock<IMouseHook>();
         _mockTargetWindow = new Mock<ITargetWindow>();
         _mockMovingWindows = new Mock<IMovingWindows>();
+        _mockFancyZonesBridge = new Mock<IFancyZonesBridge>();
         _mockResizingWindows = new Mock<IResizingWindows>();
         _mockTransparentWindows = new Mock<ITransparentWindows>();
         _mockRolodexWindows = new Mock<IRolodexWindows>();
@@ -52,6 +55,7 @@ public class QuickWindowsManagerTests
             _mockMouseHook.Object,
             _mockTargetWindow.Object,
             _mockMovingWindows.Object,
+            _mockFancyZonesBridge.Object,
             _mockResizingWindows.Object,
             _mockTransparentWindows.Object,
             _mockRolodexWindows.Object,
@@ -59,7 +63,7 @@ public class QuickWindowsManagerTests
             _mockExclusionDetector.Object,
             _mockExclusionFilter.Object,
             _mockRestoreMaximised.Object);
-        await _quickWindowsManager.StartAsync(default);
+        await _quickWindowsManager.StartAsync(CancellationToken.None);
 
         _mockTargetWindow.Setup(t => t.HaveTargetWindow).Returns(true);
         _mockKeyboardMonitor.Setup(k => k.CheckHotKeyActive()).Returns(true);
@@ -126,14 +130,14 @@ public class QuickWindowsManagerTests
     [TestMethod]
     public async Task WhenTheManagerIsStoppedTheKeyboardHookIsUninstalled()
     {
-        await _quickWindowsManager.StopAsync(default);
+        await _quickWindowsManager.StopAsync(CancellationToken.None);
         _mockKeyboardMonitor.Verify(k => k.Uninstall(), Times.Once);
     }
 
     [TestMethod]
     public async Task WhenTheManagerIsStoppedTheMouseHookIsUninstalled()
     {
-        await _quickWindowsManager.StopAsync(default);
+        await _quickWindowsManager.StopAsync(CancellationToken.None);
         _mockMouseHook.Verify(m => m.Uninstall(), Times.Once);
     }
 
@@ -264,7 +268,7 @@ public class QuickWindowsManagerTests
     }
 
     [TestMethod]
-    public void WhenTheHotKeyIsPressedAndTheMouseIsClickedOnAnExcludedWindowTheOperationIsSupressed()
+    public void WhenTheHotKeyIsPressedAndTheMouseIsClickedOnAnExcludedWindowTheOperationIsSuppressed()
     {
         _mockExclusionFilter.Setup(m => m.IsWindowAtCursorExcluded()).Returns(true);
         HotKeyPress();

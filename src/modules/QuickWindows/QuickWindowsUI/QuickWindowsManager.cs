@@ -20,6 +20,7 @@ public class QuickWindowsManager(
     IMouseHook mouseHook,
     ITargetWindow targetWindow,
     IMovingWindows movingWindows,
+    IFancyZonesBridge fancyZonesBridge,
     IResizingWindows resizingWindows,
     ITransparentWindows transparentWindows,
     IRolodexWindows rolodexWindows,
@@ -31,6 +32,7 @@ public class QuickWindowsManager(
 {
     private readonly Lock _lock = new();
     private Timer? _stateLoggerTimer;
+    private bool _fancyZonesMoveActive;
 
     internal bool IsHotKeyActivated { get; private set; }
 
@@ -128,6 +130,12 @@ public class QuickWindowsManager(
 
     private void EndOperation()
     {
+        if (_fancyZonesMoveActive && fancyZonesBridge.IsAvailable && targetWindow.HWnd != IntPtr.Zero)
+        {
+            fancyZonesBridge.EndMove(targetWindow.HWnd);
+            _fancyZonesMoveActive = false;
+        }
+
         CurrentOperation = WindowOperation.None;
         OperationInProgress = false;
 
@@ -198,6 +206,14 @@ public class QuickWindowsManager(
                     CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
                     mouseHook.Intercepting = true; // enable swallowing of down events
+
+                    // Notify FancyZones that a move/size operation started when SHIFT is already held.
+                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.NativeVkShift) & 0x8000) != 0)
+                    {
+                        fancyZonesBridge.StartMove(targetWindow.HWnd);
+                        _fancyZonesMoveActive = true;
+                    }
+
                     break;
 
                 case MouseButton.Right:
@@ -263,6 +279,17 @@ public class QuickWindowsManager(
             switch (CurrentOperation)
             {
                 case WindowOperation.Move:
+                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.NativeVkShift) & 0x8000) != 0)
+                    {
+                        if (!_fancyZonesMoveActive)
+                        {
+                            fancyZonesBridge.StartMove(targetWindow.HWnd);
+                            _fancyZonesMoveActive = true;
+                        }
+
+                        fancyZonesBridge.UpdateMove(targetWindow.HWnd);
+                    }
+
                     restoreMaximised.Move();
                     movingWindows.MoveWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
