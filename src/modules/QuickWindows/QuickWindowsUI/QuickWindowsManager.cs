@@ -140,7 +140,6 @@ public class QuickWindowsManager(
         cursorForOperation.HideCursor();
         transparentWindows.EndTransparency();
         targetWindow.ClearTargetWindow();
-        mouseHook.Intercepting = false;
     }
 
     private void OnMouseDown(object? target, MouseButtonEventArgs args)
@@ -204,7 +203,6 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
-                    mouseHook.Intercepting = true;
                     break;
 
                 case MouseButton.Right:
@@ -231,7 +229,6 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Resize;
                     OperationInProgress = true;
-                    mouseHook.Intercepting = true;
                     break;
             }
         }
@@ -259,7 +256,6 @@ public class QuickWindowsManager(
                 cursorForOperation.StartExclusionDetection(args.X, args.Y);
                 CurrentOperation = WindowOperation.ExclusionDetection;
                 OperationInProgress = true;
-                mouseHook.Intercepting = true;
             }
 
             if (!OperationInProgress)

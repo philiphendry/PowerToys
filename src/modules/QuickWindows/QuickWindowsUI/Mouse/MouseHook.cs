@@ -26,8 +26,6 @@ public class MouseHook : IMouseHook
 
     public event EventHandler<MouseMoveWheelEventArgs>? MouseWheel;
 
-    public bool Intercepting { get; set; }
-
     public void EnableEvents() => _eventsEnabled = true;
 
     public void DisableEvents() => _eventsEnabled = false;
@@ -72,9 +70,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_MOUSEWHEEL:
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
                 MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
-
-                // Swallow only if actively intercepting.
-                return Intercepting ? new IntPtr(1) : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+                return new IntPtr(1);
 
             case NativeMethods.WM_MOUSEMOVE:
                 MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
@@ -84,9 +80,7 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_RBUTTONDOWN:
                 var buttonDown = msg == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
                 MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-
-                // Swallow only if actively intercepting.
-                return Intercepting ? new IntPtr(1) : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+                return new IntPtr(1);
 
             case NativeMethods.WM_LBUTTONUP:
             case NativeMethods.WM_RBUTTONUP:
