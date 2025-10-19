@@ -208,7 +208,7 @@ public class QuickWindowsManager(
                     mouseHook.Intercepting = true; // enable swallowing of down events
 
                     // Notify FancyZones that a move/size operation started when SHIFT is already held.
-                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.NativeVkShift) & 0x8000) != 0)
+                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0)
                     {
                         fancyZonesBridge.StartMove(targetWindow.HWnd);
                         _fancyZonesMoveActive = true;
@@ -279,7 +279,7 @@ public class QuickWindowsManager(
             switch (CurrentOperation)
             {
                 case WindowOperation.Move:
-                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.NativeVkShift) & 0x8000) != 0)
+                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0)
                     {
                         if (!_fancyZonesMoveActive)
                         {
