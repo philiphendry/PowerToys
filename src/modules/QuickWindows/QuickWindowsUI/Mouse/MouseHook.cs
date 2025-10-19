@@ -13,8 +13,6 @@ public class MouseHook : IMouseHook
     private IntPtr _hookHandle = IntPtr.Zero;
     private bool _eventsEnabled;
 
-    public bool Intercepting { get; set; }
-
     public MouseHook()
     {
         _hookProc = MouseHookCallback;
@@ -28,22 +26,11 @@ public class MouseHook : IMouseHook
 
     public event EventHandler<MouseMoveWheelEventArgs>? MouseWheel;
 
-    public class MouseMoveEventArgs(int x, int y) : EventArgs
-    {
-        public int X { get; } = x;
+    public bool Intercepting { get; set; }
 
-        public int Y { get; } = y;
-    }
+    public void EnableEvents() => _eventsEnabled = true;
 
-    public class MouseButtonEventArgs(int x, int y, MouseButton button) : MouseMoveEventArgs(x, y)
-    {
-        public MouseButton Button { get; } = button;
-    }
-
-    public class MouseMoveWheelEventArgs(int x, int y, int delta) : MouseMoveEventArgs(x, y)
-    {
-        public int Delta { get; } = delta;
-    }
+    public void DisableEvents() => _eventsEnabled = false;
 
     public void Install()
     {
@@ -69,10 +56,6 @@ public class MouseHook : IMouseHook
         NativeMethods.UnhookWindowsHookEx(_hookHandle);
         _hookHandle = IntPtr.Zero;
     }
-
-    public void EnableEvents() => _eventsEnabled = true;
-
-    public void DisableEvents() => _eventsEnabled = false;
 
     private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {

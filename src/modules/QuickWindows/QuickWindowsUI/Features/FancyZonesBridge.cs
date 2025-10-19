@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using ManagedCommon;
 using QuickWindows.Interfaces;
 
 namespace QuickWindows.Features;
@@ -27,6 +28,7 @@ public class FancyZonesBridge : IFancyZonesBridge
 
     private IntPtr _fzWindow;
     private DateTime _lastLookup = DateTime.MinValue;
+    private bool _fancyZonesMoveActive;
 
     private IntPtr GetFancyZonesWindow()
     {
@@ -42,37 +44,76 @@ public class FancyZonesBridge : IFancyZonesBridge
         return _fzWindow;
     }
 
-    public bool IsAvailable => GetFancyZonesWindow() != IntPtr.Zero;
+    private static bool IsShiftPressed => (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0;
 
     public void StartMove(IntPtr hwnd)
     {
+        if (!IsShiftPressed)
+        {
+            return;
+        }
+
         var fz = GetFancyZonesWindow();
         if (fz == IntPtr.Zero)
         {
             return;
         }
 
+        Logger.LogDebug("Starting FancyZones interaction");
+
         NativeMethods.PostMessage(fz, WM_PRIV_MOVESIZESTART, hwnd, IntPtr.Zero);
 
         // Immediately send a first location change to seed FancyZones with starting position.
         NativeMethods.PostMessage(fz, WM_PRIV_LOCATIONCHANGE, hwnd, IntPtr.Zero);
+
+        _fancyZonesMoveActive = true;
     }
 
     public void UpdateMove(IntPtr hwnd)
     {
-        var fz = GetFancyZonesWindow();
-        if (fz != IntPtr.Zero)
+        if (!IsShiftPressed)
         {
-            NativeMethods.PostMessage(fz, WM_PRIV_LOCATIONCHANGE, hwnd, IntPtr.Zero);
+            return;
         }
+
+        var fz = GetFancyZonesWindow();
+        if (fz == IntPtr.Zero)
+        {
+            return;
+        }
+
+        if (!_fancyZonesMoveActive)
+        {
+            StartMove(hwnd);
+        }
+
+        Logger.LogDebug("Updating FancyZones interaction");
+
+        NativeMethods.PostMessage(fz, WM_PRIV_LOCATIONCHANGE, hwnd, IntPtr.Zero);
     }
 
     public void EndMove(IntPtr hwnd)
     {
-        var fz = GetFancyZonesWindow();
-        if (fz != IntPtr.Zero)
+        if (!_fancyZonesMoveActive)
         {
-            NativeMethods.PostMessage(fz, WM_PRIV_MOVESIZEEND, hwnd, IntPtr.Zero);
+            return;
         }
+
+        _fancyZonesMoveActive = false;
+
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var fz = GetFancyZonesWindow();
+        if (fz == IntPtr.Zero)
+        {
+            return;
+        }
+
+        Logger.LogDebug("Ending FancyZones interaction");
+
+        NativeMethods.PostMessage(fz, WM_PRIV_MOVESIZEEND, hwnd, IntPtr.Zero);
     }
 }

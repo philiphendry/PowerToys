@@ -8,13 +8,13 @@ namespace QuickWindows.Mouse;
 
 public interface IMouseHook
 {
-    event EventHandler<MouseHook.MouseMoveEventArgs>? MouseMove;
+    event EventHandler<MouseMoveEventArgs>? MouseMove;
 
-    event EventHandler<MouseHook.MouseButtonEventArgs>? MouseDown;
+    event EventHandler<MouseButtonEventArgs>? MouseDown;
 
-    event EventHandler<MouseHook.MouseButtonEventArgs>? MouseUp;
+    event EventHandler<MouseButtonEventArgs>? MouseUp;
 
-    event EventHandler<MouseHook.MouseMoveWheelEventArgs>? MouseWheel;
+    event EventHandler<MouseMoveWheelEventArgs>? MouseWheel;
 
     void Install();
 

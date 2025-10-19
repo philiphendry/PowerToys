@@ -87,32 +87,32 @@ public class QuickWindowsManagerTests
 
     private void MouseLeftButtonDown()
     {
-        _mockMouseHook.Raise(m => m.MouseDown += null!, new MouseHook.MouseButtonEventArgs(100, 100, MouseButton.Left));
+        _mockMouseHook.Raise(m => m.MouseDown += null!, new MouseButtonEventArgs(100, 100, MouseButton.Left));
     }
 
     private void MouseLeftButtonUp()
     {
-        _mockMouseHook.Raise(m => m.MouseUp += null!, new MouseHook.MouseButtonEventArgs(100, 100, MouseButton.Left));
+        _mockMouseHook.Raise(m => m.MouseUp += null!, new MouseButtonEventArgs(100, 100, MouseButton.Left));
     }
 
     private void MouseRightButtonDown()
     {
-        _mockMouseHook.Raise(m => m.MouseDown += null!, new MouseHook.MouseButtonEventArgs(100, 100, MouseButton.Right));
+        _mockMouseHook.Raise(m => m.MouseDown += null!, new MouseButtonEventArgs(100, 100, MouseButton.Right));
     }
 
     private void MouseRightButtonUp()
     {
-        _mockMouseHook.Raise(m => m.MouseUp += null!, new MouseHook.MouseButtonEventArgs(100, 100, MouseButton.Right));
+        _mockMouseHook.Raise(m => m.MouseUp += null!, new MouseButtonEventArgs(100, 100, MouseButton.Right));
     }
 
     private void MouseMove()
     {
-        _mockMouseHook.Raise(m => m.MouseMove += null!, new MouseHook.MouseMoveEventArgs(100, 100));
+        _mockMouseHook.Raise(m => m.MouseMove += null!, new MouseMoveEventArgs(100, 100));
     }
 
     private void MouseWheelUp()
     {
-        _mockMouseHook.Raise(m => m.MouseWheel += null!, new MouseHook.MouseMoveWheelEventArgs(100, 100, 1));
+        _mockMouseHook.Raise(m => m.MouseWheel += null!, new MouseMoveWheelEventArgs(100, 100, 1));
     }
 
     [TestMethod]

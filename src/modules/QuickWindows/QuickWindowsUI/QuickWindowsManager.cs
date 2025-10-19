@@ -32,12 +32,15 @@ public class QuickWindowsManager(
 {
     private readonly Lock _lock = new();
     private Timer? _stateLoggerTimer;
-    private bool _fancyZonesMoveActive;
 
     internal bool IsHotKeyActivated { get; private set; }
 
     internal bool OperationInProgress { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether an operation (move/resize) has occurred since the hotkey was pressed
+    /// so the on release of the hotkey (in particular Alt) SendControlKey can be called to cancel menu activation.
+    /// </summary>
     internal bool OperationHasOccurred { get; private set; }
 
     internal WindowOperation CurrentOperation { get; private set; }
@@ -130,22 +133,17 @@ public class QuickWindowsManager(
 
     private void EndOperation()
     {
-        if (_fancyZonesMoveActive && fancyZonesBridge.IsAvailable && targetWindow.HWnd != IntPtr.Zero)
-        {
-            fancyZonesBridge.EndMove(targetWindow.HWnd);
-            _fancyZonesMoveActive = false;
-        }
-
         CurrentOperation = WindowOperation.None;
         OperationInProgress = false;
 
+        fancyZonesBridge.EndMove(targetWindow.HWnd);
         cursorForOperation.HideCursor();
         transparentWindows.EndTransparency();
         targetWindow.ClearTargetWindow();
         mouseHook.Intercepting = false;
     }
 
-    private void OnMouseDown(object? target, MouseHook.MouseButtonEventArgs args)
+    private void OnMouseDown(object? target, MouseButtonEventArgs args)
     {
         lock (_lock)
         {
@@ -202,18 +200,11 @@ public class QuickWindowsManager(
                     movingWindows.StartMove(args.X, args.Y);
                     transparentWindows.StartTransparency(args.X, args.Y);
                     cursorForOperation.StartMove(args.X, args.Y);
+                    fancyZonesBridge.StartMove(targetWindow.HWnd);
 
                     CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
-                    mouseHook.Intercepting = true; // enable swallowing of down events
-
-                    // Notify FancyZones that a move/size operation started when SHIFT is already held.
-                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0)
-                    {
-                        fancyZonesBridge.StartMove(targetWindow.HWnd);
-                        _fancyZonesMoveActive = true;
-                    }
-
+                    mouseHook.Intercepting = true;
                     break;
 
                 case MouseButton.Right:
@@ -246,7 +237,7 @@ public class QuickWindowsManager(
         }
     }
 
-    private void OnMouseUp(object? target, MouseHook.MouseButtonEventArgs args)
+    private void OnMouseUp(object? target, MouseButtonEventArgs args)
     {
         lock (_lock)
         {
@@ -259,7 +250,7 @@ public class QuickWindowsManager(
         }
     }
 
-    private void OnMouseMove(object? target, MouseHook.MouseMoveEventArgs args)
+    private void OnMouseMove(object? target, MouseMoveEventArgs args)
     {
         lock (_lock)
         {
@@ -279,17 +270,7 @@ public class QuickWindowsManager(
             switch (CurrentOperation)
             {
                 case WindowOperation.Move:
-                    if (fancyZonesBridge.IsAvailable && (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0)
-                    {
-                        if (!_fancyZonesMoveActive)
-                        {
-                            fancyZonesBridge.StartMove(targetWindow.HWnd);
-                            _fancyZonesMoveActive = true;
-                        }
-
-                        fancyZonesBridge.UpdateMove(targetWindow.HWnd);
-                    }
-
+                    fancyZonesBridge.UpdateMove(targetWindow.HWnd);
                     restoreMaximised.Move();
                     movingWindows.MoveWindow(args.X, args.Y);
                     cursorForOperation.MoveToCursor(args.X, args.Y);
@@ -311,7 +292,7 @@ public class QuickWindowsManager(
         }
     }
 
-    private void OnMouseWheel(object? target, MouseHook.MouseMoveWheelEventArgs args)
+    private void OnMouseWheel(object? target, MouseMoveWheelEventArgs args)
     {
         lock (_lock)
         {

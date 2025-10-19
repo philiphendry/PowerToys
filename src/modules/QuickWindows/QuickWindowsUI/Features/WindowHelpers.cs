@@ -162,7 +162,6 @@ public class WindowHelpers : IWindowHelpers
                 || NativeMethods.GetWindowRect(hWnd, out rect))
             {
                 windows.Add(rect);
-                return true;
             }
 
             return true;

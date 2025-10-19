@@ -8,8 +8,6 @@ namespace QuickWindows.Interfaces;
 
 public interface IFancyZonesBridge
 {
-    bool IsAvailable { get; }
-
     void StartMove(IntPtr hwnd);
 
     void UpdateMove(IntPtr hwnd);

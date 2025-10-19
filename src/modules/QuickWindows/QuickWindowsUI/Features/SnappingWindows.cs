@@ -93,7 +93,7 @@ public class SnappingWindows : ISnappingWindows
     private static NativeMethods.Rect CalculateBorderOffsets(IntPtr hwnd, int snapGap)
     {
         if (NativeMethods.DwmGetWindowAttribute(hwnd, NativeMethods.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect frame) == 0
-            && NativeMethods.GetWindowRect(hwnd, out NativeMethods.Rect rect))
+            && NativeMethods.GetWindowRect(hwnd, out var rect))
         {
             SubRect(ref frame, rect);
             if (snapGap > 0)
@@ -281,8 +281,8 @@ public class SnappingWindows : ISnappingWindows
         var thresholdX = _snappingThreshold;
         var thresholdY = _snappingThreshold;
 
-        bool stuckX = false;
-        bool stuckY = false;
+        var stuckX = false;
+        var stuckY = false;
         var stickX = 0;
         var stickY = 0;
 
