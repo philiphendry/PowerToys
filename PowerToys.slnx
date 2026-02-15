@@ -971,7 +971,7 @@
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
-    <Project Path="src/modules/QuickWindows/UnitTest-QuickWindowsUI/UnitTest-ColorPickerUI.csproj" Id="090cd7b7-3b0c-4d1d-bc98-83eb5d799bc1">
+    <Project Path="src/modules/QuickWindows/UnitTest-QuickWindowsUI/UnitTest-QuickWindowsUI.csproj" Id="40ee596e-f52f-4aec-a1a3-be427402a04e">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
