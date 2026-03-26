@@ -69,8 +69,13 @@ public class MouseHook : IMouseHook
         {
             case NativeMethods.WM_MOUSEWHEEL:
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
-                MouseWheel?.Invoke(this, new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta));
-                return new IntPtr(1);
+                var wheelArgs = new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta);
+                MouseWheel?.Invoke(this, wheelArgs);
+                // Only suppress if the handler claimed the event (e.g. rolodex fired).
+                // Pass through otherwise so normal scrolling works while Alt is held.
+                return wheelArgs.Handled
+                    ? new IntPtr(1)
+                    : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
             case NativeMethods.WM_MOUSEMOVE:
                 MouseMove?.Invoke(this, new MouseMoveEventArgs(hookStruct.pt.x, hookStruct.pt.y));
@@ -87,7 +92,7 @@ public class MouseHook : IMouseHook
                 var buttonUp = msg == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
                 MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
 
-                // Always pass UP through – allows target window to release capture.
+                // Always pass UP through ï¿½ allows target window to release capture.
                 return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 

@@ -340,4 +340,20 @@ public class QuickWindowsManagerTests
         _mockRolodexWindows.Verify(m => m.SendWindowToBottom(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         _mockRolodexWindows.Verify(m => m.BringBottomWindowToTop(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
+
+    [TestMethod]
+    public void WhenTheMouseWheelIsUsedWithoutTheHotKeyPressedTheRolodexIsNotInvoked()
+    {
+        MouseWheelUp();
+        _mockRolodexWindows.Verify(m => m.SendWindowToBottom(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        _mockRolodexWindows.Verify(m => m.BringBottomWindowToTop(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [TestMethod]
+    public void WhenTheMouseWheelIsUsedWithHotKeyActiveAndNoOperationInProgressTheRolodexIsInvoked()
+    {
+        HotKeyPress();
+        MouseWheelUp();
+        _mockRolodexWindows.Verify(m => m.SendWindowToBottom(It.IsAny<int>(), It.IsAny<int>()), Times.Once);
+    }
 }

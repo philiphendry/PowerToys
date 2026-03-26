@@ -310,6 +310,8 @@ public class QuickWindowsManager(
             {
                 rolodexWindows.BringBottomWindowToTop(args.X, args.Y);
             }
+
+            args.Handled = true;
         }
     }
 
