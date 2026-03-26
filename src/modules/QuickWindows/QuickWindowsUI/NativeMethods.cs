@@ -60,6 +60,8 @@ public static class NativeMethods
     internal const int VK_LCONTROL = 0xA2;
     internal const int VK_RCONTROL = 0xA3;
 
+    internal const int LLKHF_INJECTED = 0x10; // Bit 4: event was injected via SendInput/keybd_event
+
     internal static readonly IntPtr HWND_BOTTOM = new(1);
     internal static readonly IntPtr HWND_TOP = new(0);
     internal static readonly IntPtr HWND_TOPMOST = new(-1);

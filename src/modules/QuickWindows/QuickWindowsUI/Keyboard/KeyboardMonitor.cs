@@ -28,7 +28,6 @@ public class KeyboardMonitor(
     private bool _shiftDown;
 
     private bool _isHotKeyPressed;
-    private bool _suppressHotKey;
 
     public event EventHandler? HotKeyPressed;
 
@@ -61,8 +60,14 @@ public class KeyboardMonitor(
     {
         lock (_lock)
         {
-            // Always update key state for KeyUp events so we never strand a key.
-            if (_suppressHotKey || disabledInGameMode.IsDisabledInGameMode())
+            // Skip injected events (e.g. Ctrl down/up sent by SendControlKey to cancel Alt-menu activation).
+            // Physical key events always have LLKHF_INJECTED clear.
+            if ((e.KeyboardData.Flags & NativeMethods.LLKHF_INJECTED) != 0)
+            {
+                return;
+            }
+
+            if (disabledInGameMode.IsDisabledInGameMode())
             {
                 if (e.KeyboardState is GlobalKeyboardHook.KeyboardState.KeyUp or GlobalKeyboardHook.KeyboardState.SysKeyUp)
                 {
@@ -160,27 +165,19 @@ public class KeyboardMonitor(
 
     public void SendControlKey()
     {
-        _suppressHotKey = true;
-        try
-        {
-            var inputs = new NativeMethods.INPUT[2];
-            inputs[0].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[0].u.ki.wVk = NativeMethods.VK_CONTROL;
-            inputs[0].u.ki.dwFlags = 0;
+        var inputs = new NativeMethods.INPUT[2];
+        inputs[0].type = NativeMethods.INPUT_KEYBOARD;
+        inputs[0].u.ki.wVk = NativeMethods.VK_CONTROL;
+        inputs[0].u.ki.dwFlags = 0;
 
-            inputs[1].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[1].u.ki.wVk = NativeMethods.VK_CONTROL;
-            inputs[1].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
+        inputs[1].type = NativeMethods.INPUT_KEYBOARD;
+        inputs[1].u.ki.wVk = NativeMethods.VK_CONTROL;
+        inputs[1].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
 
-            var result = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
-            if (result == 0)
-            {
-                Logger.LogError($"SendInput failed with error code {Marshal.GetLastWin32Error()}");
-            }
-        }
-        finally
+        var result = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
+        if (result == 0)
         {
-            _suppressHotKey = false;
+            Logger.LogError($"SendInput failed with error code {Marshal.GetLastWin32Error()}");
         }
     }
 
