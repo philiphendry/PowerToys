@@ -33,15 +33,20 @@ public class FancyZonesBridge : IFancyZonesBridge
     private IntPtr GetFancyZonesWindow()
     {
         // Cache for a short period to avoid FindWindowEx on every mouse move.
-        if ((DateTime.UtcNow - _lastLookup).TotalSeconds < 5)
+        // Only cache a valid (non-zero) handle; if FancyZones isn't running yet, retry next call.
+        if (_fzWindow != IntPtr.Zero && (DateTime.UtcNow - _lastLookup).TotalSeconds < 5)
         {
             return _fzWindow;
         }
 
-        _fzWindow = NativeMethods.FindWindowEx(IntPtr.Zero, IntPtr.Zero, FancyZonesWindowClass, null);
-        _lastLookup = DateTime.UtcNow;
+        var found = NativeMethods.FindWindowEx(IntPtr.Zero, IntPtr.Zero, FancyZonesWindowClass, null);
+        if (found != IntPtr.Zero)
+        {
+            _fzWindow = found;
+            _lastLookup = DateTime.UtcNow;
+        }
 
-        return _fzWindow;
+        return found;
     }
 
     private static bool IsShiftPressed => (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0;
