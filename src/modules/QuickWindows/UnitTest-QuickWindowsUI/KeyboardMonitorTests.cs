@@ -95,4 +95,22 @@ public class KeyboardMonitorTests
 
         Assert.IsTrue(hotKeyPressedFired, "HotKeyPressed should fire for a physical Alt down event after an injected one was ignored");
     }
+
+    [TestMethod]
+    public void PhysicalAltUpAfterInjectedAltUpStillFiresHotKeyReleased()
+    {
+        // Physical Alt down activates the hot key
+        RaiseKeyEvent(NativeMethods.VK_MENU, GlobalKeyboardHook.KeyboardState.SysKeyDown, flags: 0);
+
+        var hotKeyReleasedFired = false;
+        _monitor.HotKeyReleased += (_, _) => hotKeyReleasedFired = true;
+
+        // Injected Alt up (e.g. from another tool) — must be silently dropped
+        RaiseKeyEvent(NativeMethods.VK_MENU, GlobalKeyboardHook.KeyboardState.SysKeyUp, flags: NativeMethods.LLKHF_INJECTED);
+        Assert.IsFalse(hotKeyReleasedFired, "HotKeyReleased must not fire for injected Alt up");
+
+        // Physical Alt up — must still fire HotKeyReleased because _altDown was not cleared by the injected event
+        RaiseKeyEvent(NativeMethods.VK_MENU, GlobalKeyboardHook.KeyboardState.SysKeyUp, flags: 0);
+        Assert.IsTrue(hotKeyReleasedFired, "HotKeyReleased must fire for physical Alt up after an injected Alt up was ignored");
+    }
 }
