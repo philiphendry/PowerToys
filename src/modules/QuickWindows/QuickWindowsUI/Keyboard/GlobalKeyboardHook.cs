@@ -73,6 +73,11 @@ namespace QuickWindows.Keyboard
 
         private IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            if (nCode < 0)
+            {
+                return NativeMethods.CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
+            }
+
             var fEatKeyStroke = false;
             var wparamTyped = wParam.ToInt32();
             if (Enum.IsDefined(typeof(KeyboardState), wparamTyped))
