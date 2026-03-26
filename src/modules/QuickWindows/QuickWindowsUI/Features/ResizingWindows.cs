@@ -86,6 +86,8 @@ public class ResizingWindows(
                 break;
         }
 
+        // Clamp minimum size before snapping so the snap algorithm receives valid (non-degenerate)
+        // window dimensions. Snapping adjusts position to align edges with nearby windows.
         // Ensure minimum window size - clamp the moving edge (not the fixed opposite edge)
         const int minSize = MinimumWindowSize;
         if (newRight - newLeft < minSize)

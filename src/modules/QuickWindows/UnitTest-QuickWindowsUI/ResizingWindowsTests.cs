@@ -126,4 +126,38 @@ public class ResizingWindowsTests
         Assert.AreEqual(100, _capturedTop, "Top edge must stay fixed for ResizeBottomLeft");
         Assert.AreEqual(300, _capturedBottom, "Bottom edge should be clamped for ResizeBottomLeft");
     }
+
+    [TestMethod]
+    public void WhenResizingFromTopLeftAndOnlyWidthIsTooSmallOnlyLeftEdgeClampsNotTop()
+    {
+        // Window: 400x400 at (100,100)–(500,500).
+        // Drag top-left: move right a lot (width becomes 5) but move down only a little (height stays valid at 250).
+        SetupTargetWindow(left: 100, top: 100, right: 500, bottom: 500);
+        _resizingWindows.StartResize(x: 100, y: 100); // top-left quadrant
+
+        // deltaX = +395 → newLeft=495 (width=5, too small); deltaY = +150 → newTop=250 (height=250, valid)
+        _resizingWindows.ResizeWindow(x: 495, y: 250);
+
+        Assert.AreEqual(300, _capturedLeft, "Left edge should be clamped (width too small)");
+        Assert.AreEqual(500, _capturedRight, "Right edge must stay fixed");
+        Assert.AreEqual(250, _capturedTop, "Top edge must NOT be clamped (height is still valid)");
+        Assert.AreEqual(500, _capturedBottom, "Bottom edge must stay fixed");
+    }
+
+    [TestMethod]
+    public void WhenResizingFromBottomRightAndOnlyHeightIsTooSmallOnlyBottomEdgeClampsNotRight()
+    {
+        // Window: 400x400 at (100,100)–(500,500).
+        // Drag bottom-right: move up a lot (height becomes 5) but barely left (width stays valid at 250).
+        SetupTargetWindow(left: 100, top: 100, right: 500, bottom: 500);
+        _resizingWindows.StartResize(x: 499, y: 499); // bottom-right quadrant
+
+        // deltaX = -150 → newRight=350 (width=250, valid); deltaY = -394 → newBottom=106 (height=6, too small)
+        _resizingWindows.ResizeWindow(x: 349, y: 105);
+
+        Assert.AreEqual(100, _capturedLeft, "Left edge must stay fixed");
+        Assert.AreEqual(350, _capturedRight, "Right edge must NOT be clamped (width is still valid)");
+        Assert.AreEqual(100, _capturedTop, "Top edge must stay fixed");
+        Assert.AreEqual(300, _capturedBottom, "Bottom edge should be clamped (height too small)");
+    }
 }
