@@ -81,8 +81,9 @@ public class DisabledInGameMode : IDisabledInGameMode
                            && windowSize.right == monitorInfo.rcMonitor.right
                            && windowSize.bottom == monitorInfo.rcMonitor.bottom;
 
-        var exStyle = NativeMethods.GetWindowLong(hWindow, NativeMethods.GWL_EX_STYLE);
-        var hasTitle = (exStyle & NativeMethods.WS_CAPTION) == NativeMethods.WS_CAPTION;
+        // Use GWL_STYLE (not GWL_EX_STYLE) — WS_CAPTION is a standard style flag, not extended.
+        var style = NativeMethods.GetWindowLong(hWindow, NativeMethods.GWL_STYLE);
+        var hasTitle = (style & NativeMethods.WS_CAPTION) == NativeMethods.WS_CAPTION;
 
         return isFullScreen && !hasTitle;
     }
