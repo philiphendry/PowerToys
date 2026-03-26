@@ -113,6 +113,10 @@ public class QuickWindowsManager(
 
             if (OperationInProgress && CurrentOperation != WindowOperation.ExclusionDetection)
             {
+                // Intentional: do NOT end the operation here. The user has released the hotkey
+                // while still holding the mouse button — the drag/resize should continue until
+                // mouse-up fires OnMouseUp, which calls EndOperation() and DisableEvents().
+                // SendControlKey cancels any pending Alt-menu activation from the key release.
                 Logger.LogDebug("Operation in progress - sending control key");
                 keyboardMonitor.SendControlKey();
                 return;
