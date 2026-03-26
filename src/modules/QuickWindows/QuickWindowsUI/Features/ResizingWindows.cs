@@ -86,24 +86,30 @@ public class ResizingWindows(
                 break;
         }
 
+        // Ensure minimum window size - clamp the moving edge (not the fixed opposite edge)
+        const int minSize = MinimumWindowSize;
+        if (newRight - newLeft < minSize)
+        {
+            if (_currentOperation is ResizeOperation.ResizeTopLeft or ResizeOperation.ResizeBottomLeft)
+                newLeft = newRight - minSize; // Left edge is moving; stop it from crossing right
+            else
+                newRight = newLeft + minSize; // Right edge is moving; stop it from crossing left
+        }
+
+        if (newBottom - newTop < minSize)
+        {
+            if (_currentOperation is ResizeOperation.ResizeTopLeft or ResizeOperation.ResizeTopRight)
+                newTop = newBottom - minSize; // Top edge is moving; stop it from crossing bottom
+            else
+                newBottom = newTop + minSize; // Bottom edge is moving; stop it from crossing top
+        }
+
         (newLeft, newTop, newRight, newBottom) = snappingWindows.SnapResizingWindow(
             newLeft,
             newTop,
             newRight,
             newBottom,
             _currentOperation);
-
-        // Ensure minimum window size accounting for the edge being resized
-        const int minSize = MinimumWindowSize;
-        if (newRight - newLeft < minSize)
-        {
-            newRight = newLeft + minSize;
-        }
-
-        if (newBottom - newTop < minSize)
-        {
-            newBottom = newTop + minSize;
-        }
 
         // Optimize flags for faster resizing
         const uint flags = NativeMethods.SWP_NOZORDER | // Don't change Z-order
