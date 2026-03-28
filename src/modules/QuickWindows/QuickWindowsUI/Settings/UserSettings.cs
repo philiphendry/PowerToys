@@ -64,7 +64,7 @@ public class UserSettings : IUserSettings
         try
         {
             var exclusions = ExcludedApplications.Value
-                .Split('\r')
+                .Split(["\r\n", "\r", "\n"], StringSplitOptions.None)
                 .Where(i => i.Trim().Length > 0)
                 .ToList();
 
