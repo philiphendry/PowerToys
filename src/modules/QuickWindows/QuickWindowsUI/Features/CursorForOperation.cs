@@ -173,9 +173,14 @@ public class CursorForOperation : ICursorForOperation, IDisposable
                 }
                 else
                 {
-                    // If on wrong thread, try to post a message to the owning thread
-                    Logger.LogDebug("Window belongs to different thread, attempting alternative cleanup");
+                    // Cannot destroy a window from a different thread. Post WM_CLOSE to the owning
+                    // thread and return — do NOT call UnregisterClass here, as the window is not
+                    // yet destroyed and UnregisterClass would race with the async WM_CLOSE dispatch.
+                    // The window class will be cleaned up by the OS when the process exits.
+                    Logger.LogDebug("Window belongs to different thread, posting WM_CLOSE for deferred cleanup");
                     NativeMethods.PostMessage(_cursorWindow, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                    _cursorWindow = IntPtr.Zero;
+                    return;
                 }
             }
         }

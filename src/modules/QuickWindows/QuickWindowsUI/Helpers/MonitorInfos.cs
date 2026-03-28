@@ -5,16 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Media;
 
 namespace QuickWindows.Helpers;
 
 public class MonitorInfos : IMonitorInfos
 {
     private static readonly HandleRef NullHandleRef = new(null, IntPtr.Zero);
-
-    public DpiScale GetCurrentMonitorDpi() => VisualTreeHelper.GetDpi(Application.Current.MainWindow);
 
     public bool HasMultipleMonitors() => GetAllMonitorInfos().Count > 1;
 

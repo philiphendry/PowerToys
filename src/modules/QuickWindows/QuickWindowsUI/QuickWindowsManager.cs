@@ -28,7 +28,7 @@ public class QuickWindowsManager(
     IExclusionDetector exclusionDetector,
     IExclusionFilter exclusionFilter,
     IRestoreMaximised restoreMaximised)
-    : IQuickWindowsManager, IHostedService, IDisposable
+    : IHostedService, IDisposable
 {
     private readonly Lock _lock = new();
     private Timer? _stateLoggerTimer;
