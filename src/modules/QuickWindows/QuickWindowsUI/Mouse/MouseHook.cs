@@ -71,6 +71,7 @@ public class MouseHook : IMouseHook
                 int delta = (short)((hookStruct.mouseData >> 16) & 0xFFFF);
                 var wheelArgs = new MouseMoveWheelEventArgs(hookStruct.pt.x, hookStruct.pt.y, delta);
                 MouseWheel?.Invoke(this, wheelArgs);
+
                 // Only suppress if the handler claimed the event (e.g. rolodex fired).
                 // Pass through otherwise so normal scrolling works while Alt is held.
                 return wheelArgs.Handled

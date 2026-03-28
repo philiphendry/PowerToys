@@ -38,8 +38,7 @@ public class ExclusionFilterTests
             .Setup(w => w.GetWindowInfoAtCursor())
             .Returns((true, "Code - Insiders", "Chrome_WidgetWin_1"));
 
-        Assert.IsTrue(filter.IsWindowAtCursorExcluded(),
-            "Window with \\r\\n-separated exclusion entry should be excluded");
+        Assert.IsTrue(filter.IsWindowAtCursorExcluded(), "Window with \\r\\n-separated exclusion entry should be excluded");
     }
 
     [TestMethod]
@@ -52,7 +51,6 @@ public class ExclusionFilterTests
             .Setup(w => w.GetWindowInfoAtCursor())
             .Returns((true, "Code - Insiders", "Chrome_WidgetWin_1"));
 
-        Assert.IsTrue(filter.IsWindowAtCursorExcluded(),
-            "Window with \\n-separated exclusion entry should be excluded");
+        Assert.IsTrue(filter.IsWindowAtCursorExcluded(), "Window with \\n-separated exclusion entry should be excluded");
     }
 }

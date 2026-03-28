@@ -13,7 +13,7 @@ using QuickWindows.Settings;
 namespace Microsoft.QuickWindows.UnitTests;
 
 [TestClass]
-public class KeyboardMonitorTests
+public class KeyboardMonitorTests : IDisposable
 {
     private Mock<IGlobalKeyboardHook> _mockHook = null!;
     private Mock<IDisabledInGameMode> _mockGameMode = null!;
@@ -41,7 +41,13 @@ public class KeyboardMonitorTests
     [TestCleanup]
     public void Cleanup()
     {
-        _monitor.Dispose();
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        _monitor?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private void RaiseKeyEvent(int vKey, GlobalKeyboardHook.KeyboardState state, int flags = 0)
@@ -90,6 +96,7 @@ public class KeyboardMonitorTests
 
         // Injected event first — should be ignored
         RaiseKeyEvent(NativeMethods.VK_MENU, GlobalKeyboardHook.KeyboardState.SysKeyDown, flags: NativeMethods.LLKHF_INJECTED);
+
         // Physical Alt down — should fire
         RaiseKeyEvent(NativeMethods.VK_MENU, GlobalKeyboardHook.KeyboardState.SysKeyDown, flags: 0);
 

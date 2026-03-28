@@ -93,17 +93,25 @@ public class ResizingWindows(
         if (newRight - newLeft < minSize)
         {
             if (_currentOperation is ResizeOperation.ResizeTopLeft or ResizeOperation.ResizeBottomLeft)
+            {
                 newLeft = newRight - minSize; // Left edge is moving; stop it from crossing right
+            }
             else
+            {
                 newRight = newLeft + minSize; // Right edge is moving; stop it from crossing left
+            }
         }
 
         if (newBottom - newTop < minSize)
         {
             if (_currentOperation is ResizeOperation.ResizeTopLeft or ResizeOperation.ResizeTopRight)
+            {
                 newTop = newBottom - minSize; // Top edge is moving; stop it from crossing bottom
+            }
             else
+            {
                 newBottom = newTop + minSize; // Bottom edge is moving; stop it from crossing top
+            }
         }
 
         (newLeft, newTop, newRight, newBottom) = snappingWindows.SnapResizingWindow(

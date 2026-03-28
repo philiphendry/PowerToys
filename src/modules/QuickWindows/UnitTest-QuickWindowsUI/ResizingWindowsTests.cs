@@ -35,8 +35,12 @@ public class ResizingWindowsTests
 
         // Capture the input values and pass them through unchanged
         _mockSnappingWindows
-            .Setup(s => s.SnapResizingWindow(
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(),
+            .Setup(s =>
+                s.SnapResizingWindow(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
                 It.IsAny<ResizeOperation>()))
             .Callback<int, int, int, int, ResizeOperation>((l, t, r, b, _) =>
             {
