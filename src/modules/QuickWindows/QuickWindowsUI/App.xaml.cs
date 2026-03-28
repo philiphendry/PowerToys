@@ -23,7 +23,7 @@ public partial class App : Application, IDisposable
 {
     public ETWTrace EtwTrace { get; } = new();
 
-    private IQuickWindowsManager? _quickWindowsManager;
+    private IHost? _host;
     private Mutex? _instanceMutex;
     private bool _disposedValue;
 
@@ -72,8 +72,6 @@ public partial class App : Application, IDisposable
             });
         }
 
-        IHost host = default!;
-
         NativeEventWaiter.WaitForEventLoop(
             Constants.TerminateQuickWindowsSharedEvent(),
             Current.Shutdown,
@@ -82,7 +80,7 @@ public partial class App : Application, IDisposable
 
         NativeEventWaiter.WaitForEventLoop(
             Constants.QuickWindowsSendSettingsTelemetryEvent(),
-            () => host.Services.GetService<IUserSettings>()!.SendSettingsTelemetry(),
+            () => _host!.Services.GetService<IUserSettings>()!.SendSettingsTelemetry(),
             Current.Dispatcher,
             ExitToken);
 
@@ -90,8 +88,8 @@ public partial class App : Application, IDisposable
 
         var builder = Host.CreateApplicationBuilder();
         DependencyInjection.Configure(builder.Services);
-        host = builder.Build();
-        host.RunAsync(ExitToken);
+        _host = builder.Build();
+        _host.RunAsync(ExitToken);
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -100,8 +98,8 @@ public partial class App : Application, IDisposable
 
         NativeThreadCTS.Cancel();
 
-        _quickWindowsManager?.DeactivateHotKey();
-        _quickWindowsManager = null;
+        // Stop the host synchronously to ensure hooks are uninstalled before the process exits.
+        _host?.StopAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
 
         _instanceMutex?.ReleaseMutex();
 
