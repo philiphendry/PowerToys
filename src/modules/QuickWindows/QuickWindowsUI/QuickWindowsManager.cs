@@ -207,6 +207,7 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Move;
                     OperationInProgress = true;
+                    args.Handled = true;
                     break;
 
                 case MouseButton.Right:
@@ -233,6 +234,7 @@ public class QuickWindowsManager(
 
                     CurrentOperation = WindowOperation.Resize;
                     OperationInProgress = true;
+                    args.Handled = true;
                     break;
             }
         }

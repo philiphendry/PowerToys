@@ -85,8 +85,14 @@ public class MouseHook : IMouseHook
             case NativeMethods.WM_LBUTTONDOWN:
             case NativeMethods.WM_RBUTTONDOWN:
                 var buttonDown = msg == NativeMethods.WM_LBUTTONDOWN ? MouseButton.Left : MouseButton.Right;
-                MouseDown?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown));
-                return new IntPtr(1);
+                var buttonDownArgs = new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonDown);
+                MouseDown?.Invoke(this, buttonDownArgs);
+
+                // Only suppress if the handler claimed the event (e.g. an operation started).
+                // Pass through otherwise so applications receive normal clicks while Alt is held.
+                return buttonDownArgs.Handled
+                    ? new IntPtr(1)
+                    : NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
             case NativeMethods.WM_LBUTTONUP:
             case NativeMethods.WM_RBUTTONUP:

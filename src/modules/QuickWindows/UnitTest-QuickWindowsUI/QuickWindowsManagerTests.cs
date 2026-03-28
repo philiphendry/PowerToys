@@ -356,4 +356,22 @@ public class QuickWindowsManagerTests
         MouseWheelUp();
         _mockRolodexWindows.Verify(m => m.SendWindowToBottom(It.IsAny<int>(), It.IsAny<int>()), Times.Once);
     }
+
+    [TestMethod]
+    public void WhenHotKeyActiveAndLeftButtonDownStartsOperation_ArgsHandledIsTrue()
+    {
+        HotKeyPress();
+        var args = new MouseButtonEventArgs(100, 100, MouseButton.Left);
+        _mockMouseHook.Raise(m => m.MouseDown += null!, args);
+        Assert.IsTrue(args.Handled);
+    }
+
+    [TestMethod]
+    public void WhenHotKeyNotActive_LeftButtonDown_ArgsHandledIsFalse()
+    {
+        // Do NOT press the hot key — OnMouseDown will return early because IsHotKeyActivated is false
+        var args = new MouseButtonEventArgs(100, 100, MouseButton.Left);
+        _mockMouseHook.Raise(m => m.MouseDown += null!, args);
+        Assert.IsFalse(args.Handled);
+    }
 }

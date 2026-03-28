@@ -7,5 +7,10 @@ namespace QuickWindows.Mouse
     public class MouseButtonEventArgs(int x, int y, MouseButton button) : MouseMoveEventArgs(x, y)
     {
         public MouseButton Button { get; } = button;
+
+        /// <summary>
+        /// Set to true by the event handler to suppress the event from reaching other applications.
+        /// </summary>
+        public bool Handled { get; set; }
     }
 }
