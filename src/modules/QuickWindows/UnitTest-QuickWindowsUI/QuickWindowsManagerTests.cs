@@ -374,4 +374,14 @@ public class QuickWindowsManagerTests
         _mockMouseHook.Raise(m => m.MouseDown += null!, args);
         Assert.IsFalse(args.Handled);
     }
+
+    [TestMethod]
+    public void WhenHotKeyActiveAndNoTargetWindow_LeftButtonDown_ArgsHandledIsFalse()
+    {
+        _mockTargetWindow.Setup(t => t.HaveTargetWindow).Returns(false);
+        HotKeyPress();
+        var args = new MouseButtonEventArgs(100, 100, MouseButton.Left);
+        _mockMouseHook.Raise(m => m.MouseDown += null!, args);
+        Assert.IsFalse(args.Handled);
+    }
 }
