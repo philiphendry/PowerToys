@@ -28,7 +28,7 @@ public class QuickWindowsSettings : EventBase, IEvent
 
     public bool ExcludeAppDetection { get; set; }
 
-    public string ExcludedApplications { get; set; } = default!;
+    public int ExcludedApplicationsCount { get; set; }
 
     public int SnappingThreshold { get; set; }
 

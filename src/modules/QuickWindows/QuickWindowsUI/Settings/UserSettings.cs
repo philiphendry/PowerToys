@@ -192,7 +192,9 @@ public class UserSettings : IUserSettings
             DoNotActivateOnGameMode = properties.DoNotActivateOnGameMode,
             TransparentWindowOnMove = properties.TransparentWindowOnMove,
             ExcludeAppDetection = properties.ExcludeAppDetection,
-            ExcludedApplications = properties.ExcludedApplications,
+            ExcludedApplicationsCount = (properties.ExcludedApplications ?? string.Empty)
+                .Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries)
+                .Count(line => line.Trim().Length > 0),
             SnappingThreshold = properties.SnappingThreshold,
             SnappingPadding = properties.SnappingPadding,
         };
