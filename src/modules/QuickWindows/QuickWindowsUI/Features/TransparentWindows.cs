@@ -17,7 +17,7 @@ public class TransparentWindows : ITransparentWindows
     private readonly ITargetWindow _targetWindow;
     private readonly IUserSettings _userSettings;
 
-    private bool _enabled;
+    private volatile bool _enabled;
     private int? _originalExStyle;
     private byte? _originalOpacityLevel;
 

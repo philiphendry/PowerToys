@@ -14,7 +14,7 @@ public class DisabledInGameMode : IDisabledInGameMode
 {
     private readonly IRateLimiter _rateLimiter;
     private readonly IWindowHelpers _windowHelpers;
-    private bool _doNotActiveInGameMode;
+    private volatile bool _doNotActiveInGameMode;
     private bool _lastComputedState;
 
     public DisabledInGameMode(

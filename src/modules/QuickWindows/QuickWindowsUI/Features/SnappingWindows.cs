@@ -17,9 +17,9 @@ public class SnappingWindows : ISnappingWindows
 
     private readonly IWindowHelpers _windowHelpers;
     private readonly IMonitorInfos _monitorInfos;
-    private bool _snappingEnabled;
-    private int _snappingThreshold;
-    private int _snappingPadding;
+    private volatile bool _snappingEnabled;
+    private volatile int _snappingThreshold;
+    private volatile int _snappingPadding;
     private List<Snappable> _monitorAreas = null!;
     private List<Snappable> _snappableAreas = null!;
     private NativeMethods.Rect _windowBorderOffsets;

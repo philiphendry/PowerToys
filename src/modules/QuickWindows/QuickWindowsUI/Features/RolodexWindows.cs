@@ -13,7 +13,7 @@ namespace QuickWindows.Features;
 public class RolodexWindows : IRolodexWindows
 {
     private readonly IWindowHelpers _windowHelpers;
-    private bool _rolodexEnabled;
+    private volatile bool _rolodexEnabled;
 
     public RolodexWindows(IUserSettings userSettings, IWindowHelpers windowHelpers)
     {
