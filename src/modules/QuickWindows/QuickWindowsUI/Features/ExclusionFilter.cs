@@ -44,7 +44,7 @@ public class ExclusionFilter : IExclusionFilter
     private void SetExclusionList()
     {
         _exclusions = _userSettings.ExcludedApplications.Value
-            .Split('\r')
+            .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
             .Where(i => i.Trim().Length > 0)
             .Where(i => i.Contains("||"))
             .Select(i =>
