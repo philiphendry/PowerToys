@@ -58,9 +58,10 @@ public class TransparentWindows : ITransparentWindows
         // Clear the error state first so we can distinguish the two cases.
         Marshal.SetLastSystemError(0);
         var setWindowLongResult = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle | NativeMethods.WS_EX_LAYERED);
-        if (setWindowLongResult == 0 && Marshal.GetLastPInvokeError() != 0)
+        var errorCode = Marshal.GetLastPInvokeError();
+        if (setWindowLongResult == 0 && errorCode != 0)
         {
-            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastPInvokeError()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {errorCode}");
             return;
         }
 
@@ -84,10 +85,12 @@ public class TransparentWindows : ITransparentWindows
         NativeMethods.SetLayeredWindowAttributes(_targetWindow.HWnd, 0, opacity, NativeMethods.LWA_ALPHA);
 
         // Then restore the original window style
+        Marshal.SetLastSystemError(0);
         var result = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle);
-        if (result == 0)
+        var restoreErrorCode = Marshal.GetLastPInvokeError();
+        if (result == 0 && restoreErrorCode != 0)
         {
-            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {restoreErrorCode}");
         }
 
         // If the original style didn't include WS_EX_LAYERED, we need to update the window
