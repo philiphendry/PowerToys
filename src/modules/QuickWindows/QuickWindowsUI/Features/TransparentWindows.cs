@@ -12,8 +12,7 @@ namespace QuickWindows.Features;
 
 public class TransparentWindows : ITransparentWindows
 {
-    // TODO: Make this configurable and fetched from IUserSettings
-    private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
+    private readonly byte _resizeOpacityLevel = 210;
     private readonly ITargetWindow _targetWindow;
     private readonly IUserSettings _userSettings;
 
@@ -55,9 +54,13 @@ public class TransparentWindows : ITransparentWindows
             }
         }
 
-        var setWindowLongSuccess = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle | NativeMethods.WS_EX_LAYERED);
-        if (setWindowLongSuccess == 0)
+        // SetWindowLong returns the previous value; 0 is ambiguous (error OR previous value was 0).
+        // Clear the error state first so we can distinguish the two cases.
+        Marshal.SetLastSystemError(0);
+        var setWindowLongResult = NativeMethods.SetWindowLong(_targetWindow.HWnd, NativeMethods.GWL_EX_STYLE, originalExStyle | NativeMethods.WS_EX_LAYERED);
+        if (setWindowLongResult == 0 && Marshal.GetLastPInvokeError() != 0)
         {
+            Logger.LogError($"{nameof(NativeMethods.SetWindowLong)} failed with error code {Marshal.GetLastPInvokeError()}");
             return;
         }
 
