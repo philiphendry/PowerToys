@@ -99,7 +99,7 @@ public class MouseHook : IMouseHook
                 var buttonUp = msg == NativeMethods.WM_LBUTTONUP ? MouseButton.Left : MouseButton.Right;
                 MouseUp?.Invoke(this, new MouseButtonEventArgs(hookStruct.pt.x, hookStruct.pt.y, buttonUp));
 
-                // Always pass UP through � allows target window to release capture.
+                // Always pass UP through — allows target window to release capture.
                 return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
