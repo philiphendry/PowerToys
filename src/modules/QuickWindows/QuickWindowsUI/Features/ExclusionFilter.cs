@@ -12,6 +12,8 @@ namespace QuickWindows.Features;
 
 public class ExclusionFilter : IExclusionFilter
 {
+    private static readonly string[] LineSeparators = ["\r\n", "\r", "\n"];
+
     private readonly IWindowHelpers _windowHelpers;
     private readonly IUserSettings _userSettings;
     private List<Exclusion> _exclusions = new();
@@ -44,7 +46,7 @@ public class ExclusionFilter : IExclusionFilter
     private void SetExclusionList()
     {
         _exclusions = _userSettings.ExcludedApplications.Value
-            .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
+            .Split(LineSeparators, StringSplitOptions.None)
             .Where(i => i.Trim().Length > 0)
             .Where(i => i.Contains("||"))
             .Select(i =>

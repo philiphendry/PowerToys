@@ -115,6 +115,7 @@ public partial class App : Application, IDisposable
 
         if (disposing)
         {
+            _host?.Dispose();
             _instanceMutex?.Dispose();
             EtwTrace.Dispose();
         }
