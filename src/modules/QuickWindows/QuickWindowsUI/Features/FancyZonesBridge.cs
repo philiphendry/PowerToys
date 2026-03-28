@@ -78,6 +78,9 @@ public class FancyZonesBridge : IFancyZonesBridge
     {
         if (!IsShiftPressed)
         {
+            // Shift was released mid-drag: end the FancyZones session so it can restart
+            // cleanly if the user re-presses Shift before releasing the mouse button.
+            EndMove(hwnd);
             return;
         }
 
