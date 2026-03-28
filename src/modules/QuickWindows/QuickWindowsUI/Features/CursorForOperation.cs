@@ -94,7 +94,7 @@ public class CursorForOperation : ICursorForOperation, IDisposable
             NativeMethods.HWND_TOPMOST,
             x - 8,  // Center on cursor
             y - 8,
-            16,     // Maintain 16x16 size
+            16,     // Ignored due to SWP_NOSIZE — window size is fixed at 16x16
             16,
             NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOSIZE);
     }

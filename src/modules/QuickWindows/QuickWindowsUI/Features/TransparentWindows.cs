@@ -12,7 +12,7 @@ namespace QuickWindows.Features;
 
 public class TransparentWindows : ITransparentWindows
 {
-    // TODO: Make this configurable and fetched form IUserSettings
+    // TODO: Make this configurable and fetched from IUserSettings
     private readonly byte _resizeOpacityLevel = 210; // 0-255, can be made configurable
     private readonly ITargetWindow _targetWindow;
     private readonly IUserSettings _userSettings;

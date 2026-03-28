@@ -34,14 +34,16 @@ public class SnappingWindows : ISnappingWindows
 
         _snappingEnabled = userSettings.SnappingEnabled.Value;
         _snappingPadding = userSettings.SnappingPadding.Value;
-        _snappingThreshold = userSettings.SnappingPadding.Value + 30;
+        _snappingThreshold = userSettings.SnappingPadding.Value + userSettings.SnappingThreshold.Value;
 
         userSettings.SnappingEnabled.PropertyChanged += (_, _) => _snappingEnabled = userSettings.SnappingEnabled.Value;
         userSettings.SnappingPadding.PropertyChanged += (_, _) =>
         {
             _snappingPadding = userSettings.SnappingPadding.Value;
-            _snappingThreshold = userSettings.SnappingPadding.Value + 30;
+            _snappingThreshold = userSettings.SnappingPadding.Value + userSettings.SnappingThreshold.Value;
         };
+        userSettings.SnappingThreshold.PropertyChanged += (_, _) =>
+            _snappingThreshold = userSettings.SnappingPadding.Value + userSettings.SnappingThreshold.Value;
     }
 
     public void StartSnap(IntPtr targetWindow)
@@ -291,7 +293,7 @@ public class SnappingWindows : ISnappingWindows
             var rect = snappable.Rect;
             var snapInside = snappable.SnapInside;
 
-            // Check if positionX snaps
+            // Check if X position snaps (gated on vertical overlap — standard AltSnap algorithm)
             if (IsInRange(positionY, rect.top, rect.bottom, thresholdX)
                 || IsInRange(rect.top, positionY, positionY + height, thresholdX))
             {
@@ -328,7 +330,7 @@ public class SnappingWindows : ISnappingWindows
                 }
             }
 
-            // Check if positionY snaps
+            // Check if Y position snaps (gated on horizontal overlap — standard AltSnap algorithm)
             if (IsInRange(positionX, rect.left, rect.right, thresholdY)
                 || IsInRange(rect.left, positionX, positionX + width, thresholdY))
             {

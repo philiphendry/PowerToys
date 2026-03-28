@@ -19,7 +19,7 @@ public class WindowHelpers : IWindowHelpers
         var hwnd = NativeMethods.WindowFromPoint(point);
         if (hwnd == IntPtr.Zero)
         {
-            Logger.LogError($"{nameof(NativeMethods.WindowFromPoint)} failed with error code {Marshal.GetLastWin32Error()}");
+            Logger.LogDebug($"{nameof(NativeMethods.WindowFromPoint)} returned zero (cursor may be on desktop)");
             return IntPtr.Zero;
         }
 
