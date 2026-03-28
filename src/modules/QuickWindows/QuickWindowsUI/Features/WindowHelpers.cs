@@ -158,8 +158,12 @@ public class WindowHelpers : IWindowHelpers
                 return true;
             }
 
-            if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect) == 0
-                || NativeMethods.GetWindowRect(hWnd, out rect))
+            // Try DWM extended frame bounds first (excludes shadow); fall back to GetWindowRect.
+            if (NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_EXTENDED_FRAME_BOUNDS, out NativeMethods.Rect rect) == 0)
+            {
+                windows.Add(rect);
+            }
+            else if (NativeMethods.GetWindowRect(hWnd, out rect))
             {
                 windows.Add(rect);
             }
