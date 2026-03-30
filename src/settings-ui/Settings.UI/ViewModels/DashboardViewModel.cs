@@ -800,7 +800,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             };
             return new ObservableCollection<DashboardModuleItem>(list);
         }
-        
+
         private ObservableCollection<DashboardModuleItem> GetModuleItemsQuickWindows()
         {
             ISettingsRepository<QuickWindowsSettings> moduleSettingsRepository = SettingsRepository<QuickWindowsSettings>.GetInstance(SettingsUtils.Default);
